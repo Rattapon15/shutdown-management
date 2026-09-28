@@ -1,0 +1,31 @@
+node_modules
+npm-debug.log*
+
+# Secrets — supplied as Cloud Run env vars / Secret Manager, never baked in.
+.env
+.env.*
+!.env.example
+
+# Legacy JSON store and its backups; data now lives in PostgreSQL.
+data.json
+data.json.backup-*
+
+# Local artifacts
+uploads/
+server.log
+*.log
+cookies*.txt
+
+# Source spreadsheets and design assets — not needed at runtime.
+*.xlsx
+*.xls
+stitch_machine_shutdown_tracker_web/
+
+.git
+.gitignore
+.github
+.claude
+README.md
+Dockerfile
+.dockerignore
+docker-compose.yml

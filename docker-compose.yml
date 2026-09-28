@@ -1,0 +1,14 @@
+# Local run of the production image against the Azure database.
+# Cloud Run does not use this file — it builds the Dockerfile directly.
+services:
+  app:
+    build: .
+    image: shutdown-management:local
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      PORT: "8080"
+      NODE_ENV: production
+    restart: unless-stopped

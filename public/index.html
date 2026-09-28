@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PLANT OPS // CMMS — Shutdown Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: { extend: {
+    colors: {
+      'surface': '#f5f7ff', 'surface-dim': '#dce1ee', 'surface-bright': '#ffffff',
+      'surface-container-lowest': '#ffffff', 'surface-container-low': '#eef0fa',
+      'surface-container': '#e8eaf3', 'surface-container-high': '#e2e4ed',
+      'surface-container-highest': '#dcdee7', 'on-surface': '#1a1b22',
+      'on-surface-variant': '#44464f', 'outline': '#74767f', 'outline-variant': '#c4c6d0',
+      'primary': '#3f4fa6', 'on-primary': '#ffffff', 'primary-container': '#dde1ff',
+      'on-primary-container': '#000c65', 'primary-fixed': '#dde1ff', 'primary-fixed-dim': '#b3baff',
+      'secondary': '#0077b6', 'on-secondary': '#ffffff', 'secondary-container': '#c8e8ff',
+      'secondary-fixed': '#c8e8ff', 'secondary-fixed-dim': '#006496',
+      'tertiary': '#006e28', 'on-tertiary': '#ffffff', 'tertiary-container': '#96f990',
+      'tertiary-fixed': '#96f990', 'tertiary-fixed-dim': '#006e28',
+      'error': '#ba1a1a', 'on-error': '#ffffff', 'error-container': '#ffdad6',
+      'background': '#f5f7ff', 'on-background': '#1a1b22',
+      'surface-variant': '#e3e2ea', 'inverse-surface': '#2f3036',
+    },
+    fontFamily: {
+      sans: ['Inter', 'Sarabun', 'sans-serif'],
+      mono: ['JetBrains Mono', 'monospace'],
+    }
+  }}
+};
+</script>
+<style>
+  @layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; font-family: Inter, Sarabun, sans-serif; } }
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #eef0fa; } ::-webkit-scrollbar-thumb { background: #c4c6d0; border-radius: 2px; }
+  .area-tag.active { background: #0077b6; color: #ffffff; font-weight: 700; }
+  .fade-in { animation: fadeIn 0.25s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  input[type=file] { display: none; }
+  .upload-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 999; align-items: center; justify-content: center; }
+  .upload-overlay.show { display: flex; }
+
+  /* Column filter headers */
+  .col-filter-hd { display:inline-flex; align-items:center; gap:4px; cursor:pointer; padding:2px 4px; border-radius:4px; transition:background .15s; white-space:nowrap; }
+  .col-filter-hd:hover { background:rgba(0,119,182,.10); color:#0077b6; }
+  .col-filter-hd.active { color:#0077b6; }
+  .col-sort-icon { font-size:11px; opacity:.45; font-style:normal; }
+  .col-filter-hd.active .col-sort-icon { opacity:1; }
+  .col-filter-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#006e28; margin-left:2px; vertical-align:middle; }
+  .col-filter-dot.hidden { display:none; }
+
+  /* Dropdown panel */
+  #col-dropdown { display:none; position:fixed; z-index:9000; min-width:220px; max-width:320px;
+    background:#ffffff; border:1px solid #c4c6d0; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,.15);
+    padding:8px 0; font-family:Inter,Sarabun,sans-serif; font-size:12px; color:#1a1b22; }
+  #col-dropdown.show { display:block; }
+  .cd-section { padding:4px 12px 2px; font-size:10px; font-weight:700; color:#74767f; letter-spacing:.08em; text-transform:uppercase; }
+  .cd-btn { display:flex; align-items:center; gap:8px; width:100%; padding:5px 12px; cursor:pointer; transition:background .1s; }
+  .cd-btn:hover { background:rgba(0,119,182,.08); color:#0077b6; }
+  .cd-btn.active { color:#006e28; }
+  .cd-sep { height:1px; background:#c4c6d0; margin:4px 0; }
+  .cd-search { margin:4px 10px 2px; padding:5px 10px; background:#f5f7ff; border:1px solid #c4c6d0; border-radius:6px;
+    color:#1a1b22; font-size:11px; width:calc(100% - 20px); outline:none; }
+  .cd-search:focus { border-color:#0077b6; }
+  .cd-values { max-height:200px; overflow-y:auto; }
+  .cd-val-item { display:flex; align-items:center; gap:7px; padding:4px 12px; cursor:pointer; transition:background .1s; }
+  .cd-val-item:hover { background:rgba(0,119,182,.06); }
+  .cd-val-item input[type=checkbox] { accent-color:#0077b6; width:13px; height:13px; cursor:pointer; flex-shrink:0; }
+  .cd-val-item label { cursor:pointer; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; }
+  .cd-footer { padding:6px 10px 2px; display:flex; gap:6px; }
+  .cd-apply { flex:1; padding:5px; background:#0077b6; color:#fff; border:none; border-radius:5px; font-weight:700; font-size:11px; cursor:pointer; }
+  .cd-clear { padding:5px 10px; background:transparent; color:#74767f; border:1px solid #c4c6d0; border-radius:5px; font-size:11px; cursor:pointer; }
+  .cd-clear:hover { color:#ba1a1a; border-color:#ba1a1a; }
+</style>
+</head>
+<body class="bg-surface text-on-surface antialiased text-sm">
+
+<!-- ═══════════════════════════════════════ LOGIN SCREEN ══════════════════════ -->
+<div id="login-screen" class="fixed inset-0 bg-surface z-[100] flex items-center justify-center p-4">
+  <div class="w-full max-w-sm bg-surface-container-lowest rounded-xl p-6 shadow-2xl border border-outline-variant/30 flex flex-col gap-4">
+    <div class="flex flex-col items-center gap-2 pb-2">
+      <div class="relative w-12 h-12 rounded bg-primary-container border border-outline-variant flex items-center justify-center">
+        <span class="material-symbols-outlined text-secondary" style="font-size:28px">settings</span>
+        <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-error border-2 border-surface-container-lowest flex items-center justify-center">
+          <span class="material-symbols-outlined text-on-error" style="font-size:12px">power_settings_new</span>
+        </span>
+      </div>
+      <h1 class="text-base font-bold text-on-surface tracking-tight">Shutdown Management</h1>
+      <p class="text-xs text-on-surface-variant">เข้าสู่ระบบเพื่อใช้งาน</p>
+    </div>
+    <form id="login-form" onsubmit="handleLogin(event)" class="flex flex-col gap-3">
+      <div>
+        <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">Username</label>
+        <input id="login-username" required autocomplete="username" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+      </div>
+      <div>
+        <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">Password</label>
+        <input id="login-password" type="password" required autocomplete="current-password" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+      </div>
+      <p id="login-error" class="hidden text-xs text-error"></p>
+      <button type="submit" class="mt-1 px-4 py-2 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container font-bold transition-all shadow-md">เข้าสู่ระบบ</button>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ APP SHELL ═════════════════════════ -->
+<div id="app-shell" class="hidden">
+
+<!-- ═══════════════════════════════════════ SIDEBAR ══════════════════════════ -->
+<aside class="fixed left-0 top-0 h-full w-64 z-50 flex flex-col select-none" style="background:#000f21; border-right:1px solid #1b2b3f;">
+  <div class="flex flex-col shrink-0">
+    <div class="h-16 px-4 flex items-center gap-2.5" style="border-bottom:1px solid #1b2b3f; background:#0b1c30;">
+      <div class="relative w-9 h-9 rounded shrink-0 flex items-center justify-center" style="background:#102034; border:1px solid #26364a;">
+        <span class="material-symbols-outlined" style="font-size:22px; color:#7bd0ff;">settings</span>
+        <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center" style="background:#ffb4ab; border:2px solid #0b1c30;">
+          <span class="material-symbols-outlined" style="font-size:10px; color:#690005;">power_settings_new</span>
+        </span>
+      </div>
+      <div class="flex flex-col leading-none min-w-0 overflow-hidden">
+        <span class="text-sm font-bold truncate" style="color:#d3e4fe; letter-spacing:0.01em;">Shutdown Management</span>
+      </div>
+    </div>
+    <div class="px-3 py-2"><span class="text-[10px] uppercase tracking-widest px-2 font-semibold" style="color:#909097;">Plant Selection</span></div>
+    <nav class="flex flex-col gap-1 px-2" id="plant-tab-nav">
+      <div class="plant-group flex flex-col">
+        <a class="plant-tab flex items-center gap-2 px-3 py-2 rounded transition-colors" style="color:#909097;" href="#" data-plant="SKIC BM1" onclick="setPlantTab(this)">
+          <span class="material-symbols-outlined" style="font-size:18px">factory</span><span>SKIC BM1</span>
+        </a>
+        <div class="plant-subnav hidden flex-col gap-0.5 pl-8 pr-1 py-1" data-plant-sub="SKIC BM1">
+          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="progress" onclick="setViewTab(this,'progress')">
+            <span class="material-symbols-outlined" style="font-size:14px">monitoring</span><span>Shutdown Progress Update</span>
+          </a>
+          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="safety" onclick="setViewTab(this,'safety')">
+            <span class="material-symbols-outlined" style="font-size:14px">health_and_safety</span><span>Shutdown Safety Activities</span>
+          </a>
+        </div>
+      </div>
+      <div class="plant-group flex flex-col">
+        <a class="plant-tab flex items-center gap-2 px-3 py-2 rounded transition-colors" style="color:#909097;" href="#" data-plant="SKIC BM3" onclick="setPlantTab(this)">
+          <span class="material-symbols-outlined" style="font-size:18px">factory</span><span>SKIC BM3</span>
+        </a>
+        <div class="plant-subnav hidden flex-col gap-0.5 pl-8 pr-1 py-1" data-plant-sub="SKIC BM3">
+          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="progress" onclick="setViewTab(this,'progress')">
+            <span class="material-symbols-outlined" style="font-size:14px">monitoring</span><span>Shutdown Progress Update</span>
+          </a>
+          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="safety" onclick="setViewTab(this,'safety')">
+            <span class="material-symbols-outlined" style="font-size:14px">health_and_safety</span><span>Shutdown Safety Activities</span>
+          </a>
+        </div>
+      </div>
+      <div class="plant-group flex flex-col">
+        <a class="plant-tab flex items-center gap-2 px-3 py-2 rounded transition-colors" style="color:#909097;" href="#" data-plant="SKIC BM17" onclick="setPlantTab(this)">
+          <span class="material-symbols-outlined" style="font-size:18px">factory</span><span>SKIC BM17</span>
+        </a>
+        <div class="plant-subnav hidden flex-col gap-0.5 pl-8 pr-1 py-1" data-plant-sub="SKIC BM17">
+          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="progress" onclick="setViewTab(this,'progress')">
+            <span class="material-symbols-outlined" style="font-size:14px">monitoring</span><span>Shutdown Progress Update</span>
+          </a>
+          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="safety" onclick="setViewTab(this,'safety')">
+            <span class="material-symbols-outlined" style="font-size:14px">health_and_safety</span><span>Shutdown Safety Activities</span>
+          </a>
+        </div>
+      </div>
+      <div class="plant-group flex flex-col">
+        <a class="plant-tab active flex items-center gap-2 px-3 py-2 rounded border-l-2 font-semibold" style="background:#1b2b3f; color:#7bd0ff; border-color:#7bd0ff;" href="#" data-plant="SKIC BM16" onclick="setPlantTab(this)">
+          <span class="material-symbols-outlined" style="font-size:18px">factory</span><span>SKIC BM16</span>
+          <span class="ml-auto font-mono text-xs px-1.5 py-0.5 rounded" style="background:#001c10; color:#4edea3; border:1px solid rgba(78,222,163,0.4);">LIVE</span>
+        </a>
+        <div class="plant-subnav flex flex-col gap-0.5 pl-8 pr-1 py-1" data-plant-sub="SKIC BM16">
+          <a class="view-tab active flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-semibold transition-colors" style="background:#102034; color:#7bd0ff;" href="#" data-view="progress" onclick="setViewTab(this,'progress')">
+            <span class="material-symbols-outlined" style="font-size:14px">monitoring</span><span>Shutdown Progress Update</span>
+          </a>
+          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="safety" onclick="setViewTab(this,'safety')">
+            <span class="material-symbols-outlined" style="font-size:14px">health_and_safety</span><span>Shutdown Safety Activities</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Activity feed -->
+  <div class="flex-1 min-h-0 flex flex-col px-3 pt-3 pb-2" style="border-top:1px solid #1b2b3f;">
+    <div class="flex items-center justify-between pb-2 mb-2 shrink-0" style="border-bottom:1px solid #1b2b3f;">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined" style="font-size:18px; color:#7bd0ff;">rss_feed</span>
+        <span class="text-xs font-bold" style="color:#d3e4fe;">ฟีดอัปเดตหน้างานสด</span>
+      </div>
+      <span class="w-2 h-2 rounded-full animate-ping" style="background:#4edea3;"></span>
+    </div>
+    <div class="flex-1 min-h-0 flex flex-col gap-2 overflow-y-auto pr-1" id="activity-feed"></div>
+  </div>
+
+  <div class="p-3 shrink-0 flex flex-col gap-1.5" style="border-top:1px solid #1b2b3f;">
+    <div class="hidden items-center justify-between px-1" id="last-refresh-row">
+      <span class="text-[9px] font-mono" style="color:#909097;">Refresh ล่าสุด</span>
+      <span class="text-[9px] font-mono font-semibold" id="last-refresh-text" style="color:#7bd0ff;">—</span>
+    </div>
+    <div class="flex items-center justify-between p-2 rounded" id="server-status-box" style="background:#000f21; border:1px solid #26364a;">
+      <div class="flex items-center gap-2">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" id="server-status-ping" style="background:#4edea3;"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2" id="server-status-dot" style="background:#4edea3;"></span>
+        </span>
+        <span class="font-mono text-xs" id="server-status-text" style="color:#d3e4fe;">กำลังตรวจสอบ...</span>
+      </div>
+      <span class="font-mono text-xs text-tertiary font-semibold" id="server-status-latency">—</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════════════════════════════ TOPBAR ═══════════════════════════ -->
+<div class="pl-64">
+<header class="fixed top-0 left-64 right-0 h-16 z-40 px-5 flex items-center justify-between gap-4 border-b" style="background:#0b1c30; border-color:#1b2b3f;">
+  <div class="flex items-center gap-2 min-w-0">
+    <span class="inline-flex items-center justify-center w-7 h-7 rounded shrink-0" style="background:rgba(123,208,255,0.15); color:#7bd0ff;">
+      <span class="material-symbols-outlined" style="font-size:18px">emergency_home</span>
+    </span>
+    <h1 class="text-base font-bold tracking-tight truncate" style="color:#d3e4fe;">Dashboard ติดตามสถานะงาน Monthly Shutdown</h1>
+  </div>
+  <div class="flex items-center gap-4">
+    <div class="hidden md:flex flex-col items-end leading-tight">
+      <span class="font-mono text-base font-bold tracking-wider" id="live-clock" style="color:#d3e4fe;">--:--:-- UTC+7</span>
+      <span class="font-mono text-xs" id="live-date" style="color:#909097;">--</span>
+    </div>
+    <div class="h-8 w-px" style="background:rgba(69,70,77,0.6);"></div>
+    <button id="user-mgmt-btn" onclick="openUserModal()" title="จัดการผู้ใช้งาน" class="hidden p-1.5 rounded transition-colors" style="color:#909097;" onmouseover="this.style.color='#7bd0ff';this.style.background='rgba(27,43,63,1)'" onmouseout="this.style.color='#909097';this.style.background='transparent'">
+      <span class="material-symbols-outlined" style="font-size:20px">manage_accounts</span>
+    </button>
+    <button onclick="handleLogout()" title="ออกจากระบบ" class="p-1.5 rounded transition-colors" style="color:#909097;" onmouseover="this.style.color='#ffb4ab';this.style.background='rgba(27,43,63,1)'" onmouseout="this.style.color='#909097';this.style.background='transparent'">
+      <span class="material-symbols-outlined" style="font-size:20px">logout</span>
+    </button>
+    <div class="flex items-center gap-2">
+      <div class="flex flex-col items-end leading-tight text-right">
+        <span class="text-xs font-semibold" id="topbar-username" style="color:#d3e4fe;">—</span>
+        <span class="text-[10px] uppercase tracking-wider font-semibold" id="topbar-role" style="color:#7bd0ff;">—</span>
+        <span class="text-[9px] font-mono hidden" id="topbar-last-login" style="color:#909097;"></span>
+      </div>
+      <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+        <span class="material-symbols-outlined text-on-primary" style="font-size:18px">person</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════ MAIN ════════════════════════════ -->
+<main class="relative pt-16 bg-surface min-h-screen">
+
+<div id="view-progress">
+
+  <div class="w-full px-5 py-5 flex flex-col gap-4">
+
+    <!-- ── HEADER BANNER ── -->
+    <div class="bg-surface-container-low rounded-xl p-5 flex flex-col gap-4 shadow-md">
+      <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+        <button onclick="openScheduleModal()"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container transition-all shadow-md active:scale-95 text-xs font-bold tracking-tight w-fit">
+          <span class="material-symbols-outlined group-hover:scale-110 transition-transform" style="font-size:18px">event_note</span>
+          <span>กรอกแผนงาน Shutdown (Milestone Schedule)</span>
+        </button>
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Upload Excel -->
+          <div class="flex flex-col gap-1">
+            <button onclick="document.getElementById('excel-file-input').click()"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container transition-all shadow-md active:scale-95 text-xs font-bold tracking-tight">
+              <span class="material-symbols-outlined group-hover:scale-110 transition-transform" style="font-size:18px">upload_file</span>
+              <span>อัปโหลด Excel แผนงาน</span>
+              <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-surface-container-lowest text-secondary-fixed-dim border border-outline-variant/30">.XLSX</span>
+            </button>
+            <div id="excel-file-name" class="hidden flex-col gap-0.5 px-1 max-w-[260px]">
+              <div class="flex items-center gap-1 text-[10px] font-mono text-tertiary truncate">
+                <span class="material-symbols-outlined" style="font-size:12px">task_alt</span>
+                <span id="excel-file-name-text"></span>
+              </div>
+              <div class="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant/70 truncate pl-4">
+                <span id="excel-upload-time-text"></span>
+              </div>
+            </div>
+          </div>
+          <input type="file" id="excel-file-input" accept=".xlsx,.xls" onchange="handleExcelUpload(event)">
+
+          <button onclick="toggleModal(true)"
+            class="flex items-center gap-1.5 px-4 py-1.5 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container transition-all shadow-md active:scale-95 text-xs font-bold tracking-tight">
+            <span class="material-symbols-outlined" style="font-size:18px">add_task</span>
+            <span>+ เพิ่มรายการงานหยุดซ่อม</span>
+          </button>
+
+          <button onclick="clearAllTasks()" title="ล้างข้อมูลตารางงานทั้งหมด เพื่อเตรียม Upload Excel ครั้งต่อไป"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface-container-high hover:bg-error-container/30 border border-outline-variant/40 hover:border-error/50 text-on-surface-variant hover:text-error transition-all active:scale-95 text-xs font-semibold group">
+            <span class="material-symbols-outlined group-hover:scale-110 transition-transform" style="font-size:18px">delete_sweep</span>
+            <span>ล้างข้อมูลทั้งหมด</span>
+          </button>
+
+          <button onclick="exportReport()"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface-container-high hover:bg-surface-bright text-on-surface transition-all active:scale-95 text-xs font-semibold">
+            <span class="material-symbols-outlined text-secondary" style="font-size:18px">file_download</span>
+            <span>ส่งออก Report</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Milestone schedule strip -->
+      <div id="schedule-strip" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2"></div>
+    </div>
+
+    <!-- ── KPI TILES ── -->
+    <div class="flex flex-col xl:flex-row gap-4 w-full">
+      <!-- Pie Chart -->
+      <div class="xl:w-2/5 bg-surface-container-lowest rounded-xl p-5 flex flex-col gap-3 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-semibold text-on-surface-variant tracking-widest uppercase">OVERALL SHUTDOWN COMPLETION RATE</span>
+          <span class="font-mono text-2xl font-bold text-on-surface" id="kpi-percent">0.0%</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="shrink-0">
+            <svg id="pie-chart-svg" viewBox="0 0 200 200" width="180" height="180">
+              <!-- pie slices injected by JS before this group -->
+              <g id="pie-center-group">
+                <circle cx="100" cy="100" r="54" fill="#ffffff"/>
+                <text x="100" y="93" text-anchor="middle" font-size="22" font-weight="bold" fill="#1a1b22" id="gauge-text" font-family="monospace, sans-serif">0%</text>
+                <text x="100" y="112" text-anchor="middle" font-size="9" fill="#74767f" id="gauge-total-text" font-family="sans-serif">0 งาน</text>
+              </g>
+            </svg>
+          </div>
+          <div class="flex flex-col gap-1.5 flex-1 min-w-0">
+            <p class="text-xs text-on-surface-variant/80 mb-1">จำนวนงานทั้งหมด <span class="text-secondary font-semibold font-mono" id="kpi-total">0 งาน</span></p>
+            <div id="pie-legend" class="flex flex-col gap-2"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Stage Tiles -->
+      <div class="flex-1 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div id="stage-tile-0" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase(0)">
+          <div class="h-1 w-full bg-outline-variant/50 absolute top-0 left-0"></div>
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-semibold text-on-surface-variant uppercase">STAGE 1 // 0%</span>
+            <span class="material-symbols-outlined text-outline group-hover:scale-110 transition-transform" style="font-size:18px">lock_clock</span>
+          </div>
+          <div class="my-2 flex-1 flex flex-col items-center justify-center text-center">
+            <div class="text-2xl font-bold text-on-surface font-mono"><span id="cnt-0">0</span> <span class="text-xs font-normal text-on-surface-variant">งาน</span></div>
+            <div class="text-xs text-on-surface-variant mt-1">รอเปิด Work Permit</div>
+          </div>
+        </div>
+        <div id="stage-tile-25" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase(25)">
+          <div class="h-1 w-full bg-secondary-container absolute top-0 left-0"></div>
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-semibold text-secondary-fixed-dim uppercase">STAGE 2 // 25%</span>
+            <span class="material-symbols-outlined text-secondary group-hover:scale-110 transition-transform" style="font-size:18px">assignment_turned_in</span>
+          </div>
+          <div class="my-2 flex-1 flex flex-col items-center justify-center text-center">
+            <div class="text-2xl font-bold text-secondary font-mono"><span id="cnt-25">0</span> <span class="text-xs font-normal text-on-surface-variant">งาน</span></div>
+            <div class="text-xs text-on-surface mt-1">เปิด Work Permit แล้ว</div>
+          </div>
+        </div>
+        <div id="stage-tile-50" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase(50)">
+          <div class="h-1 w-full bg-secondary absolute top-0 left-0"></div>
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-semibold text-secondary uppercase">STAGE 3 // 50%</span>
+            <span class="material-symbols-outlined text-secondary group-hover:scale-110 transition-transform" style="font-size:18px">handyman</span>
+          </div>
+          <div class="my-2 flex-1 flex flex-col items-center justify-center text-center">
+            <div class="text-2xl font-bold text-on-surface font-mono"><span id="cnt-50">0</span> <span class="text-xs font-normal text-on-surface-variant">งาน</span></div>
+            <div class="text-xs text-on-surface mt-1">อยู่ระหว่างทำงาน</div>
+          </div>
+        </div>
+        <div id="stage-tile-75" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase(75)">
+          <div class="h-1 w-full bg-primary-fixed-dim absolute top-0 left-0"></div>
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-semibold text-primary uppercase">STAGE 4 // 75%</span>
+            <span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform" style="font-size:18px">fact_check</span>
+          </div>
+          <div class="my-2 flex-1 flex flex-col items-center justify-center text-center">
+            <div class="text-2xl font-bold text-primary font-mono"><span id="cnt-75">0</span> <span class="text-xs font-normal text-on-surface-variant">งาน</span></div>
+            <div class="text-xs text-on-surface mt-1">รอปิด Work Permit</div>
+          </div>
+        </div>
+        <div id="stage-tile-100" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase(100)">
+          <div class="h-1 w-full bg-tertiary absolute top-0 left-0"></div>
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-semibold text-tertiary uppercase">STAGE 5 // 100%</span>
+            <span class="material-symbols-outlined text-tertiary group-hover:scale-110 transition-transform" style="font-size:18px">verified</span>
+          </div>
+          <div class="my-2 flex-1 flex flex-col items-center justify-center text-center">
+            <div class="text-2xl font-bold text-tertiary font-mono"><span id="cnt-100">0</span> <span class="text-xs font-normal text-on-surface-variant">งาน</span></div>
+            <div class="text-xs text-on-surface mt-1">ปิด Work Permit เสร็จแล้ว</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SEARCH BAR ── -->
+    <div class="bg-surface-container-lowest rounded-xl p-3 flex items-center gap-3 shadow-sm">
+      <span class="material-symbols-outlined text-secondary shrink-0" style="font-size:22px">manage_search</span>
+      <div class="flex-1 relative">
+        <input id="main-search-input" oninput="renderTable()" autocomplete="off" spellcheck="false"
+          placeholder="ค้นหาได้จากทุกคอลัมน์ — ชื่องาน, ผู้รับผิดชอบ, Section, พื้นที่, เวลา, สถานะ (เช่น 100%), หมายเหตุ..."
+          class="w-full bg-surface-container border border-outline-variant/50 rounded-lg px-4 py-2.5 font-sans text-sm text-on-surface placeholder:text-outline/60 focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all">
+        <span id="main-search-clear" onclick="clearMainSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-outline hover:text-on-surface transition-colors">
+          <span class="material-symbols-outlined" style="font-size:18px">close</span>
+        </span>
+      </div>
+      <div class="shrink-0 flex items-center gap-1.5 text-[10px] font-mono text-on-surface-variant/60 select-none">
+        <span class="px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30">Section</span>
+        <span class="px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30">ชื่องาน</span>
+        <span class="px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30">ผู้รับผิดชอบ</span>
+        <span class="px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30">เวลา</span>
+        <span class="px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30">%</span>
+      </div>
+      <button onclick="resetFilters()" class="shrink-0 p-2 rounded bg-surface-container hover:bg-surface-bright text-on-surface-variant hover:text-on-surface transition-colors" title="ล้างตัวกรอง">
+        <span class="material-symbols-outlined" style="font-size:18px">filter_alt_off</span>
+      </button>
+    </div>
+
+    <!-- ── MAIN LAYOUT: TABLE ── -->
+    <div class="grid grid-cols-1 gap-4 items-start">
+
+      <!-- Task Table -->
+      <div class="flex flex-col gap-4">
+        <!-- Phase legend -->
+        <div class="bg-surface-container-low rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-secondary" style="font-size:20px">tune</span>
+            <span class="text-[10px] font-bold uppercase text-on-surface tracking-wider">5-PHASE STATUS PROGRESSION STANDARD</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container text-outline-variant font-mono text-xs font-medium">
+              <span class="w-2 h-2 rounded-full bg-outline"></span> 0% รอเปิด Work Permit
+            </div>
+            <span class="material-symbols-outlined text-outline" style="font-size:14px">arrow_forward</span>
+            <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-secondary-container/20 text-secondary font-mono text-xs font-medium">
+              <span class="w-2 h-2 rounded-full bg-secondary-container"></span> 25% เปิด Work Permit แล้ว
+            </div>
+            <span class="material-symbols-outlined text-outline" style="font-size:14px">arrow_forward</span>
+            <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-secondary/15 text-secondary font-mono text-xs font-medium">
+              <span class="w-2 h-2 rounded-full bg-secondary"></span> 50% อยู่ระหว่างทำงาน
+            </div>
+            <span class="material-symbols-outlined text-outline" style="font-size:14px">arrow_forward</span>
+            <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-high text-primary font-mono text-xs font-medium">
+              <span class="w-2 h-2 rounded-full bg-primary-fixed-dim"></span> 75% รอปิด Work Permit
+            </div>
+            <span class="material-symbols-outlined text-outline" style="font-size:14px">arrow_forward</span>
+            <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-tertiary-container text-tertiary font-mono text-xs font-medium">
+              <span class="w-2 h-2 rounded-full bg-tertiary"></span> 100% ปิด Work Permit เสร็จแล้ว
+            </div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-md flex flex-col">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse" id="tasks-table">
+              <thead>
+                <tr class="bg-surface-container-low text-on-surface-variant text-[10px] font-semibold uppercase tracking-wider select-none">
+                  <th class="py-2 px-4 w-24"><div class="col-filter-hd" data-col="area">Location <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></th>
+                  <th class="py-2 px-4 w-28"><div class="col-filter-hd" data-col="tag">Section <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></th>
+                  <th class="py-2 pl-4 pr-1 w-24"><div class="col-filter-hd" data-col="start_time">เวลาเริ่ม / จบ <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></th>
+                  <th class="py-2 pl-1 pr-4 w-14"><div class="col-filter-hd" data-col="duration">เวลารวม <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></th>
+                  <th class="py-2 px-4 w-[300px] max-w-[300px]"><div class="col-filter-hd" data-col="title">ชื่องานหยุดซ่อมบำรุง <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></th>
+                  <th class="py-2 px-4 min-w-[140px]"><div class="col-filter-hd" data-col="assignee">ผู้รับผิดชอบ / ช่าง <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></th>
+                  <th class="py-2 px-4 min-w-[240px]"><div class="col-filter-hd" data-col="progress">ขั้นตอนความคืบหน้า (5-STAGE) <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></th>
+                  <th class="py-2 px-4 min-w-[200px]">บันทึกหน้างานล่าสุด (Live Note)</th>
+                  <th class="py-2 px-4 text-right w-20">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="task-tbody" class="divide-y divide-surface-container-high text-xs text-on-surface"></tbody>
+            </table>
+          </div>
+          <div class="p-3 bg-surface-container-low flex flex-wrap items-center justify-between text-xs text-on-surface-variant gap-2">
+            <div class="flex items-center gap-3">
+              <span>แสดงทั้งหมด <strong class="text-on-surface font-mono" id="showing-count">0</strong> รายการ</span>
+              <span class="inline-block w-1 h-1 rounded-full bg-outline"></span>
+              <span class="text-tertiary flex items-center gap-1 font-mono text-[10px]">
+                <span class="material-symbols-outlined" style="font-size:15px">sync_alt</span> SCADA Hot-Sync: 0 Packet Loss
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /px-5 -->
+</div><!-- /view-progress -->
+
+<div id="view-safety" class="hidden">
+  <div class="w-full px-5 py-5 flex flex-col gap-4">
+    <div class="bg-surface-container-low rounded-xl p-4 flex items-center gap-2 shadow-md">
+      <span class="material-symbols-outlined text-secondary" style="font-size:20px">health_and_safety</span>
+      <h2 class="text-sm font-bold text-on-surface">Shutdown Safety Activities</h2>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+      <!-- Card: Power Outage -->
+      <div class="bg-surface-container-lowest rounded-xl p-5 flex flex-col gap-3 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-secondary" style="font-size:20px">bolt</span>
+            <h3 class="text-sm font-bold text-on-surface">แผนการดับไฟ</h3>
+          </div>
+          <button onclick="openSafetyModal('power_outage')" class="flex items-center gap-1 px-2 py-1 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container text-[11px] font-bold transition-all active:scale-95">
+            <span class="material-symbols-outlined" style="font-size:14px">add</span>เพิ่มรายการ
+          </button>
+        </div>
+        <div id="safety-list-power_outage" class="flex flex-col gap-2"></div>
+      </div>
+
+      <!-- Card: Site Prep -->
+      <div class="bg-surface-container-lowest rounded-xl p-5 flex flex-col gap-3 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-secondary" style="font-size:20px">construction</span>
+            <h3 class="text-sm font-bold text-on-surface">การเตรียมพื้นที่หน้างาน</h3>
+          </div>
+          <button onclick="openSafetyModal('site_prep')" class="flex items-center gap-1 px-2 py-1 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container text-[11px] font-bold transition-all active:scale-95">
+            <span class="material-symbols-outlined" style="font-size:14px">add</span>เพิ่มรายการ
+          </button>
+        </div>
+        <div id="safety-list-site_prep" class="flex flex-col gap-2"></div>
+      </div>
+
+      <!-- Card: High Risk -->
+      <div class="bg-surface-container-lowest rounded-xl p-5 flex flex-col gap-3 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-error" style="font-size:20px">warning</span>
+            <h3 class="text-sm font-bold text-on-surface">งานเสี่ยง</h3>
+          </div>
+          <button onclick="openSafetyModal('high_risk')" class="flex items-center gap-1 px-2 py-1 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container text-[11px] font-bold transition-all active:scale-95">
+            <span class="material-symbols-outlined" style="font-size:14px">add</span>เพิ่มรายการ
+          </button>
+        </div>
+        <div id="safety-list-high_risk" class="flex flex-col gap-2"></div>
+      </div>
+    </div>
+  </div>
+</div><!-- /view-safety -->
+
+</main>
+<!-- Safety item modal -->
+<div id="safety-modal-backdrop" class="fixed inset-0 bg-black/80 z-50 items-center justify-center p-4 hidden">
+  <div class="bg-surface-container-lowest rounded-xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 relative border border-outline-variant/30">
+    <div class="flex items-center justify-between pb-2 border-b border-surface-container-high">
+      <h2 class="text-base font-bold text-on-surface" id="safety-modal-title">เพิ่มรายการ</h2>
+      <button onclick="toggleSafetyModal(false)" class="text-on-surface-variant hover:text-on-surface">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <form id="safety-form" onsubmit="saveSafetyItem(event)" class="flex flex-col gap-3">
+      <input type="hidden" id="safety-form-category">
+      <input type="hidden" id="safety-form-id">
+      <div>
+        <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">รายละเอียด</label>
+        <textarea id="safety-form-text" required rows="2" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary"></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">ผู้รับผิดชอบ</label>
+          <input id="safety-form-responsible" type="text" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+        </div>
+        <div>
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">วันที่/เวลา</label>
+          <input id="safety-form-datetime" type="datetime-local" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+        </div>
+      </div>
+      <div>
+        <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">สถานะ</label>
+        <select id="safety-form-status" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+          <option value="pending">รอดำเนินการ</option>
+          <option value="in_progress">กำลังดำเนินการ</option>
+          <option value="done">เสร็จสิ้น</option>
+        </select>
+      </div>
+      <button type="submit" class="mt-1 px-4 py-2 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container font-bold transition-all shadow-md">บันทึก</button>
+    </form>
+  </div>
+</div>
+</div><!-- /pl-64 -->
+
+<!-- ═══════════════════════════════════════ MODAL ════════════════════════════ -->
+<div id="modal-backdrop" class="fixed inset-0 bg-black/80 z-50 items-center justify-center p-4 hidden">
+  <div class="bg-surface-container-lowest rounded-xl max-w-xl w-full p-6 shadow-2xl flex flex-col gap-4 relative border border-outline-variant/30">
+    <div class="flex items-center justify-between pb-2 border-b border-surface-container-high">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary" style="font-size:22px">add_circle</span>
+        <h2 class="text-base font-bold text-on-surface">ลงทะเบียนงานหยุดซ่อมบำรุงใหม่</h2>
+      </div>
+      <button onclick="toggleModal(false)" class="p-1 rounded hover:bg-surface-container text-on-surface-variant">
+        <span class="material-symbols-outlined" style="font-size:20px">close</span>
+      </button>
+    </div>
+    <form id="new-task-form" onsubmit="createTask(event)" class="flex flex-col gap-3 text-xs">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">MACHINE TAG *</label>
+          <input id="f-tag" required placeholder="เช่น P-202B, TK-05" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
+        </div>
+        <div>
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">โซน / พื้นที่ *</label>
+          <select id="f-area" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+            <option>Reaction Plant 1</option>
+            <option>Boiler Line 2</option>
+            <option>Utility Station</option>
+            <option>Raw Material Yard</option>
+            <option>Gas Metering Unit</option>
+            <option>Power Island</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">ชื่องานซ่อมบำรุง *</label>
+        <input id="f-title" required placeholder="เช่น ตรวจเช็กระบบวาล์วบายพาสแรงดัน..." class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">เวลาเริ่มงาน (START TIME)</label>
+          <input id="f-start-time" type="time" placeholder="09:00" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
+        </div>
+        <div>
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">เวลาสิ้นสุด (END TIME)</label>
+          <input id="f-end-time" type="time" placeholder="17:00" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">ผู้รับผิดชอบ *</label>
+          <input id="f-assignee" required placeholder="เช่น ช่างวิเชียร / บ.ไทยคอนโทรล" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+        </div>
+        <div>
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">สถานะเริ่มต้น</label>
+          <select id="f-progress" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
+            <option value="0">0% รอเปิด Work Permit</option>
+            <option value="25" selected>25% เปิด Work Permit แล้ว</option>
+            <option value="50">50% อยู่ระหว่างทำงาน</option>
+            <option value="75">75% รอปิด Work Permit</option>
+            <option value="100">100% ปิด Work Permit เสร็จแล้ว</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">บันทึกหน้างานเบื้องต้น</label>
+        <textarea id="f-note" rows="2" placeholder="ระบุเลขที่ Work Permit หรือความพร้อมของชิ้นส่วนอะไหล่..." class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary"></textarea>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-surface-container-high">
+        <button type="button" onclick="toggleModal(false)" class="px-4 py-2 rounded bg-surface-container hover:bg-surface-bright text-on-surface font-medium transition-colors">ยกเลิก</button>
+        <button type="submit" class="px-5 py-2 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container font-bold transition-all shadow-md">บันทึกรายการงาน</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ SCHEDULE MODAL ════════════════════ -->
+<div id="schedule-modal-backdrop" class="fixed inset-0 bg-black/80 z-50 items-center justify-center p-4 hidden">
+  <div class="bg-surface-container-lowest rounded-xl max-w-2xl w-full p-6 shadow-2xl flex flex-col gap-4 relative border border-outline-variant/30">
+    <div class="flex items-center justify-between pb-2 border-b border-surface-container-high">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary" style="font-size:22px">event_note</span>
+        <h2 class="text-base font-bold text-on-surface">กรอกแผนงาน Shutdown (Milestone Schedule)</h2>
+      </div>
+      <button onclick="toggleScheduleModal(false)" class="p-1 rounded hover:bg-surface-container text-on-surface-variant">
+        <span class="material-symbols-outlined" style="font-size:20px">close</span>
+      </button>
+    </div>
+    <form id="schedule-form" onsubmit="saveSchedule(event)" class="flex flex-col gap-3 text-xs">
+      <div id="schedule-form-fields" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-surface-container-high">
+        <button type="button" onclick="toggleScheduleModal(false)" class="px-4 py-2 rounded bg-surface-container hover:bg-surface-bright text-on-surface font-medium transition-colors">ยกเลิก</button>
+        <button type="submit" class="px-5 py-2 rounded bg-primary-container hover:bg-primary text-on-primary-container font-bold transition-all shadow-md">บันทึกแผนงาน</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ USER MANAGEMENT MODAL ═════════════ -->
+<div id="user-modal-backdrop" class="fixed inset-0 bg-black/80 z-50 items-center justify-center p-4 hidden">
+  <div class="bg-surface-container-lowest rounded-xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 relative border border-outline-variant/30">
+    <div class="flex items-center justify-between pb-2 border-b border-surface-container-high">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary" style="font-size:22px">manage_accounts</span>
+        <h2 class="text-base font-bold text-on-surface">จัดการผู้ใช้งาน</h2>
+      </div>
+      <button onclick="toggleUserModal(false)" class="p-1 rounded hover:bg-surface-container text-on-surface-variant">
+        <span class="material-symbols-outlined" style="font-size:20px">close</span>
+      </button>
+    </div>
+    <div id="user-list" class="flex flex-col gap-1.5 max-h-56 overflow-y-auto"></div>
+    <form id="new-user-form" onsubmit="createUser(event)" class="flex flex-col gap-3 text-xs pt-3 border-t border-surface-container-high">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">Username *</label>
+          <input id="nu-username" required class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+        </div>
+        <div>
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">Password *</label>
+          <input id="nu-password" type="password" required class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+        </div>
+      </div>
+      <div>
+        <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">Role</label>
+        <select id="nu-role" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+          <option value="user" selected>User</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <button type="submit" class="px-4 py-2 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container font-bold transition-all shadow-md">+ เพิ่มผู้ใช้งาน</button>
+    </form>
+  </div>
+</div>
+
+<!-- Column filter dropdown -->
+<div id="col-dropdown">
+  <div class="cd-section" id="cd-col-label">FILTER</div>
+  <div class="cd-btn" id="cd-sort-asc"><span style="font-size:14px">↑</span> เรียงน้อย → มาก (A→Z)</div>
+  <div class="cd-btn" id="cd-sort-desc"><span style="font-size:14px">↓</span> เรียงมาก → น้อย (Z→A)</div>
+  <div class="cd-sep"></div>
+  <div style="padding:4px 10px 2px"><input class="cd-search" id="cd-val-search" placeholder="ค้นหาค่า..." oninput="cdFilterValues()"></div>
+  <div class="cd-values" id="cd-values-list"></div>
+  <div class="cd-sep"></div>
+  <div class="cd-footer">
+    <button class="cd-clear" onclick="cdClear()">ล้าง</button>
+    <button class="cd-apply" onclick="cdApply()">ใช้งาน</button>
+  </div>
+</div>
+
+<!-- Upload overlay -->
+<div class="upload-overlay" id="upload-overlay">
+  <div class="bg-surface-container-low rounded-xl p-8 flex flex-col items-center gap-4 border border-tertiary/40 shadow-2xl">
+    <div class="relative flex h-10 w-10">
+      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary opacity-50"></span>
+      <span class="relative inline-flex rounded-full h-10 w-10 bg-tertiary/20 border border-tertiary items-center justify-center">
+        <span class="material-symbols-outlined text-tertiary" style="font-size:24px">upload_file</span>
+      </span>
+    </div>
+    <span class="text-on-surface font-semibold">กำลังนำเข้าข้อมูล Excel...</span>
+    <span class="text-xs text-on-surface-variant">โปรดรอสักครู่</span>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed bottom-6 right-6 z-50 transform transition-all duration-300 pointer-events-none translate-y-20 opacity-0">
+  <div class="bg-surface-container-high text-on-surface px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 border-l-4" id="toast-inner" style="border-color:#4edea3">
+    <span class="material-symbols-outlined text-tertiary" style="font-size:22px" id="toast-icon">check_circle</span>
+    <div class="flex flex-col">
+      <span class="font-bold text-xs" id="toast-title">สำเร็จ</span>
+      <span class="text-xs text-on-surface-variant" id="toast-msg"></span>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app-shell -->
+
+<!-- ═══════════════════════════════════════ SCRIPT ════════════════════════════ -->
+<script>
+let allTasks = [];
+let activePhase = null;
+let activeNoteTaskId = null;
+let currentUser = null;
+let currentPlant = 'SKIC BM16';
+let currentView = 'progress';
+let currentSafety = { power_outage: [], site_prep: [], high_risk: [] };
+
+function plantQS() { return `plant=${encodeURIComponent(currentPlant)}`; }
+
+// ─── Column filter / sort state ───────────────────────────────────────────────
+const colFilters = {};   // { col: Set of allowed values } — empty Set = show all
+let colSort = { col: null, dir: 1 };  // dir: 1=asc, -1=desc
+let cdCurrentCol = null;
+let cdPendingValues = new Set(); // values checked in open dropdown (not yet applied)
+let cdAllValues = [];            // all unique values for current col
+
+function cdGetValue(task, col) {
+  if (col === 'progress') return String(task.progress) + '%';
+  if (col === 'start_time') return task.start_time || task.end_time ? `${task.start_time||'—'} / ${task.end_time||'—'}` : '';
+  return String(task[col] || '');
+}
+
+function cdOpen(col, headerEl) {
+  cdCurrentCol = col;
+
+  // Build unique values from all tasks (not filtered)
+  const valSet = new Map();
+  for (const t of allTasks) {
+    const v = cdGetValue(t, col);
+    if (!valSet.has(v)) valSet.set(v, 0);
+    valSet.set(v, valSet.get(v) + 1);
+  }
+  cdAllValues = [...valSet.entries()].sort((a,b) => {
+    if (col === 'progress') return Number(a[0]) - Number(b[0]);
+    return a[0].localeCompare(b[0], 'th');
+  });
+
+  // cdPendingValues = set of values that are CHECKED (explicit whitelist).
+  // No existing filter → everything starts checked (i.e. "show all").
+  cdPendingValues = colFilters[col] ? new Set(colFilters[col]) : new Set(cdAllValues.map(([v]) => v));
+
+  document.getElementById('cd-col-label').textContent = headerEl.dataset.col.toUpperCase() + ' — FILTER';
+  document.getElementById('cd-val-search').value = '';
+
+  // Highlight sort buttons
+  document.getElementById('cd-sort-asc').className = 'cd-btn' + (colSort.col===col && colSort.dir===1 ? ' active' : '');
+  document.getElementById('cd-sort-desc').className = 'cd-btn' + (colSort.col===col && colSort.dir===-1 ? ' active' : '');
+
+  cdRenderValues(cdAllValues);
+
+  // Position dropdown near the header
+  const dd = document.getElementById('col-dropdown');
+  dd.classList.add('show');
+  const rect = headerEl.getBoundingClientRect();
+  let top = rect.bottom + 4;
+  let left = rect.left;
+  const ddW = 260;
+  if (left + ddW > window.innerWidth - 8) left = window.innerWidth - ddW - 8;
+  dd.style.top = top + 'px';
+  dd.style.left = left + 'px';
+
+  document.getElementById('cd-sort-asc').onclick = () => { colSort = {col, dir:1}; cdApply(); };
+  document.getElementById('cd-sort-desc').onclick = () => { colSort = {col, dir:-1}; cdApply(); };
+
+  setTimeout(() => document.addEventListener('mousedown', cdOutsideClick, {once:true}), 10);
+}
+
+function cdOutsideClick(e) {
+  const dd = document.getElementById('col-dropdown');
+  if (!dd.contains(e.target)) cdClose();
+  else setTimeout(() => document.addEventListener('mousedown', cdOutsideClick, {once:true}), 10);
+}
+
+function cdClose() {
+  document.getElementById('col-dropdown').classList.remove('show');
+  cdCurrentCol = null;
+}
+
+function cdRenderValues(values) {
+  // cdPendingValues holds the set of values that ARE checked (whitelist).
+  const allChecked = values.length > 0 && values.every(([v]) => cdPendingValues.has(v));
+  let html = `<div class="cd-val-item">
+    <input type="checkbox" id="cd-all" ${allChecked?'checked':''} onchange="cdToggleAll(this.checked)">
+    <label for="cd-all" style="font-weight:700;color:#7bd0ff">(เลือกทั้งหมด)</label>
+  </div>`;
+  for (const [val, count] of values) {
+    const id = 'cdv_' + btoa(encodeURIComponent(val)).replace(/[^a-zA-Z0-9]/g,'').slice(0,12);
+    const checked = cdPendingValues.has(val);
+    html += `<div class="cd-val-item">
+      <input type="checkbox" id="${id}" ${checked?'checked':''} onchange="cdToggleVal('${val.replace(/'/g,"\\'")}',this.checked)" data-val="${val.replace(/"/g,'&quot;')}">
+      <label for="${id}" title="${val.replace(/"/g,'&quot;')}">${val||'<em style="opacity:.5">(ว่าง)</em>'}</label>
+      <span style="font-size:10px;color:#909097;margin-left:auto">${count}</span>
+    </div>`;
+  }
+  document.getElementById('cd-values-list').innerHTML = html;
+}
+
+function cdFilterValues() {
+  const q = document.getElementById('cd-val-search').value.toLowerCase();
+  const filtered = q ? cdAllValues.filter(([v]) => v.toLowerCase().includes(q)) : cdAllValues;
+  cdRenderValues(filtered);
+}
+
+function cdToggleAll(checked) {
+  // Only affects the values currently visible (post-search) — matches native Excel behavior.
+  const visibleVals = [...document.querySelectorAll('#cd-values-list input[data-val]')].map(cb => cb.dataset.val);
+  if (checked) visibleVals.forEach(v => cdPendingValues.add(v));
+  else visibleVals.forEach(v => cdPendingValues.delete(v));
+  document.querySelectorAll('#cd-values-list input[data-val]').forEach(cb => { cb.checked = checked; });
+}
+
+function cdToggleVal(val, checked) {
+  if (checked) cdPendingValues.add(val);
+  else cdPendingValues.delete(val);
+
+  const allBox = document.getElementById('cd-all');
+  if (allBox) {
+    const visibleVals = [...document.querySelectorAll('#cd-values-list input[data-val]')].map(cb => cb.dataset.val);
+    allBox.checked = visibleVals.length > 0 && visibleVals.every(v => cdPendingValues.has(v));
+  }
+}
+
+function cdApply() {
+  if (cdCurrentCol) {
+    // Fully-checked (all values selected) == no filter needed.
+    if (cdPendingValues.size === 0 || cdPendingValues.size === cdAllValues.length) {
+      delete colFilters[cdCurrentCol];
+    } else {
+      colFilters[cdCurrentCol] = new Set(cdPendingValues);
+    }
+    updateColHeaders();
+  }
+  cdClose();
+  renderTable();
+}
+
+function cdClear() {
+  cdPendingValues.clear();
+  if (cdCurrentCol) delete colFilters[cdCurrentCol];
+  updateColHeaders();
+  cdClose();
+  renderTable();
+}
+
+function updateColHeaders() {
+  document.querySelectorAll('.col-filter-hd').forEach(hd => {
+    const col = hd.dataset.col;
+    const dot = hd.querySelector('.col-filter-dot');
+    const icon = hd.querySelector('.col-sort-icon');
+    const hasFilter = colFilters[col] && colFilters[col].size > 0;
+    const isSort = colSort.col === col;
+    hd.classList.toggle('active', hasFilter || isSort);
+    if (dot) dot.classList.toggle('hidden', !hasFilter);
+    if (icon) {
+      if (isSort) icon.textContent = colSort.dir === 1 ? '↑' : '↓';
+      else icon.textContent = '⇅';
+    }
+  });
+}
+
+// Attach click handlers after DOM ready
+function initColHeaders() {
+  document.querySelectorAll('.col-filter-hd').forEach(hd => {
+    hd.addEventListener('click', e => { e.stopPropagation(); cdOpen(hd.dataset.col, hd); });
+  });
+}
+
+// ─── Plant tab switching ───────────────────────────────────────────────────────
+function showPlantSubnav(plant) {
+  document.querySelectorAll('#plant-tab-nav .plant-subnav').forEach(sub => {
+    const isActive = sub.dataset.plantSub === plant;
+    sub.classList.toggle('hidden', !isActive);
+    sub.classList.toggle('flex', isActive);
+  });
+}
+
+async function setPlantTab(el) {
+  if (el.dataset.plant === currentPlant) { showPlantSubnav(currentPlant); return; }
+  document.querySelectorAll('#plant-tab-nav .plant-tab').forEach(t => {
+    t.classList.remove('active', 'bg-surface-container-high', 'text-secondary', 'border-l-2', 'border-secondary', 'font-semibold');
+    t.classList.add('text-on-surface-variant');
+    t.style.background = '';
+    t.style.color = '#909097';
+    t.style.borderColor = '';
+    const liveBadge = t.querySelector('.ml-auto');
+    if (liveBadge) liveBadge.remove();
+  });
+  el.classList.add('active', 'bg-surface-container-high', 'text-secondary', 'border-l-2', 'border-secondary', 'font-semibold');
+  el.classList.remove('text-on-surface-variant');
+  el.style.background = '#1b2b3f';
+  el.style.color = '#7bd0ff';
+  el.style.borderColor = '#7bd0ff';
+  if (!el.querySelector('.ml-auto')) {
+    el.insertAdjacentHTML('beforeend', '<span class="ml-auto font-mono text-xs px-1.5 py-0.5 rounded" style="background:#001c10; color:#4edea3; border:1px solid rgba(78,222,163,0.4);">LIVE</span>');
+  }
+
+  currentPlant = el.dataset.plant;
+  activePhase = null;
+  updateStageTileHighlight();
+  const searchInput = document.getElementById('main-search-input');
+  if (searchInput) searchInput.value = '';
+
+  showPlantSubnav(currentPlant);
+  setViewTab(document.querySelector(`.plant-subnav[data-plant-sub="${currentPlant}"] .view-tab[data-view="progress"]`), 'progress');
+
+  showToast(`สลับไปยัง ${el.dataset.plant}`, 'กำลังโหลดข้อมูลแผน Shutdown ของ Plant นี้');
+
+  await Promise.all([loadTasks(), loadActivity(), loadSchedule(), loadLastExcelUpload()]);
+}
+
+// ─── View tab switching (Progress vs Safety Activities) ───────────────────────
+function setViewTab(el, view) {
+  currentView = view;
+  document.querySelectorAll('#plant-tab-nav .view-tab').forEach(t => {
+    t.classList.remove('active', 'font-semibold');
+    t.style.background = '';
+    t.style.color = '#909097';
+  });
+  document.querySelectorAll(`.plant-subnav[data-plant-sub="${currentPlant}"] .view-tab[data-view="${view}"]`).forEach(t => {
+    t.classList.add('active', 'font-semibold');
+    t.style.background = '#102034';
+    t.style.color = '#7bd0ff';
+  });
+  document.getElementById('view-progress').classList.toggle('hidden', view !== 'progress');
+  document.getElementById('view-safety').classList.toggle('hidden', view !== 'safety');
+  if (view === 'safety') loadSafetyActivities();
+}
+
+// ─── Clock ────────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('live-clock').textContent =
+    `${now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} UTC+7`;
+  document.getElementById('live-date').textContent =
+    now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ─── Server status (health check) ────────────────────────────────────────────
+async function checkServerStatus() {
+  const dot = document.getElementById('server-status-dot');
+  const ping = document.getElementById('server-status-ping');
+  const text = document.getElementById('server-status-text');
+  const latencyEl = document.getElementById('server-status-latency');
+  const started = performance.now();
+  try {
+    const res = await fetch('/api/health', { cache: 'no-store' });
+    if (!res.ok) throw new Error('bad status');
+    const latency = Math.round(performance.now() - started);
+    dot.classList.remove('bg-error');
+    dot.classList.add('bg-tertiary');
+    ping.classList.remove('bg-error');
+    ping.classList.add('bg-tertiary');
+    text.textContent = 'ระบบออนไลน์ปกติ';
+    text.classList.remove('text-error');
+    latencyEl.textContent = `${latency} ms`;
+    latencyEl.classList.remove('text-error');
+    latencyEl.classList.add('text-tertiary');
+  } catch (err) {
+    dot.classList.remove('bg-tertiary');
+    dot.classList.add('bg-error');
+    ping.classList.remove('bg-tertiary');
+    ping.classList.add('bg-error');
+    text.textContent = 'ขาดการเชื่อมต่อเซิร์ฟเวอร์';
+    text.classList.add('text-error');
+    latencyEl.textContent = 'OFFLINE';
+    latencyEl.classList.remove('text-tertiary');
+    latencyEl.classList.add('text-error');
+  }
+}
+setInterval(checkServerStatus, 15000);
+checkServerStatus();
+
+// ─── Auto Refresh (every 30 min) ─────────────────────────────────────────────
+function updateLastRefreshLabel() {
+  const row = document.getElementById('last-refresh-row');
+  const el  = document.getElementById('last-refresh-text');
+  const now = new Date();
+  const label = now.toLocaleString('th-TH', {
+    day: '2-digit', month: '2-digit', year: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  });
+  el.textContent = label;
+  row.classList.remove('hidden');
+  row.classList.add('flex');
+}
+
+async function doAutoRefresh() {
+  await Promise.all([loadTasks(), loadActivity(), loadSchedule(), loadLastExcelUpload()]);
+  if (currentView === 'safety') await loadSafetyActivities();
+  updateLastRefreshLabel();
+}
+
+setInterval(doAutoRefresh, 30 * 60 * 1000);
+
+// ─── Fetch from API ───────────────────────────────────────────────────────────
+async function loadTasks() {
+  const res = await fetch(`/api/tasks?${plantQS()}`);
+  allTasks = await res.json();
+  renderTable();
+  updateKPIs();
+  initColHeaders();
+}
+
+async function loadActivity() {
+  const res = await fetch(`/api/activity?${plantQS()}`);
+  const rows = await res.json();
+  const feed = document.getElementById('activity-feed');
+  feed.innerHTML = '';
+  rows.forEach(row => {
+    const el = document.createElement('div');
+    const borderColor = row.action.includes('100%') ? '#4edea3' : row.action.includes('75%') ? '#bec6e0' : '#7bd0ff';
+    el.className = 'p-2.5 rounded-lg bg-surface-container-low flex flex-col gap-1 fade-in';
+    el.style.borderLeft = `2px solid ${borderColor}`;
+    const dt = new Date(row.created_at);
+    const timeAgo = formatTimeAgo(dt);
+    el.innerHTML = `
+      <div class="flex items-center justify-between">
+        <span class="font-mono text-[10px] font-bold" style="color:${borderColor}">${escHtml(row.tag)}</span>
+        <span class="font-mono text-[10px] text-on-surface-variant">${timeAgo}</span>
+      </div>
+      <p class="text-xs text-on-surface">${escHtml(row.actor)}: ${escHtml(row.action)}</p>
+    `;
+    feed.appendChild(el);
+  });
+}
+
+function formatTimeAgo(dt) {
+  const diff = Math.floor((Date.now() - dt.getTime()) / 1000);
+  if (diff < 60) return 'เมื่อสักครู่';
+  if (diff < 3600) return `${Math.floor(diff/60)} นาทีที่แล้ว`;
+  if (diff < 86400) return `${Math.floor(diff/3600)} ชม. ที่แล้ว`;
+  return dt.toLocaleDateString('th-TH');
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── Time cell helper ─────────────────────────────────────────────────────────
+function renderTimeCell(task) {
+  let start = task.start_time || '';
+  let end   = task.end_time   || '';
+
+  // Fallback: parse from note for older tasks that embed time in note text
+  if (!start && task.note) {
+    const ms = task.note.match(/เริ่ม\s*(\d{1,2}:\d{2})/);
+    const me = task.note.match(/สิ้นสุด\s*(\d{1,2}:\d{2})/);
+    if (ms) start = ms[1];
+    if (me) end   = me[1];
+  }
+
+  if (!start && !end) {
+    return `<span class="font-mono text-[10px] text-on-surface-variant/40">—</span>`;
+  }
+
+  return `
+    <div class="flex flex-col gap-0.5">
+      <div class="flex items-center gap-1">
+        <span class="material-symbols-outlined text-tertiary" style="font-size:12px">play_circle</span>
+        <span class="font-mono text-xs font-semibold text-tertiary">${escHtml(start) || '—'}</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <span class="material-symbols-outlined text-secondary" style="font-size:12px">stop_circle</span>
+        <span class="font-mono text-xs font-semibold text-secondary">${escHtml(end) || '—'}</span>
+      </div>
+    </div>`;
+}
+
+// ─── Render Table ─────────────────────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('task-tbody');
+  const mainEl = document.getElementById('main-search-input');
+  const searchVal = (mainEl ? mainEl.value : '').toLowerCase().trim();
+  const clearBtn = document.getElementById('main-search-clear');
+  if (clearBtn) clearBtn.classList.toggle('hidden', !searchVal);
+
+  let filtered = allTasks.filter(t => {
+    const matchPhase = activePhase === null || t.progress === activePhase;
+    const matchSearch = !searchVal || [t.id, t.tag, t.title, t.area, t.assignee, t.note, t.start_time||'', t.end_time||'', t.duration||'', String(t.progress)+'%'].some(v => String(v||'').toLowerCase().includes(searchVal));
+    // Column filters
+    const matchCols = Object.entries(colFilters).every(([col, allowed]) => {
+      if (!allowed || allowed.size === 0) return true;
+      return allowed.has(cdGetValue(t, col));
+    });
+    return matchPhase && matchSearch && matchCols;
+  });
+
+  // Column sort
+  if (colSort.col) {
+    const col = colSort.col;
+    filtered = [...filtered].sort((a, b) => {
+      const av = cdGetValue(a, col);
+      const bv = cdGetValue(b, col);
+      if (col === 'progress') return ((parseInt(av)||0) - (parseInt(bv)||0)) * colSort.dir;
+      return av.localeCompare(bv, 'th') * colSort.dir;
+    });
+  }
+
+  tbody.innerHTML = '';
+  filtered.forEach(task => {
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-surface-container transition-colors group fade-in';
+
+    const { badgeCls, stageText } = getStageStyle(task.progress);
+
+    tr.innerHTML = `
+      <td class="py-3 px-4 align-top">
+        <span class="inline-flex items-center gap-1 text-[11px] font-medium text-on-surface-variant">
+          <span class="material-symbols-outlined text-outline" style="font-size:14px">location_on</span>
+          ${escHtml(task.area)}
+        </span>
+      </td>
+      <td class="py-3 px-4 align-top">
+        <div class="flex flex-col">
+          <span class="font-mono font-bold text-secondary">${escHtml(task.tag)}</span>
+          <span class="font-mono text-[10px] text-on-surface-variant">#${escHtml(task.id)}</span>
+        </div>
+      </td>
+      <td class="py-3 pl-4 pr-1 align-top">
+        ${renderTimeCell(task)}
+      </td>
+      <td class="py-3 pl-1 pr-4 align-top">
+        <span class="font-mono text-xs text-on-surface-variant whitespace-nowrap">${escHtml(task.duration) || '—'}</span>
+      </td>
+      <td class="py-3 px-4 align-top max-w-[300px]">
+        <div class="flex flex-col">
+          <span class="font-semibold text-on-surface break-words">${escHtml(task.title)}</span>
+        </div>
+      </td>
+      <td class="py-3 px-4 align-top">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded bg-surface-container-high flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-outline" style="font-size:14px">person</span>
+          </div>
+          <span class="text-on-surface font-medium">${escHtml(task.assignee)}</span>
+        </div>
+      </td>
+      <td class="py-3 px-4 align-top">
+        <div class="flex flex-col gap-1.5 max-w-xs">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-[10px] px-2 py-0.5 rounded ${badgeCls} font-semibold">${stageText}</span>
+            <span class="font-mono text-xs font-bold text-on-surface">${task.progress}%</span>
+          </div>
+          <div class="grid grid-cols-5 gap-1.5 w-full mt-1">
+            ${[0,25,50,75,100].map(p => {
+              const active = task.progress >= p;
+              const col = p===0?'bg-outline-variant':p===25?'bg-secondary-container':p===50?'bg-secondary':p===75?'bg-primary-fixed-dim':'bg-tertiary';
+              const cls = active ? col : 'bg-surface-container-high';
+              return `<button title="ปรับเป็น ${p}%" onclick="updateProgress('${task.id}',${p})" class="h-[18px] rounded transition-all ${cls} hover:opacity-80 hover:scale-y-110 cursor-pointer"></button>`;
+            }).join('')}
+          </div>
+        </div>
+      </td>
+      <td class="py-3 px-4 align-top">
+        <div class="flex flex-col gap-1">
+          <input id="note-${task.id}" value="${escHtml(task.note)}"
+            onchange="updateNote('${task.id}',this.value)"
+            onfocus="activeNoteTaskId='${task.id}'"
+            class="w-full bg-surface-container-high hover:bg-surface-bright focus:bg-surface-container-lowest transition-colors rounded px-2.5 py-1 text-on-surface text-xs focus:outline-none focus:ring-1 focus:ring-secondary">
+          <div class="flex items-center justify-between text-[10px] text-on-surface-variant font-mono">
+            <span>อัปเดต: ${escHtml(task.updated_at||'')}</span>
+            <span>โดย: ${escHtml(task.updated_by||'')}</span>
+          </div>
+        </div>
+      </td>
+      <td class="py-3 px-4 align-top text-right">
+        <div class="flex items-center justify-end gap-1">
+          <button onclick="advanceTask('${task.id}')" title="เลื่อนสู่ขั้นถัดไป (+25%)" class="p-1 rounded hover:bg-surface-container-high text-secondary transition-colors">
+            <span class="material-symbols-outlined" style="font-size:18px">forward</span>
+          </button>
+          <button onclick="deleteTask('${task.id}')" title="ลบรายการ" class="p-1 rounded hover:bg-error-container/20 text-outline hover:text-error transition-colors">
+            <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+          </button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('showing-count').textContent = filtered.length;
+}
+
+function getStageStyle(p) {
+  if (p === 0)   return { badgeCls: 'text-outline-variant bg-surface-container',                          stageText: '0% รอเปิด Work Permit' };
+  if (p === 25)  return { badgeCls: 'text-secondary bg-secondary-container/20 border border-secondary/30', stageText: '25% เปิด Work Permit แล้ว' };
+  if (p === 50)  return { badgeCls: 'text-secondary bg-secondary/15 border border-secondary/40',           stageText: '50% อยู่ระหว่างทำงาน' };
+  if (p === 75)  return { badgeCls: 'text-primary bg-surface-container-high border border-primary/30',     stageText: '75% รอปิด Work Permit' };
+  if (p === 100) return { badgeCls: 'text-tertiary bg-tertiary-container border border-tertiary/40',       stageText: '100% ปิด Work Permit เสร็จแล้ว' };
+  return { badgeCls: 'text-on-surface-variant bg-surface-container', stageText: `${p}%` };
+}
+
+// ─── KPIs ─────────────────────────────────────────────────────────────────────
+const PIE_STAGES = [
+  { p: 0,   label: 'รอเปิด Work Permit',   color: '#6b7280' },
+  { p: 25,  label: 'เปิด Work Permit แล้ว',    color: '#06b6d4' },
+  { p: 50,  label: 'อยู่ระหว่างทำงาน',   color: '#3b82f6' },
+  { p: 75,  label: 'รอปิด Work Permit',         color: '#a855f7' },
+  { p: 100, label: 'ปิด Work Permit เสร็จแล้ว',  color: '#10b981' },
+];
+
+function updateKPIs() {
+  const total = allTasks.length;
+  const sum = allTasks.reduce((a, t) => a + t.progress, 0);
+  const avg = total > 0 ? (sum / total).toFixed(1) : '0.0';
+
+  document.getElementById('kpi-percent').textContent = avg + '%';
+  document.getElementById('kpi-total').textContent = total + ' งาน';
+  document.getElementById('gauge-text').textContent = avg + '%';
+  document.getElementById('gauge-total-text').textContent = total + ' งาน';
+
+  // Count per stage
+  const counts = {};
+  PIE_STAGES.forEach(s => {
+    counts[s.p] = allTasks.filter(t => t.progress === s.p).length;
+    const el = document.getElementById(`cnt-${s.p}`);
+    if (el) el.textContent = counts[s.p];
+  });
+
+  // ── Draw pie chart ──────────────────────────────────────────────
+  const svg = document.getElementById('pie-chart-svg');
+  svg.querySelectorAll('.pie-slice, .pie-label').forEach(el => el.remove());
+  const centerGroup = document.getElementById('pie-center-group');
+  const cx = 100, cy = 100, outerR = 92, innerR = 55;
+
+  if (total === 0) {
+    const empty = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    empty.setAttribute('cx', cx); empty.setAttribute('cy', cy); empty.setAttribute('r', outerR);
+    empty.setAttribute('fill', '#374151'); empty.setAttribute('class', 'pie-slice');
+    svg.insertBefore(empty, centerGroup);
+  } else {
+    let startAngle = -Math.PI / 2;
+    PIE_STAGES.forEach(st => {
+      const count = counts[st.p] || 0;
+      if (count === 0) return;
+      const angle = (count / total) * 2 * Math.PI;
+      const endAngle = startAngle + angle;
+      const largeArc = angle > Math.PI ? 1 : 0;
+
+      const x1  = cx + outerR * Math.cos(startAngle), y1  = cy + outerR * Math.sin(startAngle);
+      const x2  = cx + outerR * Math.cos(endAngle),   y2  = cy + outerR * Math.sin(endAngle);
+      const xi1 = cx + innerR * Math.cos(startAngle), yi1 = cy + innerR * Math.sin(startAngle);
+      const xi2 = cx + innerR * Math.cos(endAngle),   yi2 = cy + innerR * Math.sin(endAngle);
+
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d',
+        `M ${xi1} ${yi1} L ${x1} ${y1} A ${outerR} ${outerR} 0 ${largeArc} 1 ${x2} ${y2} ` +
+        `L ${xi2} ${yi2} A ${innerR} ${innerR} 0 ${largeArc} 0 ${xi1} ${yi1} Z`);
+      path.setAttribute('fill', st.color);
+      path.setAttribute('stroke', '#ffffff');
+      path.setAttribute('stroke-width', '1.5');
+      path.setAttribute('class', 'pie-slice');
+      svg.insertBefore(path, centerGroup);
+
+      // Label inside slice (only if slice >= 4%)
+      if (count / total >= 0.04) {
+        const mid = startAngle + angle / 2;
+        const labelR = (outerR + innerR) / 2;
+        const lx = cx + labelR * Math.cos(mid);
+        const ly = cy + labelR * Math.sin(mid);
+        const pct = Math.round(count / total * 100);
+
+        const t1 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        t1.setAttribute('x', lx); t1.setAttribute('y', ly - 4);
+        t1.setAttribute('text-anchor', 'middle'); t1.setAttribute('dominant-baseline', 'middle');
+        t1.setAttribute('fill', 'white'); t1.setAttribute('font-size', '10');
+        t1.setAttribute('font-weight', 'bold'); t1.setAttribute('font-family', 'monospace, sans-serif');
+        t1.setAttribute('class', 'pie-label'); t1.textContent = pct + '%';
+        svg.insertBefore(t1, centerGroup);
+
+        const t2 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        t2.setAttribute('x', lx); t2.setAttribute('y', ly + 8);
+        t2.setAttribute('text-anchor', 'middle'); t2.setAttribute('dominant-baseline', 'middle');
+        t2.setAttribute('fill', 'rgba(255,255,255,0.8)'); t2.setAttribute('font-size', '8');
+        t2.setAttribute('font-family', 'sans-serif');
+        t2.setAttribute('class', 'pie-label'); t2.textContent = count + ' งาน';
+        svg.insertBefore(t2, centerGroup);
+      }
+
+      startAngle = endAngle;
+    });
+  }
+
+  // ── Update legend ───────────────────────────────────────────────
+  const legendEl = document.getElementById('pie-legend');
+  if (legendEl) {
+    legendEl.innerHTML = PIE_STAGES.map(s => {
+      const count = counts[s.p] || 0;
+      const pct = total > 0 ? Math.round(count / total * 100) : 0;
+      return `<div class="flex items-center gap-2 text-xs">
+        <span class="w-3 h-3 rounded-sm shrink-0" style="background:${s.color}"></span>
+        <span class="text-on-surface-variant flex-1 truncate">${s.label}</span>
+        <span class="font-mono font-semibold text-on-surface shrink-0">${count}</span>
+        <span class="font-mono text-on-surface-variant/60 shrink-0 w-9 text-right">${pct}%</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Update "ทั้งหมด" button count
+  const allBtn = document.querySelector('[data-area="ALL"]');
+  if (allBtn) allBtn.textContent = `ทั้งหมด (${total})`;
+}
+
+// ─── Actions ─────────────────────────────────────────────────────────────────
+async function updateProgress(id, progress) {
+  await fetch(`/api/tasks/${id}/progress`, {
+    method: 'PUT', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ progress, updated_by: currentUser?.username || 'User', plant: currentPlant })
+  });
+  const task = allTasks.find(t => t.id === id);
+  if (task) {
+    task.progress = progress;
+    const now = new Date();
+    task.updated_at = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')} น.`;
+    task.updated_by = currentUser?.username || 'User';
+  }
+  showToast(`อัปเดต ${task?.tag} เป็น ${progress}%`, 'ข้อมูลซิงก์สู่ระบบเรียบร้อย');
+  renderTable();
+  updateKPIs();
+  loadActivity();
+}
+
+async function updateNote(id, note) {
+  await fetch(`/api/tasks/${id}/note`, {
+    method: 'PUT', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ note, updated_by: currentUser?.username || 'User', plant: currentPlant })
+  });
+  const task = allTasks.find(t => t.id === id);
+  if (task) task.note = note;
+  loadActivity();
+}
+
+async function advanceTask(id) {
+  const task = allTasks.find(t => t.id === id);
+  if (task && task.progress < 100) await updateProgress(id, task.progress + 25);
+}
+
+async function deleteTask(id) {
+  const task = allTasks.find(t => t.id === id);
+  if (!confirm(`คุณต้องการลบรายการ "${task?.tag}" ใช่หรือไม่?`)) return;
+  await fetch(`/api/tasks/${id}?${plantQS()}`, { method: 'DELETE' });
+  allTasks = allTasks.filter(t => t.id !== id);
+  showToast(`ลบรายการ ${task?.tag} แล้ว`, 'ปรับปรุงค่าความคืบหน้ารวมอัตโนมัติ');
+  renderTable();
+  updateKPIs();
+  loadActivity();
+}
+
+async function clearAllTasks() {
+  if (allTasks.length === 0) { showToast('ไม่มีข้อมูล', 'ตารางงานว่างอยู่แล้ว'); return; }
+  if (!confirm(`คำเตือน: การกระทำนี้จะลบรายการงานทั้งหมด ${allTasks.length} รายการออกจากระบบอย่างถาวร\n\nต้องการดำเนินการต่อหรือไม่?`)) return;
+  if (!confirm(`ยืนยันอีกครั้ง: ล้างข้อมูลตารางงานทั้งหมดเพื่อเตรียม Upload Excel ครั้งต่อไปใช่หรือไม่?\n\nกดตกลงเพื่อลบข้อมูลทั้งหมดถาวร`)) return;
+  await fetch(`/api/tasks?${plantQS()}`, { method: 'DELETE' });
+  allTasks = [];
+  resetFilters();
+  renderTable();
+  updateKPIs();
+  loadActivity();
+  currentSafety = { power_outage: [], site_prep: [], high_risk: [] };
+  if (currentView === 'safety') ['power_outage', 'site_prep', 'high_risk'].forEach(renderSafetyCard);
+  setExcelFileName(null);
+  showToast('ล้างข้อมูลสำเร็จ', 'ตารางงานและ Safety Activities ว่างพร้อมสำหรับ Upload Excel แผนงานใหม่');
+}
+
+async function createTask(e) {
+  e.preventDefault();
+  const body = {
+    tag:        document.getElementById('f-tag').value.trim(),
+    title:      document.getElementById('f-title').value.trim(),
+    area:       document.getElementById('f-area').value,
+    assignee:   document.getElementById('f-assignee').value.trim(),
+    progress:   Number(document.getElementById('f-progress').value),
+    note:       document.getElementById('f-note').value.trim() || 'เปิดงานใหม่ รอการเข้าพื้นที่',
+    start_time: document.getElementById('f-start-time').value || '',
+    end_time:   document.getElementById('f-end-time').value   || '',
+    updated_by: currentUser?.username || 'User',
+    plant:      currentPlant
+  };
+  const res = await fetch('/api/tasks', {
+    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+  });
+  const result = await res.json();
+  toggleModal(false);
+  e.target.reset();
+  await loadTasks();
+  await loadActivity();
+  showToast(`เพิ่มงาน ${result.tag} สำเร็จ`, 'บันทึกเข้าสู่ตารางงานหยุดซ่อมเรียบร้อย');
+}
+
+// ─── Excel Upload ─────────────────────────────────────────────────────────────
+function formatUploadTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleString('th-TH', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+
+function setExcelFileName(name, isError = false, uploadedAt = null) {
+  const wrap = document.getElementById('excel-file-name');
+  const text = document.getElementById('excel-file-name-text');
+  const timeText = document.getElementById('excel-upload-time-text');
+  const icon = wrap.querySelector('.material-symbols-outlined');
+  if (!name) { wrap.classList.add('hidden'); wrap.classList.remove('flex'); timeText.textContent = ''; return; }
+  text.textContent = name;
+  timeText.textContent = uploadedAt ? `อัปโหลดล่าสุด: ${formatUploadTime(uploadedAt)}` : '';
+  icon.textContent = isError ? 'error' : 'task_alt';
+  wrap.classList.toggle('text-tertiary', !isError);
+  wrap.classList.toggle('text-error', isError);
+  wrap.classList.remove('hidden');
+  wrap.classList.add('flex');
+}
+
+async function loadLastExcelUpload() {
+  const res = await fetch(`/api/upload/last?${plantQS()}`);
+  const info = await res.json();
+  if (info && info.fileName) {
+    setExcelFileName(info.fileName, false, info.uploadedAt);
+  } else {
+    setExcelFileName(null);
+  }
+}
+
+async function handleExcelUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+
+  setExcelFileName(file.name);
+  document.getElementById('upload-overlay').classList.add('show');
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await fetch(`/api/upload?${plantQS()}`, { method: 'POST', body: formData });
+    const result = await res.json();
+    document.getElementById('upload-overlay').classList.remove('show');
+
+    if (result.ok) {
+      setExcelFileName(file.name, false, result.lastUpload?.uploadedAt);
+      showToast(`นำเข้าสำเร็จ ${result.imported} รายการ`, `จากไฟล์ ${file.name} (ทั้งหมด ${result.total} แถว)`);
+      await loadTasks();
+      await loadActivity();
+      if (currentView === 'safety') loadSafetyActivities();
+    } else {
+      setExcelFileName(file.name, true);
+      showToast('เกิดข้อผิดพลาด', result.error || 'ไม่สามารถอ่านไฟล์ Excel ได้', true);
+    }
+  } catch (err) {
+    document.getElementById('upload-overlay').classList.remove('show');
+    setExcelFileName(file.name, true);
+    showToast('เกิดข้อผิดพลาด', err.message, true);
+  }
+}
+
+// ─── Quick Insert Tags ────────────────────────────────────────────────────────
+function insertQuickTag(tagText) {
+  if (!activeNoteTaskId) activeNoteTaskId = allTasks[0]?.id;
+  if (!activeNoteTaskId) return;
+  const input = document.getElementById(`note-${activeNoteTaskId}`);
+  if (!input) return;
+  input.value = (input.value + ' [' + tagText + ']').trim();
+  input.dispatchEvent(new Event('change'));
+  input.focus();
+}
+
+// ─── Filters ──────────────────────────────────────────────────────────────────
+const STAGE_PHASES = [0, 25, 50, 75, 100];
+
+function updateStageTileHighlight() {
+  STAGE_PHASES.forEach(p => {
+    const tile = document.getElementById(`stage-tile-${p}`);
+    if (!tile) return;
+    if (activePhase === p) {
+      tile.classList.add('ring-2', 'ring-inset', 'opacity-60', 'scale-[0.98]');
+      tile.classList.remove('bg-surface-container-low');
+      tile.classList.add('bg-surface-container');
+    } else {
+      tile.classList.remove('ring-2', 'ring-inset', 'opacity-60', 'scale-[0.98]');
+      tile.classList.add('bg-surface-container-low');
+      tile.classList.remove('bg-surface-container');
+    }
+  });
+}
+
+function filterByPhase(phase) {
+  activePhase = activePhase === phase ? null : phase;
+  updateStageTileHighlight();
+  renderTable();
+}
+
+function clearMainSearch() {
+  const el = document.getElementById('main-search-input');
+  if (el) { el.value = ''; el.focus(); }
+  renderTable();
+}
+
+function resetFilters() {
+  activePhase = null;
+  updateStageTileHighlight();
+  Object.keys(colFilters).forEach(k => delete colFilters[k]);
+  colSort.col = null;
+  const el = document.getElementById('main-search-input');
+  if (el) el.value = '';
+  const clearBtn = document.getElementById('main-search-clear');
+  if (clearBtn) clearBtn.classList.add('hidden');
+  updateColHeaders();
+  renderTable();
+}
+
+// ─── Modal ────────────────────────────────────────────────────────────────────
+function toggleModal(open) {
+  const m = document.getElementById('modal-backdrop');
+  m.classList.toggle('hidden', !open);
+  m.classList.toggle('flex', open);
+}
+
+// ─── Shutdown Milestone Schedule ────────────────────────────────────────────────
+const SCHEDULE_FIELDS = [
+  { key: 'shutdown',       label: '1. หยุดเครื่อง',       icon: 'power_settings_new' },
+  { key: 'repair_done',    label: '2. เสร็จงานซ่อม',       icon: 'build_circle' },
+  { key: 'warm_stream',    label: '3. Warm Stream',       icon: 'device_thermostat' },
+  { key: 'function_test',  label: '4. Function Test',     icon: 'fact_check' },
+  { key: 'startup',        label: '5. Start Up',          icon: 'play_circle' },
+  { key: 'on_reel',        label: '6. On Reel',           icon: 'check_circle' }
+];
+let currentSchedule = {};
+
+function formatScheduleDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  if (!y || !m || !d) return iso;
+  return `${d}.${m}.${y.slice(2)}`;
+}
+
+async function loadSchedule() {
+  const res = await fetch(`/api/schedule?${plantQS()}`);
+  currentSchedule = await res.json();
+  renderScheduleStrip();
+}
+
+function renderScheduleStrip() {
+  const strip = document.getElementById('schedule-strip');
+  if (!strip) return;
+  strip.innerHTML = SCHEDULE_FIELDS.map(f => {
+    const v = currentSchedule[f.key] || { date: '', time: '' };
+    const hasValue = v.date || v.time;
+    return `
+      <div class="bg-surface-container-lowest rounded-lg px-3 py-2 flex flex-col gap-0.5 border border-outline-variant/20">
+        <div class="flex items-center gap-1.5 text-on-surface-variant">
+          <span class="material-symbols-outlined" style="font-size:14px">${f.icon}</span>
+          <span class="text-[10px] font-semibold uppercase tracking-wide truncate">${f.label}</span>
+        </div>
+        ${hasValue
+          ? `<div class="font-mono text-sm font-bold text-on-surface">${escHtml(v.time) || '--:--'} <span class="text-[10px] font-normal text-on-surface-variant">น.</span></div>
+             <div class="font-mono text-[10px] text-on-surface-variant">${escHtml(formatScheduleDate(v.date)) || '-'}</div>`
+          : `<div class="text-xs text-on-surface-variant/60 italic mt-1">ยังไม่กรอกข้อมูล</div>`}
+      </div>
+    `;
+  }).join('');
+}
+
+function openScheduleModal() {
+  const fields = document.getElementById('schedule-form-fields');
+  fields.innerHTML = SCHEDULE_FIELDS.map(f => {
+    const v = currentSchedule[f.key] || { date: '', time: '' };
+    return `
+      <div class="bg-surface-container-low rounded-lg p-3 flex flex-col gap-2">
+        <label class="text-[10px] font-semibold text-on-surface-variant uppercase flex items-center gap-1.5">
+          <span class="material-symbols-outlined" style="font-size:14px">${f.icon}</span>${f.label}
+        </label>
+        <div class="grid grid-cols-2 gap-2">
+          <input type="time" id="sf-time-${f.key}" value="${escHtml(v.time)}" class="w-full bg-surface-container-high rounded px-2 py-1.5 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
+          <input type="date" id="sf-date-${f.key}" value="${escHtml(v.date)}" class="w-full bg-surface-container-high rounded px-2 py-1.5 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
+        </div>
+      </div>
+    `;
+  }).join('');
+  toggleScheduleModal(true);
+}
+
+function toggleScheduleModal(open) {
+  const m = document.getElementById('schedule-modal-backdrop');
+  m.classList.toggle('hidden', !open);
+  m.classList.toggle('flex', open);
+}
+
+async function saveSchedule(e) {
+  e.preventDefault();
+  const schedule = {};
+  SCHEDULE_FIELDS.forEach(f => {
+    schedule[f.key] = {
+      time: document.getElementById(`sf-time-${f.key}`).value || '',
+      date: document.getElementById(`sf-date-${f.key}`).value || ''
+    };
+  });
+  const res = await fetch(`/api/schedule?${plantQS()}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ schedule })
+  });
+  if (res.ok) {
+    currentSchedule = await res.json();
+    renderScheduleStrip();
+    toggleScheduleModal(false);
+    showToast('บันทึกแผนงาน Shutdown สำเร็จ', 'อัปเดตข้อมูล Milestone Schedule แล้ว');
+  } else {
+    showToast('บันทึกไม่สำเร็จ', 'กรุณาลองใหม่อีกครั้ง', true);
+  }
+}
+
+// ─── Shutdown Safety Activities ────────────────────────────────────────────────
+const SAFETY_STATUS_LABELS = { pending: 'รอดำเนินการ', in_progress: 'กำลังดำเนินการ', done: 'เสร็จสิ้น' };
+const SAFETY_STATUS_STYLES = {
+  pending:     'background:#e8eaf3; color:#44464f;',
+  in_progress: 'background:#c8e8ff; color:#0077b6;',
+  done:        'background:#96f990; color:#006e28;'
+};
+
+function formatSafetyDatetime(dt) {
+  if (!dt) return '-';
+  const d = new Date(dt);
+  if (isNaN(d.getTime())) return dt;
+  return d.toLocaleString('th-TH', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+
+async function loadSafetyActivities() {
+  const res = await fetch(`/api/safety?${plantQS()}`);
+  currentSafety = await res.json();
+  ['power_outage', 'site_prep', 'high_risk'].forEach(renderSafetyCard);
+}
+
+function renderSafetyCard(category) {
+  const listEl = document.getElementById(`safety-list-${category}`);
+  if (!listEl) return;
+  const items = currentSafety[category] || [];
+  if (items.length === 0) {
+    listEl.innerHTML = `<p class="text-xs text-on-surface-variant/60 italic">ยังไม่มีรายการ</p>`;
+    return;
+  }
+  listEl.innerHTML = items.map(item => `
+    <div class="bg-surface-container-low rounded-lg p-3 flex flex-col gap-1.5">
+      <div class="flex items-start justify-between gap-2">
+        <span class="text-sm text-on-surface flex-1 break-words">${escHtml(item.text)}</span>
+        <div class="flex items-center gap-1 shrink-0">
+          <button onclick="openSafetyModal('${category}','${item.id}')" class="text-on-surface-variant hover:text-secondary">
+            <span class="material-symbols-outlined" style="font-size:16px">edit</span>
+          </button>
+          <button onclick="deleteSafetyItem('${category}','${item.id}')" class="text-on-surface-variant hover:text-error">
+            <span class="material-symbols-outlined" style="font-size:16px">delete</span>
+          </button>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-2 text-[11px] text-on-surface-variant">
+        ${item.responsible ? `<span class="flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:12px">person</span>${escHtml(item.responsible)}</span>` : ''}
+        ${item.datetime ? `<span class="flex items-center gap-1 font-mono"><span class="material-symbols-outlined" style="font-size:12px">schedule</span>${escHtml(formatSafetyDatetime(item.datetime))}</span>` : ''}
+        <span class="font-semibold px-1.5 py-0.5 rounded" style="${SAFETY_STATUS_STYLES[item.status] || SAFETY_STATUS_STYLES.pending}">${SAFETY_STATUS_LABELS[item.status] || item.status}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openSafetyModal(category, id = null) {
+  document.getElementById('safety-form-category').value = category;
+  document.getElementById('safety-form-id').value = id || '';
+  const item = id ? (currentSafety[category] || []).find(i => i.id === id) : null;
+  document.getElementById('safety-modal-title').textContent = id ? 'แก้ไขรายการ' : 'เพิ่มรายการ';
+  document.getElementById('safety-form-text').value = item ? item.text : '';
+  document.getElementById('safety-form-responsible').value = item ? item.responsible : '';
+  document.getElementById('safety-form-datetime').value = item ? item.datetime : '';
+  document.getElementById('safety-form-status').value = item ? item.status : 'pending';
+  toggleSafetyModal(true);
+}
+
+function toggleSafetyModal(open) {
+  const m = document.getElementById('safety-modal-backdrop');
+  m.classList.toggle('hidden', !open);
+  m.classList.toggle('flex', open);
+}
+
+async function saveSafetyItem(e) {
+  e.preventDefault();
+  const category = document.getElementById('safety-form-category').value;
+  const id = document.getElementById('safety-form-id').value;
+  const payload = {
+    text: document.getElementById('safety-form-text').value.trim(),
+    responsible: document.getElementById('safety-form-responsible').value.trim(),
+    datetime: document.getElementById('safety-form-datetime').value,
+    status: document.getElementById('safety-form-status').value
+  };
+  const url = id ? `/api/safety/${category}/${id}?${plantQS()}` : `/api/safety/${category}?${plantQS()}`;
+  const res = await fetch(url, {
+    method: id ? 'PUT' : 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (res.ok) {
+    await loadSafetyActivities();
+    toggleSafetyModal(false);
+    showToast(id ? 'แก้ไขรายการสำเร็จ' : 'เพิ่มรายการสำเร็จ', 'อัปเดตข้อมูล Safety Activities แล้ว');
+  } else {
+    showToast('บันทึกไม่สำเร็จ', 'กรุณาลองใหม่อีกครั้ง', true);
+  }
+}
+
+async function deleteSafetyItem(category, id) {
+  await fetch(`/api/safety/${category}/${id}?${plantQS()}`, { method: 'DELETE' });
+  await loadSafetyActivities();
+  showToast('ลบรายการสำเร็จ', 'ลบรายการ Safety Activity แล้ว');
+}
+
+// ─── Export Report ────────────────────────────────────────────────────────────
+function exportReport() {
+  const rows = [['ID','Tag','Title','Area','Start Time','End Time','Duration','Assignee','Progress','Note','Updated At','Updated By']];
+  allTasks.forEach(t => rows.push([t.id,t.tag,t.title,t.area,t.start_time,t.end_time,t.duration,t.assignee,t.progress+'%',t.note,t.updated_at,t.updated_by]));
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `shutdown-report-${Date.now()}.csv`; a.click();
+  URL.revokeObjectURL(url);
+  showToast('ส่งออก Report สำเร็จ', 'ไฟล์ CSV พร้อมดาวน์โหลด');
+}
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+function showToast(title, msg, isError = false) {
+  const toast = document.getElementById('toast');
+  const inner = document.getElementById('toast-inner');
+  document.getElementById('toast-title').textContent = title;
+  document.getElementById('toast-msg').textContent = msg;
+  document.getElementById('toast-icon').textContent = isError ? 'error' : 'check_circle';
+  inner.style.borderColor = isError ? '#ffb4ab' : '#4edea3';
+  document.getElementById('toast-icon').style.color = isError ? '#ffb4ab' : '#4edea3';
+  toast.classList.remove('translate-y-20','opacity-0');
+  toast.classList.add('translate-y-0','opacity-100');
+  setTimeout(() => {
+    toast.classList.add('translate-y-20','opacity-0');
+    toast.classList.remove('translate-y-0','opacity-100');
+  }, 3500);
+}
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+function showLoginScreen() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('app-shell').classList.add('hidden');
+}
+
+function setTopbarLastLogin(iso) {
+  const el = document.getElementById('topbar-last-login');
+  if (!iso) { el.classList.add('hidden'); el.textContent = ''; return; }
+  const d = new Date(iso);
+  const label = isNaN(d.getTime()) ? iso : d.toLocaleString('th-TH', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+  el.textContent = `Login ล่าสุด: ${label}`;
+  el.classList.remove('hidden');
+}
+
+function showAppShell() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app-shell').classList.remove('hidden');
+  document.getElementById('topbar-username').textContent = currentUser.username;
+  document.getElementById('topbar-role').textContent = currentUser.role === 'admin' ? 'Administrator' : 'User';
+  document.getElementById('user-mgmt-btn').classList.toggle('hidden', currentUser.role !== 'admin');
+  setTopbarLastLogin(currentUser.last_login || null);
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.classList.add('hidden');
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username, password })
+    });
+    const result = await res.json();
+    if (!res.ok) {
+      errEl.textContent = result.error || 'เข้าสู่ระบบไม่สำเร็จ';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    currentUser = { username: result.username, role: result.role, last_login: result.last_login || null };
+    document.getElementById('login-form').reset();
+    showAppShell();
+    initApp();
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.classList.remove('hidden');
+  }
+}
+
+async function handleLogout() {
+  await fetch('/api/logout', { method: 'POST' });
+  currentUser = null;
+  showLoginScreen();
+}
+
+function initApp() {
+  loadTasks();
+  loadActivity();
+  loadSchedule();
+  loadLastExcelUpload();
+  updateLastRefreshLabel();
+}
+
+async function checkAuth() {
+  try {
+    const res = await fetch('/api/me');
+    if (!res.ok) { showLoginScreen(); return; }
+    currentUser = await res.json();
+    showAppShell();
+    initApp();
+  } catch (err) {
+    showLoginScreen();
+  }
+}
+
+// ─── User management ─────────────────────────────────────────────────────────
+function toggleUserModal(open) {
+  const m = document.getElementById('user-modal-backdrop');
+  m.classList.toggle('hidden', !open);
+  m.classList.toggle('flex', open);
+}
+
+async function openUserModal() {
+  toggleUserModal(true);
+  await loadUserList();
+}
+
+async function loadUserList() {
+  const res = await fetch('/api/users');
+  if (!res.ok) return;
+  const users = await res.json();
+  const list = document.getElementById('user-list');
+  list.innerHTML = users.map(u => `
+    <div class="flex items-center justify-between px-3 py-2 rounded bg-surface-container-high">
+      <div class="flex flex-col">
+        <span class="text-xs font-semibold text-on-surface">${escHtml(u.username)}</span>
+        <span class="text-[10px] text-on-surface-variant uppercase">${escHtml(u.role)}</span>
+      </div>
+      ${u.username === currentUser.username
+        ? '<span class="text-[10px] text-on-surface-variant/60">คุณ</span>'
+        : `<button onclick="deleteUser('${escHtml(u.username)}')" class="p-1 rounded hover:bg-error-container/30 text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined" style="font-size:18px">delete</span></button>`}
+    </div>
+  `).join('');
+}
+
+async function createUser(e) {
+  e.preventDefault();
+  const username = document.getElementById('nu-username').value.trim();
+  const password = document.getElementById('nu-password').value;
+  const role = document.getElementById('nu-role').value;
+  const res = await fetch('/api/users', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ username, password, role })
+  });
+  const result = await res.json();
+  if (!res.ok) { showToast('เกิดข้อผิดพลาด', result.error, true); return; }
+  document.getElementById('new-user-form').reset();
+  showToast('เพิ่มผู้ใช้งานสำเร็จ', `เพิ่ม ${username} เรียบร้อยแล้ว`);
+  await loadUserList();
+}
+
+async function deleteUser(username) {
+  if (!confirm(`ยืนยันการลบผู้ใช้งาน "${username}"?`)) return;
+  const res = await fetch(`/api/users/${encodeURIComponent(username)}`, { method: 'DELETE' });
+  const result = await res.json();
+  if (!res.ok) { showToast('เกิดข้อผิดพลาด', result.error, true); return; }
+  showToast('ลบผู้ใช้งานสำเร็จ', `ลบ ${username} เรียบร้อยแล้ว`);
+  await loadUserList();
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+checkAuth();
+</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+# Secrets — never commit. Use .env.example as the template.
+.env
+.env.local
+.env.*.local
+
+node_modules/
+
+# Legacy JSON datastore and migration backups (contains user password hashes).
+data.json
+data.json.backup-*
+
+# Runtime artifacts
+uploads/
+server.log
+*.log
+npm-debug.log*
+cookies*.txt
+
+# Source spreadsheets — operational data, not source code.
+*.xlsx
+*.xls
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

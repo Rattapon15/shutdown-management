@@ -1,0 +1,851 @@
+<!DOCTYPE html><html class="dark" lang="en" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"surface-tint":"#bec6e0","on-tertiary-fixed":"#002113","tertiary":"#4edea3","on-secondary-container":"#00374d","on-secondary":"#00354a","surface-container-high":"#1b2b3f","on-primary-fixed-variant":"#3f465c","outline-variant":"#45464d","on-tertiary":"#003824","tertiary-fixed":"#6ffbbe","primary-container":"#0f172a","primary-fixed-dim":"#bec6e0","tertiary-fixed-dim":"#4edea3","on-surface-variant":"#c6c6cd","error":"#ffb4ab","surface-dim":"#031427","outline":"#909097","on-secondary-fixed-variant":"#004c69","secondary-fixed-dim":"#7bd0ff","surface-container-low":"#0b1c30","on-background":"#d3e4fe","surface-bright":"#2a3a4f","on-error-container":"#ffdad6","on-error":"#690005","inverse-surface":"#d3e4fe","background":"#031427","on-tertiary-fixed-variant":"#005236","surface-container-lowest":"#000f21","secondary-fixed":"#c4e7ff","surface-variant":"#26364a","inverse-on-surface":"#213145","on-primary-fixed":"#131b2e","surface-container-highest":"#26364a","primary":"#bec6e0","on-primary":"#283044","inverse-primary":"#565e74","secondary-container":"#00a6e0","primary-fixed":"#dae2fd","surface-container":"#102034","tertiary-container":"#001c10","surface":"#031427","on-secondary-fixed":"#001e2c","on-primary-container":"#798098","secondary":"#7bd0ff","error-container":"#93000a","on-surface":"#d3e4fe","on-tertiary-container":"#009365"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"space-lg":"1.25rem","space-xs":"0.25rem","gutter":"1rem","space-sm":"0.5rem","space-md":"0.75rem","margin":"1.25rem","space-xl":"1.75rem"},"fontFamily":{"headline-md":["Inter"],"badge-status":["JetBrains Mono"],"display-lg-mobile":["Inter"],"telemetry-data":["JetBrains Mono"],"body-md":["Inter"],"display-lg":["Inter"],"label-caps":["Inter"],"body-lg":["Inter"],"body-sm":["Inter"],"telemetry-kpi":["JetBrains Mono"],"headline-lg":["Inter"]},"fontSize":{"headline-md":["1.25rem",{"lineHeight":"1.75rem","fontWeight":"600"}],"badge-status":["0.75rem",{"lineHeight":"1rem","fontWeight":"600"}],"display-lg-mobile":["2rem",{"lineHeight":"2.5rem","letterSpacing":"-0.01em","fontWeight":"700"}],"telemetry-data":["0.875rem",{"lineHeight":"1.25rem","fontWeight":"500"}],"body-md":["0.875rem",{"lineHeight":"1.25rem","fontWeight":"400"}],"display-lg":["3rem",{"lineHeight":"3.5rem","letterSpacing":"-0.02em","fontWeight":"700"}],"label-caps":["0.6875rem",{"lineHeight":"0.875rem","letterSpacing":"0.08em","fontWeight":"600"}],"body-lg":["1rem",{"lineHeight":"1.5rem","fontWeight":"400"}],"body-sm":["0.75rem",{"lineHeight":"1rem","fontWeight":"400"}],"telemetry-kpi":["2.25rem",{"lineHeight":"2.5rem","letterSpacing":"-0.03em","fontWeight":"700"}],"headline-lg":["1.75rem",{"lineHeight":"2.25rem","letterSpacing":"-0.01em","fontWeight":"600"}]}}}}</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline-variant/30 z-50 flex flex-col justify-between select-none"><div class="flex flex-col"><div class="h-16 px-space-lg flex items-center gap-space-sm border-b border-outline-variant/30 bg-surface-container-low"><div class="w-8 h-8 rounded bg-primary-container border border-outline-variant flex items-center justify-center"><span class="material-symbols-outlined text-secondary text-[20px]">precision_manufacturing</span></div><div class="flex flex-col leading-none"><span class="font-headline-md text-body-md tracking-wider uppercase text-on-surface font-bold">PLANT OPS // CMMS</span><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">ENG COMMAND CENTER</span></div></div><div class="px-space-md py-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant/70 uppercase tracking-widest px-space-sm">Operations &amp; Control</span></div><nav class="flex flex-col gap-1 px-space-sm" data-active-classes="bg-surface-container-high text-secondary border-l-2 border-secondary font-semibold"><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-space-sm rounded-DEFAULT transition-colors bg-surface-container-high text-secondary border-l-2 border-secondary font-semibold" data-path="plant-overview" href="#"><span class="material-symbols-outlined text-[18px]">grid_view</span><span class="font-body-md text-body-md">Plant Overview</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-DEFAULT text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="active-work-permits" href="#"><span class="material-symbols-outlined text-[18px]">assignment</span><span class="font-body-md text-body-md">Work Permits</span><span class="ml-auto font-badge-status text-badge-status bg-secondary-container/20 text-secondary border border-secondary/30 px-1.5 py-0.5 rounded">18</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-DEFAULT text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="equipment-telemetry" href="#"><span class="material-symbols-outlined text-[18px]">monitoring</span><span class="font-body-md text-body-md">Telemetry &amp; Sensors</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-DEFAULT text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="outage-management" href="#"><span class="material-symbols-outlined text-[18px]">build_circle</span><span class="font-body-md text-body-md">Shutdown &amp; Turnaround</span><span class="ml-auto font-badge-status text-badge-status bg-tertiary-container text-tertiary border border-tertiary/40 px-1.5 py-0.5 rounded">MTR25</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-DEFAULT text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="incident-logs" href="#"><span class="material-symbols-outlined text-[18px]">warning</span><span class="font-body-md text-body-md">Anomaly Queue</span><span class="ml-auto font-badge-status text-badge-status bg-error-container text-error border border-error/40 px-1.5 py-0.5 rounded">2</span></a></nav><div class="px-space-md pt-space-md pb-space-sm mt-space-md border-t border-outline-variant/20"><span class="font-label-caps text-label-caps text-on-surface-variant/70 uppercase tracking-widest px-space-sm">Asset Registry</span></div><nav class="flex flex-col gap-1 px-space-sm" data-active-classes="bg-surface-container-high text-secondary border-l-2 border-secondary font-semibold"><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-DEFAULT text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="turbines-pumps" href="#"><span class="material-symbols-outlined text-[18px]">mode_fan</span><span class="font-body-md text-body-md">Turbines &amp; Rotary</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-DEFAULT text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="safety-systems" href="#"><span class="material-symbols-outlined text-[18px]">shield_with_heart</span><span class="font-body-md text-body-md">ESD &amp; Safety Loops</span></a></nav></div><div class="p-space-md border-t border-outline-variant/30 bg-surface-container-low/50"><div class="flex items-center justify-between p-space-sm bg-surface-container-lowest border border-outline-variant/40 rounded"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-tertiary"></span><span class="font-telemetry-data text-body-sm text-on-surface">SCADA LINK 01</span></div><span class="font-badge-status text-badge-status text-tertiary">99.98%</span></div></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface-container-lowest border-b border-outline-variant/30 z-40 px-space-lg flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><div class="flex items-center bg-surface-container-low border border-outline-variant/40 rounded px-space-sm py-1"><label class="font-label-caps text-label-caps text-on-surface-variant mr-2 uppercase" for="plant-select">UNIT:</label><select class="bg-transparent text-secondary font-telemetry-data text-body-sm focus:outline-none cursor-pointer pr-2" id="plant-select"><option class="bg-surface-container text-on-surface" value="plant-1">Plant 1 (Reforming)</option><option class="bg-surface-container text-on-surface" value="plant-2">Plant 2 (Cracker Unit)</option><option class="bg-surface-container text-on-surface" selected="" value="boiler-unit">Boiler Unit #4 &amp; Steam Line</option><option class="bg-surface-container text-on-surface" value="utilities">Utilities &amp; Water Treatment</option></select></div><div class="hidden xl:flex items-center bg-surface-container-low border border-outline-variant/30 rounded px-space-sm py-1 gap-2"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase">SHIFT:</span><span class="font-badge-status text-badge-status text-on-surface font-semibold">กะกลางวัน: Day Shift (08:00 - 20:00)</span></div><div class="hidden 2xl:flex items-center bg-secondary-container/10 border border-secondary/30 rounded px-space-sm py-1 gap-2"><span class="material-symbols-outlined text-secondary text-[16px]">campaign</span><span class="font-badge-status text-badge-status text-secondary tracking-tight uppercase font-medium">Major Turnaround 2025 - Plant A &amp; Boiler Line</span></div></div><div class="flex-1 max-w-md mx-space-sm"><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-3 text-outline text-[18px]">search</span><input class="w-full bg-surface-container-low border border-outline-variant/40 rounded pl-9 pr-space-md py-1.5 font-telemetry-data text-body-sm text-on-surface placeholder:text-outline/70 focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all" placeholder="Search Machine Tag, Serial, or Permit ID (e.g. B4-VLV-102, PT-882)..." type="text"></div></div><div class="flex items-center gap-space-md"><div class="flex items-center bg-tertiary-container/30 border border-tertiary/40 rounded px-space-sm py-1 gap-2"><span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-tertiary"></span></span><span class="font-badge-status text-badge-status text-tertiary uppercase tracking-wider font-semibold">ONLINE / LIVE SYNC</span></div><div class="hidden md:flex flex-col items-end leading-tight"><span class="font-telemetry-data text-body-sm text-on-surface font-semibold tracking-wider" id="live-clock">14:28:49 UTC+7</span><span class="font-badge-status text-badge-status text-on-surface-variant">24-OCT-2025</span></div><div class="h-8 w-[1px] bg-outline-variant/30"></div><div class="flex items-center gap-space-sm"><div class="flex flex-col items-end leading-tight text-right"><span class="font-body-md text-body-sm text-on-surface font-semibold">E. Somchai P.</span><span class="font-label-caps text-label-caps text-secondary-fixed-dim uppercase tracking-wider">Lead Maintenance Eng</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="relative pt-16 bg-surface min-h-screen"><div class="w-full px-margin py-space-md border-b border-outline-variant/20 bg-surface-container-lowest flex items-center justify-between"><nav class="flex items-center gap-2 font-badge-status text-badge-status text-on-surface-variant"><span class="text-on-surface-variant/60">SYSTEM</span><span class="material-symbols-outlined text-[14px] text-outline">chevron_right</span><span class="text-on-surface-variant/60">MAIN FACILITY</span><span class="material-symbols-outlined text-[14px] text-outline">chevron_right</span><span class="text-secondary font-semibold">ACTIVE ZONE</span></nav><div class="flex items-center gap-space-md text-body-sm text-on-surface-variant"><span class="font-badge-status text-badge-status text-on-surface-variant">TELEMETRY REFRESH: <strong class="text-tertiary">1000ms</strong></span><span class="font-badge-status text-badge-status text-on-surface-variant">LATENCY: <strong class="text-on-surface">14ms</strong></span></div></div><div class="w-full px-margin py-space-lg"><div class="flex flex-col w-full gap-space-lg select-none">
+<!-- TOP EXECUTIVE CONTROL BANNER & TELEMETRY HEARTBEAT -->
+<div class="bg-surface-container-low rounded-xl p-space-lg flex flex-col xl:flex-row xl:items-center justify-between gap-space-md shadow-md">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-space-sm">
+<span class="inline-flex items-center justify-center w-7 h-7 rounded bg-secondary/15 text-secondary">
+<span class="material-symbols-outlined text-[18px]">emergency_home</span>
+</span>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight font-bold">Dashboard ติดตามสถานะงาน Monthly Shutdown&nbsp;</h1>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-secondary font-badge-status text-badge-status tracking-wide">
+          LIVE SHOCK-PROOF SYNC
+        </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-2">
+<span class="">Major Overhaul 2025: ระบบคำนวณถัวเฉลี่ยถ่วงน้ำหนักความคืบหน้ารายกะอัตโนมัติ</span>
+<span class="inline-block w-1 h-1 rounded-full bg-outline"></span>
+<span class="font-badge-status text-badge-status text-on-surface-variant/80">
+          สูตรคำนวณ: (ผลรวม % ทุกงาน / จำนวนงานทั้งหมด) = ค่าเฉลี่ยภาพรวม
+        </span>
+</p>
+</div>
+<!-- Live Save & Quick Broadcast Controls -->
+<div class="flex flex-wrap items-center gap-space-sm">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-lowest">
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-tertiary"></span>
+</span>
+<span class="font-badge-status text-badge-status text-tertiary font-semibold tracking-wider">
+          BROADCAST ACTIVE (WS-NODE #04)
+        </span>
+<span class="text-on-surface-variant font-badge-status text-body-sm">•</span>
+<span class="font-telemetry-data text-body-sm text-on-surface-variant" id="auto-save-counter">บันทึกอัตโนมัติ &amp; เชื่อมต่อสด</span>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-tertiary-container hover:bg-surface-bright border border-tertiary/40 text-tertiary transition-all active:scale-95 text-body-sm font-semibold group" id="btn-upload-excel" onclick="showToast('อัปโหลดไฟล์สำเร็จ', 'นำเข้าข้อมูลแผนงาน Shutdown จาก Excel (.xlsx) เข้าสู่ระบบเรียบร้อย')"><span class="material-symbols-outlined text-[18px] text-tertiary group-hover:scale-110 transition-transform">upload_file</span><span class="">อัปโหลด Excel แผนงาน</span><span class="font-badge-status text-label-caps px-1.5 py-0.5 rounded bg-surface-container-lowest text-tertiary-fixed-dim border border-tertiary/30">.XLSX</span></button><button class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface-container-high hover:bg-surface-bright text-on-surface transition-all active:scale-95 text-body-sm font-semibold" id="btn-export-report" onclick="triggerShiftReport()">
+<span class="material-symbols-outlined text-[18px] text-secondary">file_download</span>
+<span class="">ส่งออก Report</span>
+</button>
+<button class="flex items-center gap-1.5 px-4 py-1.5 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container transition-all shadow-md active:scale-95 text-body-sm font-bold tracking-tight" id="btn-open-new-task" onclick="toggleTaskModal(true)">
+<span class="material-symbols-outlined text-[18px]">add_task</span>
+<span class="">+ เพิ่มรายการงานหยุดซ่อม</span>
+</button>
+</div>
+</div>
+<!-- 1. EXECUTIVE KPI METRICS BAR WITH INTEGRATED PROGRESS GAUGE & STATUS BUCKETS -->
+<div class="flex flex-col xl:flex-row gap-space-md w-full"><div class="xl:w-1/3 bg-surface-container-lowest rounded-xl p-space-lg flex items-center justify-between shadow-sm relative overflow-hidden"><div class="absolute -right-6 -bottom-6 w-36 h-36 rounded-full bg-secondary/5 pointer-events-none"></div><div class="flex flex-col gap-1 z-10"><span class="font-label-caps text-label-caps text-on-surface-variant tracking-widest uppercase">OVERALL SHUTDOWN COMPLETION RATE</span><div class="flex items-baseline gap-2 mt-1"><span class="font-telemetry-kpi text-telemetry-kpi text-on-surface tracking-tight font-bold" id="kpi-aggregate-percent">50.0%</span><span class="font-badge-status text-badge-status text-tertiary flex items-center gap-0.5"><span class="material-symbols-outlined text-[14px]">trending_up</span> +4.5% กะเช้า</span></div><p class="font-body-sm text-body-sm text-on-surface-variant/80 mt-1">เป้าหมายปิดงาน: <strong class="text-on-surface font-telemetry-data">18:00 น.</strong> | แผนงานกะนี้: <span class="text-secondary font-semibold font-telemetry-data" id="kpi-total-tasks-label">6 งาน</span></p><div class="flex items-center gap-2 mt-2 font-badge-status text-label-caps text-outline"><span class="">DELTA ACTUAL VS TARGET:</span><span class="text-tertiary font-bold tracking-normal">+1.2 HR AHEAD</span></div></div><div class="relative w-28 h-28 shrink-0 flex items-center justify-center"><svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100"><circle class="text-surface-container-high" cx="50" cy="50" fill="transparent" r="40" stroke="currentColor" stroke-width="8"></circle><circle class="text-secondary transition-all duration-700 ease-out" cx="50" cy="50" fill="transparent" id="gauge-circle-bar" r="40" stroke="currentColor" stroke-dasharray="251.2" stroke-dashoffset="125.6" stroke-linecap="round" stroke-width="8"></circle></svg><div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"><span class="material-symbols-outlined text-secondary text-[22px]">speed</span><span class="font-telemetry-data text-badge-status font-bold text-on-surface" id="gauge-center-text">50.0%</span></div></div></div><div class="flex-1 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-space-md"><div class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-space-md flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase('0')"><div class="h-1 w-full bg-outline-variant/50 absolute top-0 left-0"></div><div class="flex items-center justify-between"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase font-semibold">STAGE 1 // 0%</span><span class="material-symbols-outlined text-[18px] text-outline group-hover:scale-110 transition-transform">lock_clock</span></div><div class="my-2"><div class="font-telemetry-kpi text-headline-lg font-bold text-on-surface"><span id="kpi-count-0" class="">1</span> <span class="text-body-sm font-normal text-on-surface-variant font-body-md">งาน</span></div><div class="font-body-sm text-body-sm text-on-surface-variant font-medium mt-0.5">ยังไม่เปิด Permit</div></div><div class="font-badge-status text-label-caps text-outline-variant/90 tracking-wide uppercase">STANDBY / ISOLATION</div></div><div class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-space-md flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase('25')"><div class="h-1 w-full bg-secondary-container absolute top-0 left-0"></div><div class="flex items-center justify-between"><span class="font-label-caps text-label-caps text-secondary-fixed-dim uppercase font-semibold">STAGE 2 // 25%</span><span class="material-symbols-outlined text-[18px] text-secondary group-hover:scale-110 transition-transform">assignment_turned_in</span></div><div class="my-2"><div class="font-telemetry-kpi text-headline-lg font-bold text-secondary"><span id="kpi-count-25" class="">1</span> <span class="text-body-sm font-normal text-on-surface-variant font-body-md">งาน</span></div><div class="font-body-sm text-body-sm text-on-surface font-medium mt-0.5">เปิด Permit แล้ว</div></div><div class="font-badge-status text-label-caps text-secondary tracking-wide uppercase">LOTO &amp; HOT/COLD APPROVED</div></div><div class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-space-md flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase('50')"><div class="h-1 w-full bg-secondary absolute top-0 left-0"></div><div class="flex items-center justify-between"><span class="font-label-caps text-label-caps text-secondary uppercase font-semibold">STAGE 3 // 50%</span><span class="material-symbols-outlined text-[18px] text-secondary group-hover:scale-110 transition-transform">handyman</span></div><div class="my-2"><div class="font-telemetry-kpi text-headline-lg font-bold text-on-surface"><span id="kpi-count-50" class="">2</span> <span class="text-body-sm font-normal text-on-surface-variant font-body-md">งาน</span></div><div class="font-body-sm text-body-sm text-on-surface font-medium mt-0.5">อยู่ระหว่างทำงาน</div></div><div class="font-badge-status text-label-caps text-secondary tracking-wide uppercase">DISASSEMBLY / REPAIR</div></div><div class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-space-md flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase('75')"><div class="h-1 w-full bg-primary-fixed-dim absolute top-0 left-0"></div><div class="flex items-center justify-between"><span class="font-label-caps text-label-caps text-primary uppercase font-semibold">STAGE 4 // 75%</span><span class="material-symbols-outlined text-[18px] text-primary group-hover:scale-110 transition-transform">fact_check</span></div><div class="my-2"><div class="font-telemetry-kpi text-headline-lg font-bold text-primary"><span id="kpi-count-75" class="">1</span> <span class="text-body-sm font-normal text-on-surface-variant font-body-md">งาน</span></div><div class="font-body-sm text-body-sm text-on-surface font-medium mt-0.5">รอปิด Permit</div></div><div class="font-badge-status text-label-caps text-primary tracking-wide uppercase">FIELD QA / SAFETY SIGN-OFF</div></div><div class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-space-md flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase('100')"><div class="h-1 w-full bg-tertiary absolute top-0 left-0"></div><div class="flex items-center justify-between"><span class="font-label-caps text-label-caps text-tertiary uppercase font-semibold">STAGE 5 // 100%</span><span class="material-symbols-outlined text-[18px] text-tertiary group-hover:scale-110 transition-transform">verified</span></div><div class="my-2"><div class="font-telemetry-kpi text-headline-lg font-bold text-tertiary"><span id="kpi-count-100" class="">1</span> <span class="text-body-sm font-normal text-on-surface-variant font-body-md">งาน</span></div><div class="font-body-sm text-body-sm text-on-surface font-medium mt-0.5">ปิด Permit สำเร็จ</div></div><div class="font-badge-status text-label-caps text-tertiary tracking-wide uppercase">COMMISSIONED &amp; SAFE</div></div></div></div>
+<!-- 2. FILTER STRIP & SEARCH TOOLBAR -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md flex flex-wrap items-center justify-between gap-space-md shadow-sm">
+<!-- Area Filter Pills -->
+<div class="flex flex-wrap items-center gap-1.5" id="area-filter-container">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase mr-2 font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">domain</span> แผนก / โซน:
+      </span>
+<button class="area-tag active px-3 py-1 rounded bg-secondary text-on-secondary font-badge-status text-badge-status font-bold transition-all" onclick="applyAreaFilter('ALL')">
+        ทั้งหมด (6)
+      </button>
+<button class="area-tag px-3 py-1 rounded bg-surface-container text-on-surface-variant hover:text-on-surface font-badge-status text-badge-status transition-all" onclick="applyAreaFilter('Boiler')">
+        Boiler Line
+      </button>
+<button class="area-tag px-3 py-1 rounded bg-surface-container text-on-surface-variant hover:text-on-surface font-badge-status text-badge-status transition-all" onclick="applyAreaFilter('Reaction')">
+        Reaction Plant
+      </button>
+<button class="area-tag px-3 py-1 rounded bg-surface-container text-on-surface-variant hover:text-on-surface font-badge-status text-badge-status transition-all" onclick="applyAreaFilter('Utility')">
+        Cooling &amp; Utility
+      </button>
+<button class="area-tag px-3 py-1 rounded bg-surface-container text-on-surface-variant hover:text-on-surface font-badge-status text-badge-status transition-all" onclick="applyAreaFilter('Raw Material')">
+        Conveyor &amp; Yard
+      </button>
+<button class="area-tag px-3 py-1 rounded bg-surface-container text-on-surface-variant hover:text-on-surface font-badge-status text-badge-status transition-all" onclick="applyAreaFilter('Gas Metering')">
+        Gas &amp; Compressor
+      </button>
+</div>
+<!-- Quick Status Phase Pills & Search -->
+<div class="flex items-center gap-space-sm w-full md:w-auto">
+<div class="relative w-full sm:w-80 md:w-96"><span class="material-symbols-outlined absolute left-2.5 top-2 text-outline text-[18px]">search</span><input class="w-full bg-surface-container-high rounded pl-8 pr-3 py-1.5 font-telemetry-data text-body-sm text-on-surface placeholder:text-outline/60 focus:outline-none focus:ring-1 focus:ring-secondary" id="search-input" onkeyup="filterTasksRealtime()" placeholder="ค้นหา Section, ชื่องาน, หรือผู้รับผิดชอบ (เช่น ESDV-01, วาล์ว, ชัยพร)..." type="text"></div>
+<div class="hidden md:flex items-center gap-1 font-badge-status text-label-caps text-on-surface-variant/80"><span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/30 text-secondary">Section</span><span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/30 text-on-surface">ชื่องาน</span><span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant/30 text-tertiary">ผู้รับผิดชอบ</span></div><button class="p-2 rounded bg-surface-container hover:bg-surface-bright text-on-surface-variant hover:text-on-surface transition-colors flex items-center justify-center" onclick="resetAllFilters()" title="ล้างการคัดกรองทั้งหมด">
+<span class="material-symbols-outlined text-[18px]">filter_alt_off</span>
+</button>
+</div>
+</div>
+<!-- 3. MAIN WORKSPACE: DATA TABLE MATRIX & REALTIME ACTIVITY FEED DUAL LAYOUT -->
+<div class="grid grid-cols-1 2xl:grid-cols-12 gap-space-lg items-start">
+<!-- Primary Task Management Table (9 Cols on 2xl) -->
+<div class="2xl:col-span-9 flex flex-col gap-space-md">
+<!-- Visual Status Stepper Guide & Legend -->
+<div class="bg-surface-container-low rounded-xl p-space-md flex flex-wrap items-center justify-between gap-space-md shadow-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">tune</span>
+<span class="font-label-caps text-label-caps uppercase text-on-surface font-bold">5-PHASE STATUS PROGRESSION STANDARD</span>
+</div>
+<div class="flex flex-wrap items-center gap-2">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container text-outline-variant font-badge-status text-badge-status font-medium">
+<span class="w-2 h-2 rounded-full bg-outline"></span> 0% ยังไม่เปิด Permit
+          </div>
+<span class="material-symbols-outlined text-[14px] text-outline">arrow_forward</span>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-secondary-container/20 text-secondary font-badge-status text-badge-status font-medium">
+<span class="w-2 h-2 rounded-full bg-secondary-container"></span> 25% เปิด Permit แล้ว
+          </div>
+<span class="material-symbols-outlined text-[14px] text-outline">arrow_forward</span>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-secondary/15 text-secondary font-badge-status text-badge-status font-medium">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> 50% อยู่ระหว่างทำงาน
+          </div>
+<span class="material-symbols-outlined text-[14px] text-outline">arrow_forward</span>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-high text-primary font-badge-status text-badge-status font-medium">
+<span class="w-2 h-2 rounded-full bg-primary-fixed-dim"></span> 75% รอตรวจปิด Permit
+          </div>
+<span class="material-symbols-outlined text-[14px] text-outline">arrow_forward</span>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-tertiary-container text-tertiary font-badge-status text-badge-status font-medium">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span> 100% ปิด Permit สมบูรณ์
+          </div>
+</div>
+</div>
+<!-- High-Density Engineering Table Matrix -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-md flex flex-col">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse" id="tasks-table">
+<thead>
+<tr class="bg-surface-container-low text-on-surface-variant font-label-caps text-label-caps uppercase tracking-wider">
+<th class="py-3 px-space-md w-28">Section</th>
+<th class="py-3 px-space-md min-w-[220px]">ชื่องานหยุดซ่อมบำรุง&nbsp;</th>
+<th class="py-3 px-space-md min-w-[160px]">ผู้รับผิดชอบ / ช่าง</th>
+<th class="py-3 px-space-md min-w-[260px]">ขั้นตอนความคืบหน้า (5-Stage Status)</th>
+<th class="py-3 px-space-md min-w-[280px]">บันทึกหน้างานล่าสุด (Live Note)</th>
+<th class="py-3 px-space-md text-right w-24">การจัดการ</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-high text-body-sm font-body-md text-on-surface" id="task-tbody"><tr class="hover:bg-surface-container transition-colors group">
+        <td class="py-3 px-space-md align-top">
+          <div class="flex flex-col">
+            <span class="font-telemetry-data text-body-md font-bold text-secondary">ESDV-01</span>
+            <span class="font-badge-status text-label-caps text-on-surface-variant font-mono">#TASK-005</span>
+          </div>
+        </td>
+        
+        <td class="py-3 px-space-md align-top">
+          <div class="flex flex-col">
+            <span class="font-semibold text-on-surface">ซ่อมบำรุงระบบวาล์วฉุกเฉิน ESDV Main Gas Pipeline</span>
+            <span class="font-body-sm text-label-caps text-on-surface-variant flex items-center gap-1 mt-0.5">
+              <span class="material-symbols-outlined text-[13px] text-outline">location_on</span>
+              Gas Metering Unit
+            </span>
+          </div>
+        </td>
+
+        <td class="py-3 px-space-md align-top">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded bg-surface-container-high flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-[14px] text-outline">person</span>
+            </div>
+            <span class="font-body-sm text-on-surface font-medium">ช่างเครื่องมือวัด ชัยพร</span>
+          </div>
+        </td>
+
+        <td class="py-3 px-space-md align-top">
+          <div class="flex flex-col gap-1.5 max-w-[280px]">
+            <div class="flex items-center justify-between">
+              <span class="font-badge-status text-badge-status px-2 py-0.5 rounded text-outline-variant bg-surface-container font-semibold">0% ยังไม่เปิด Permit</span>
+              <span class="font-telemetry-data text-body-sm font-bold text-on-surface">0%</span>
+            </div>
+            
+            <!-- Segmented 5-Step Visual Stepper -->
+            <div class="grid grid-cols-5 gap-1 w-full mt-1">
+              <button title="ปรับเป็น 0%" onclick="updateTaskProgress('TASK-005', 0)" class="h-2 rounded-sm transition-all bg-outline-variant hover:opacity-80"></button>
+              <button title="ปรับเป็น 25%" onclick="updateTaskProgress('TASK-005', 25)" class="h-2 rounded-sm transition-all bg-surface-container-high hover:opacity-80"></button>
+              <button title="ปรับเป็น 50%" onclick="updateTaskProgress('TASK-005', 50)" class="h-2 rounded-sm transition-all bg-surface-container-high hover:opacity-80"></button>
+              <button title="ปรับเป็น 75%" onclick="updateTaskProgress('TASK-005', 75)" class="h-2 rounded-sm transition-all bg-surface-container-high hover:opacity-80"></button>
+              <button title="ปรับเป็น 100%" onclick="updateTaskProgress('TASK-005', 100)" class="h-2 rounded-sm transition-all bg-surface-container-high hover:opacity-80"></button>
+            </div>
+          </div>
+        </td>
+
+        <td class="py-3 px-space-md align-top">
+          <div class="flex flex-col gap-1">
+            <div class="relative flex items-center">
+              <input id="note-input-TASK-005" value="รอผลตรวจก๊าซรั่วไหล LEL จากทีม Safety ก่อนยื่นเปิดใบ Cold Work Permit" onchange="updateTaskNote('TASK-005', this.value)" onfocus="activeQuickTargetTaskId = 'TASK-005'" class="w-full bg-surface-container-high hover:bg-surface-bright focus:bg-surface-container-lowest transition-colors rounded px-2.5 py-1 text-on-surface text-body-sm focus:outline-none focus:ring-1 focus:ring-secondary font-body-sm">
+            </div>
+            <div class="flex items-center justify-between text-label-caps text-on-surface-variant font-badge-status">
+              <span class="">อัปเดต: 11:15 น.</span>
+              <span class="">โดย: วราภรณ์ (Safety)</span>
+            </div>
+          </div>
+        </td>
+
+        <td class="py-3 px-space-md align-top text-right">
+          <div class="flex items-center justify-end gap-1">
+            <button onclick="quickAdvanceNextStep('TASK-005')" title="เลื่อนสู่ขั้นถัดไป (+25%)" class="p-1 rounded hover:bg-surface-container-high text-secondary transition-colors">
+              <span class="material-symbols-outlined text-[18px]">forward</span>
+            </button>
+            <button onclick="deleteTaskPrompt('TASK-005')" title="ลบรายการ" class="p-1 rounded hover:bg-error-container/20 text-outline hover:text-error transition-colors">
+              <span class="material-symbols-outlined text-[18px]">delete</span>
+            </button>
+          </div>
+        </td>
+      </tr></tbody>
+</table>
+</div>
+<!-- Table Footer / Summary Bar -->
+<div class="p-space-md bg-surface-container-low flex flex-wrap items-center justify-between text-body-sm text-on-surface-variant gap-space-sm">
+<div class="flex items-center gap-3">
+<span class="">แสดงทั้งหมด <strong class="text-on-surface font-telemetry-data" id="showing-task-count">1</strong> รายการ</span>
+<span class="inline-block w-1 h-1 rounded-full bg-outline"></span>
+<span class="text-tertiary flex items-center gap-1 font-badge-status text-badge-status">
+<span class="material-symbols-outlined text-[15px]">sync_alt</span>
+              SCADA Hot-Sync Linked: 0 Packet Loss
+            </span>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1 rounded bg-surface-container-high hover:bg-surface-bright text-on-surface text-body-sm font-semibold transition-colors flex items-center gap-1" onclick="batchAdvancePrompt()">
+<span class="material-symbols-outlined text-[16px] text-secondary">checklist</span>
+<span class="">เลือกหลายรายการพร้อมกัน</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Sidebar: Live Realtime Feed & Operational Notes (3 Cols on 2xl) -->
+<div class="2xl:col-span-3 flex flex-col gap-space-md">
+<!-- Shift Status Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-3">
+<div class="flex items-center justify-between pb-2 border-b border-surface-container-high">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">badge</span>
+<span class="font-headline-md text-body-md text-on-surface font-bold">ข้อมูลเวรกะปฏิบัติการ</span>
+</div>
+<span class="font-badge-status text-badge-status text-tertiary px-2 py-0.5 rounded bg-tertiary-container">
+            กะ A (ปกติ)
+          </span>
+</div>
+<div class="flex flex-col gap-2 font-body-sm">
+<div class="flex justify-between">
+<span class="text-on-surface-variant">หัวหน้ากะ (Shift Sup):</span>
+<span class="text-on-surface font-medium">นายวรพจน์ ว.</span>
+</div>
+<div class="flex justify-between">
+<span class="text-on-surface-variant">จป.วิชาชีพประจำกะ:</span>
+<span class="text-on-surface font-medium">วราภรณ์ ส. (Ext. 402)</span>
+</div>
+<div class="flex justify-between">
+<span class="text-on-surface-variant">ใบ Permit ทั้งหมดในระบบ:</span>
+<span class="text-secondary font-telemetry-data font-bold">18 ฉบับ</span>
+</div>
+<div class="flex justify-between">
+<span class="text-on-surface-variant">งานที่มีความร้อนสูง (Hot Work):</span>
+<span class="text-error font-telemetry-data font-bold">4 จุด</span>
+</div>
+</div>
+</div>
+<!-- Quick Preset Tags for Instant Logging -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-2">
+<span class="font-label-caps text-label-caps uppercase text-on-surface-variant font-bold">
+          ข้อความด่วนหน้างาน (QUICK-INSERT TAGS)
+        </span>
+<div class="flex flex-wrap gap-1.5">
+<button class="px-2.5 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-badge-status text-label-caps transition-colors" onclick="insertQuickTag('รออะไหล่สำรอง')">
+            + รออะไหล่สำรอง
+          </button>
+<button class="px-2.5 py-1 rounded bg-surface-container hover:bg-surface-container-high text-secondary font-badge-status text-label-caps transition-colors" onclick="insertQuickTag('รอ จป. ตรวจ LEL')">
+            + รอ จป. ตรวจ LEL
+          </button>
+<button class="px-2.5 py-1 rounded bg-surface-container hover:bg-surface-container-high text-tertiary font-badge-status text-label-caps transition-colors" onclick="insertQuickTag('ทดสอบแรงดันผ่าน')">
+            + ทดสอบแรงดันผ่าน
+          </button>
+<button class="px-2.5 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-badge-status text-label-caps transition-colors" onclick="insertQuickTag('ส่งมอบคืนฝ่ายผลิต')">
+            + ส่งมอบคืนฝ่ายผลิต
+          </button>
+<button class="px-2.5 py-1 rounded bg-surface-container hover:bg-surface-container-high text-tertiary font-badge-status text-label-caps transition-colors" onclick="insertQuickTag('ปลอดภัย 100%')">
+            + ปลอดภัย 100%
+          </button>
+</div>
+</div>
+<!-- Live Stream Activity Feed -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col flex-1">
+<div class="flex items-center justify-between pb-2 mb-3 border-b border-surface-container-high">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">rss_feed</span>
+<span class="font-headline-md text-body-md text-on-surface font-bold">ฟีดอัปเดตหน้างานสด (Realtime Feed)</span>
+</div>
+<span class="w-2 h-2 rounded-full bg-tertiary animate-ping"></span>
+</div>
+<div class="flex flex-col gap-3 overflow-y-auto max-h-[480px] pr-1" id="activity-stream">
+<!-- Live Activity Feed Nodes -->
+<div class="p-2.5 rounded-lg bg-surface-container-low flex flex-col gap-1 border-l-2 border-secondary">
+<div class="flex items-center justify-between">
+<span class="font-telemetry-data text-label-caps text-secondary font-bold">P-101A</span>
+<span class="font-badge-status text-label-caps text-on-surface-variant">2 นาทีที่แล้ว</span>
+</div>
+<p class="text-body-sm text-on-surface">
+              ช่างสมชาย ปรับสถานะเป็น <strong class="text-secondary font-telemetry-data">50% (อยู่ระหว่างทำงาน)</strong>
+</p>
+<span class="font-body-sm text-body-sm text-on-surface-variant italic">
+              "ประกอบใบพัดชุดใหม่ คาดเสร็จขั้นตอนกลึง 15:30 น."
+            </span>
+</div>
+<div class="p-2.5 rounded-lg bg-surface-container-low flex flex-col gap-1 border-l-2 border-tertiary">
+<div class="flex items-center justify-between">
+<span class="font-telemetry-data text-label-caps text-tertiary font-bold">CV-102</span>
+<span class="font-badge-status text-label-caps text-on-surface-variant">43 นาทีที่แล้ว</span>
+</div>
+<p class="text-body-sm text-on-surface">
+              ช่างไฟฟ้า สมศักดิ์ เปลี่ยนสถานะเป็น <strong class="text-tertiary font-telemetry-data">100% (ปิด Permit)</strong>
+</p>
+<span class="font-body-sm text-body-sm text-on-surface-variant italic">
+              "รันระบบทดสอบ 30 นาที เรียบร้อย ส่งมอบพื้นที่คืน"
+            </span>
+</div>
+<div class="p-2.5 rounded-lg bg-surface-container-low flex flex-col gap-1 border-l-2 border-primary">
+<div class="flex items-center justify-between">
+<span class="font-telemetry-data text-label-caps text-primary font-bold">CT-03</span>
+<span class="font-badge-status text-label-caps text-on-surface-variant">1 ชม. ที่แล้ว</span>
+</div>
+<p class="text-body-sm text-on-surface">
+              วิศวกรอนุสรณ์ บันทึกโน้ต: รอ จป. เซ็นตรวจรับหน้างาน
+            </p>
+</div>
+<div class="p-2.5 rounded-lg bg-surface-container-low flex flex-col gap-1 border-l-2 border-secondary-container">
+<div class="flex items-center justify-between">
+<span class="font-telemetry-data text-label-caps text-secondary-fixed-dim font-bold">V-305</span>
+<span class="font-badge-status text-label-caps text-on-surface-variant">2 ชม. ที่แล้ว</span>
+</div>
+<p class="text-body-sm text-on-surface">
+              นายสมเกียรติ อัปเดต Hot Work Permit #WP-2025-0841 อนุมัติแล้ว
+            </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 4. MODAL: ADD NEW SHUTDOWN TASK -->
+<div class="fixed inset-0 bg-black/80 z-50 items-center justify-center p-4 hidden" id="modal-task-backdrop">
+<div class="bg-surface-container-lowest rounded-xl max-w-xl w-full p-space-lg shadow-2xl flex flex-col gap-space-md relative border border-outline-variant/30">
+<div class="flex items-center justify-between pb-2 border-b border-surface-container-high">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[22px]">add_circle</span>
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold">ลงทะเบียนงานหยุดซ่อมบำรุงใหม่</h2>
+</div>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant" onclick="toggleTaskModal(false)">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<form class="flex flex-col gap-3 font-body-md text-body-sm" id="new-task-form" onsubmit="handleCreateTask(event)">
+<div class="grid grid-cols-2 gap-3">
+<div>
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold block mb-1">MACHINE TAG *</label>
+<input class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface font-telemetry-data text-body-sm focus:outline-none focus:ring-1 focus:ring-secondary" id="input-tag" placeholder="เช่น P-202B, TK-05" required="">
+</div>
+<div>
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold block mb-1">โซน / พื้นที่ (AREA) *</label>
+<select class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface text-body-sm focus:outline-none focus:ring-1 focus:ring-secondary" id="input-area">
+<option value="Reaction Plant 1">Reaction Plant 1</option>
+<option value="Boiler Line 2">Boiler Line 2</option>
+<option value="Utility Station">Utility Station</option>
+<option value="Raw Material Yard">Raw Material Yard</option>
+<option value="Gas Metering Unit">Gas Metering Unit</option>
+<option value="Power Island">Power Island</option>
+</select>
+</div>
+</div>
+<div>
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold block mb-1">ชื่องานซ่อมบำรุง (TASK TITLE) *</label>
+<input class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface text-body-sm focus:outline-none focus:ring-1 focus:ring-secondary" id="input-title" placeholder="เช่น ตรวจเช็กระบบวาล์วบายพาสแรงดัน..." required="">
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div>
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold block mb-1">ผู้รับผิดชอบ / ช่าง / ผู้รับเหมา *</label>
+<input class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface text-body-sm focus:outline-none focus:ring-1 focus:ring-secondary" id="input-assignee" placeholder="เช่น ช่างวิเชียร / บ.ไทยคอนโทรล" required="">
+</div>
+<div>
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold block mb-1">สถานะเริ่มต้น (5-STAGE)</label>
+<select class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface font-telemetry-data text-body-sm focus:outline-none focus:ring-1 focus:ring-secondary" id="input-progress">
+<option value="0">0% ยังไม่เปิด Work Permit</option>
+<option selected="" value="25">25% เปิด Work Permit แล้ว</option>
+<option value="50">50% อยู่ระหว่างทำงาน</option>
+<option value="75">75% รอตรวจปิด Work Permit</option>
+<option value="100">100% ปิด Work Permit สมบูรณ์</option>
+</select>
+</div>
+</div>
+<div>
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold block mb-1">บันทึกหน้างานเบื้องต้น (INITIAL NOTE)</label>
+<textarea class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface text-body-sm focus:outline-none focus:ring-1 focus:ring-secondary" id="input-note" placeholder="ระบุเลขที่ Work Permit หรือความพร้อมของชิ้นส่วนอะไหล่..." rows="2"></textarea>
+</div>
+<div class="flex items-center justify-end gap-2 pt-3 border-t border-surface-container-high">
+<button class="px-4 py-2 rounded bg-surface-container hover:bg-surface-bright text-on-surface font-medium transition-colors" onclick="toggleTaskModal(false)" type="button">
+            ยกเลิก
+          </button>
+<button class="px-5 py-2 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container font-bold transition-all shadow-md" type="submit">
+            บันทึกรายการงาน
+          </button>
+</div>
+</form>
+</div>
+</div>
+<!-- 5. TOAST NOTIFICATION BANNER -->
+<div class="fixed bottom-6 right-6 z-50 transform transition-all duration-300 pointer-events-none translate-y-20 opacity-0" id="toast-banner">
+<div class="bg-surface-container-high text-on-surface px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 border-l-4 border-tertiary">
+<span class="material-symbols-outlined text-tertiary text-[22px]">check_circle</span>
+<div class="flex flex-col">
+<span class="font-bold text-body-sm" id="toast-title">กำลังประมวลผล Daily Shift Report</span>
+<span class="text-body-sm text-on-surface-variant" id="toast-message">ส่งไฟล์รายงานสรุปไปยังแผนกวิศวกรรมแล้ว</span>
+</div>
+</div>
+</div>
+</div>
+<!-- INTERACTIVE ENGINE SCRIPT -->
+<script>
+  // Primary Plant Shutdown Dataset
+  let shutdownTasks = [
+    {
+      id: 'TASK-001',
+      tag: 'P-101A',
+      title: 'โอเวอร์ฮอลปั๊มสารเคมี P-101A (Chemical Feed Pump Overhaul)',
+      area: 'Reaction Plant 1',
+      assignee: 'ช่างสมชาย / บ.ไทยวิศวกรรม',
+      progress: 50,
+      note: 'กำลังประกอบใบพัดชุดใหม่ คาดว่าจะเสร็จขั้นตอนกลึงเวลา 15:30 น.',
+      updatedAt: '14:10 น.',
+      updatedBy: 'นายประวิทย์ (Site Eng)'
+    },
+    {
+      id: 'TASK-002',
+      tag: 'V-305',
+      title: 'เปลี่ยนปะเก็นและซีลท่อไอน้ำแรงดันสูง (High-Pressure Steam Valve Replacement)',
+      area: 'Boiler Line 2',
+      assignee: 'ทีมเครื่องกล กะ A',
+      progress: 25,
+      note: 'Safety Officer อนุมัติ Hot Work Permit #WP-2025-0841 แล้ว เตรียมตัดแยกระบบ',
+      updatedAt: '13:50 น.',
+      updatedBy: 'นายสมเกียรติ'
+    },
+    {
+      id: 'TASK-003',
+      tag: 'CT-03',
+      title: 'ตรวจสอบและล้างทำความสะอาดแผงรังผึ้ง Cooling Tower 03',
+      area: 'Utility Station',
+      assignee: 'ทีม บ.คูลลิ่งเซอร์วิส',
+      progress: 75,
+      note: 'ล้างเสร็จสิ้น ผลทดสอบแรงดันน้ำผ่าน อยู่ระหว่างประสานงาน จป. เซ็นตรวจรับหน้างานเพื่อปิดใบอนุญาต',
+      updatedAt: '13:20 น.',
+      updatedBy: 'วิศวกรอนุสรณ์'
+    },
+    {
+      id: 'TASK-004',
+      tag: 'CV-102',
+      title: 'เปลี่ยนลูกปืนมอเตอร์สายพานลำเลียงหินปูน (Conveyor Motor 150kW)',
+      area: 'Raw Material Yard',
+      assignee: 'ช่างไฟฟ้า สมศักดิ์',
+      progress: 100,
+      note: 'ปิด Permit เรียบร้อย ส่งมอบพื้นที่คืนฝ่ายผลิต รันระบบทดสอบ 30 นาที ปกติ',
+      updatedAt: '13:45 น.',
+      updatedBy: 'สมศักดิ์ (Lead Elec)'
+    },
+    {
+      id: 'TASK-005',
+      tag: 'ESDV-01',
+      title: 'ซ่อมบำรุงระบบวาล์วฉุกเฉิน ESDV Main Gas Pipeline',
+      area: 'Gas Metering Unit',
+      assignee: 'ช่างเครื่องมือวัด ชัยพร',
+      progress: 0,
+      note: 'รอผลตรวจก๊าซรั่วไหล LEL จากทีม Safety ก่อนยื่นเปิดใบ Cold Work Permit',
+      updatedAt: '11:15 น.',
+      updatedBy: 'วราภรณ์ (Safety)'
+    },
+    {
+      id: 'TASK-006',
+      tag: 'BL-01',
+      title: 'ล้างตะกรันหม้อต้มไอน้ำ Boiler Tube Bundle',
+      area: 'Power Island',
+      assignee: 'ช่างเทคนิคกะบ่าย',
+      progress: 50,
+      note: 'ฉีดน้ำแรงดันสูงล้างคราบตะกรัน Tube 1-40 เสร็จแล้ว กำลังเข้า Tube 41-80',
+      updatedAt: '14:05 น.',
+      updatedBy: 'ธนากร'
+    }
+  ];
+
+  let currentAreaFilter = 'ALL';
+  let currentPhaseFilter = null;
+  let activeQuickTargetTaskId = 'TASK-001';
+
+  // Rendering Helper
+  function renderTable() {
+    const tbody = document.getElementById('task-tbody');
+    const searchVal = (document.getElementById('search-input').value || '').toLowerCase().trim();
+
+    const filtered = shutdownTasks.filter(item => {
+      const matchArea = (currentAreaFilter === 'ALL') || item.area.toLowerCase().includes(currentAreaFilter.toLowerCase());
+      const matchPhase = (currentPhaseFilter === null) || (item.progress.toString() === currentPhaseFilter.toString());
+      const matchSearch = item.tag.toLowerCase().includes(searchVal) ||
+                          item.title.toLowerCase().includes(searchVal) ||
+                          item.assignee.toLowerCase().includes(searchVal) ||
+                          item.note.toLowerCase().includes(searchVal);
+      return matchArea && matchPhase && matchSearch;
+    });
+
+    tbody.innerHTML = '';
+
+    filtered.forEach(task => {
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-surface-container transition-colors group';
+
+      // Determine colors and stage label
+      let badgeClass = 'text-outline-variant bg-surface-container';
+      let stageText = '0% ยังไม่เปิด Permit';
+      if (task.progress === 25) {
+        badgeClass = 'text-secondary bg-secondary-container/20 border border-secondary/30';
+        stageText = '25% เปิด Permit แล้ว';
+      } else if (task.progress === 50) {
+        badgeClass = 'text-secondary bg-secondary/15 border border-secondary/40';
+        stageText = '50% อยู่ระหว่างทำงาน';
+      } else if (task.progress === 75) {
+        badgeClass = 'text-primary bg-surface-container-high border border-primary/30';
+        stageText = '75% รอตรวจปิด Permit';
+      } else if (task.progress === 100) {
+        badgeClass = 'text-tertiary bg-tertiary-container border border-tertiary/40';
+        stageText = '100% ปิด Permit สมบูรณ์';
+      }
+
+      tr.innerHTML = `
+        <td class="py-3 px-space-md align-top">
+          <div class="flex flex-col">
+            <span class="font-telemetry-data text-body-md font-bold text-secondary">${task.tag}</span>
+            <span class="font-badge-status text-label-caps text-on-surface-variant font-mono">#${task.id}</span>
+          </div>
+        </td>
+        
+        <td class="py-3 px-space-md align-top">
+          <div class="flex flex-col">
+            <span class="font-semibold text-on-surface">${task.title}</span>
+            <span class="font-body-sm text-label-caps text-on-surface-variant flex items-center gap-1 mt-0.5">
+              <span class="material-symbols-outlined text-[13px] text-outline">location_on</span>
+              ${task.area}
+            </span>
+          </div>
+        </td>
+
+        <td class="py-3 px-space-md align-top">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded bg-surface-container-high flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-[14px] text-outline">person</span>
+            </div>
+            <span class="font-body-sm text-on-surface font-medium">${task.assignee}</span>
+          </div>
+        </td>
+
+        <td class="py-3 px-space-md align-top">
+          <div class="flex flex-col gap-1.5 max-w-[280px]">
+            <div class="flex items-center justify-between">
+              <span class="font-badge-status text-badge-status px-2 py-0.5 rounded ${badgeClass} font-semibold">${stageText}</span>
+              <span class="font-telemetry-data text-body-sm font-bold text-on-surface">${task.progress}%</span>
+            </div>
+            
+            <!-- Segmented 5-Step Visual Stepper -->
+            <div class="grid grid-cols-5 gap-1 w-full mt-1">
+              <button title="ปรับเป็น 0%" onclick="updateTaskProgress('${task.id}', 0)" class="h-2 rounded-sm transition-all ${task.progress >= 0 ? 'bg-outline-variant' : 'bg-surface-container-high'} hover:opacity-80"></button>
+              <button title="ปรับเป็น 25%" onclick="updateTaskProgress('${task.id}', 25)" class="h-2 rounded-sm transition-all ${task.progress >= 25 ? 'bg-secondary-container' : 'bg-surface-container-high'} hover:opacity-80"></button>
+              <button title="ปรับเป็น 50%" onclick="updateTaskProgress('${task.id}', 50)" class="h-2 rounded-sm transition-all ${task.progress >= 50 ? 'bg-secondary' : 'bg-surface-container-high'} hover:opacity-80"></button>
+              <button title="ปรับเป็น 75%" onclick="updateTaskProgress('${task.id}', 75)" class="h-2 rounded-sm transition-all ${task.progress >= 75 ? 'bg-primary-fixed-dim' : 'bg-surface-container-high'} hover:opacity-80"></button>
+              <button title="ปรับเป็น 100%" onclick="updateTaskProgress('${task.id}', 100)" class="h-2 rounded-sm transition-all ${task.progress === 100 ? 'bg-tertiary' : 'bg-surface-container-high'} hover:opacity-80"></button>
+            </div>
+          </div>
+        </td>
+
+        <td class="py-3 px-space-md align-top">
+          <div class="flex flex-col gap-1">
+            <div class="relative flex items-center">
+              <input 
+                id="note-input-${task.id}" 
+                value="${task.note.replace(/"/g, '&quot;')}" 
+                onchange="updateTaskNote('${task.id}', this.value)"
+                onfocus="activeQuickTargetTaskId = '${task.id}'"
+                class="w-full bg-surface-container-high hover:bg-surface-bright focus:bg-surface-container-lowest transition-colors rounded px-2.5 py-1 text-on-surface text-body-sm focus:outline-none focus:ring-1 focus:ring-secondary font-body-sm"
+              />
+            </div>
+            <div class="flex items-center justify-between text-label-caps text-on-surface-variant font-badge-status">
+              <span>อัปเดต: ${task.updatedAt}</span>
+              <span>โดย: ${task.updatedBy}</span>
+            </div>
+          </div>
+        </td>
+
+        <td class="py-3 px-space-md align-top text-right">
+          <div class="flex items-center justify-end gap-1">
+            <button onclick="quickAdvanceNextStep('${task.id}')" title="เลื่อนสู่ขั้นถัดไป (+25%)" class="p-1 rounded hover:bg-surface-container-high text-secondary transition-colors">
+              <span class="material-symbols-outlined text-[18px]">forward</span>
+            </button>
+            <button onclick="deleteTaskPrompt('${task.id}')" title="ลบรายการ" class="p-1 rounded hover:bg-error-container/20 text-outline hover:text-error transition-colors">
+              <span class="material-symbols-outlined text-[18px]">delete</span>
+            </button>
+          </div>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('showing-task-count').innerText = filtered.length;
+    recalculateDashboard();
+  }
+
+  // Dynamic Overall Aggregate Completion Rate Calculator
+  function recalculateDashboard() {
+    const totalCount = shutdownTasks.length;
+    let sumProgress = 0;
+    let count0 = 0;
+    let count25 = 0;
+    let count50 = 0;
+    let count75 = 0;
+    let count100 = 0;
+
+    shutdownTasks.forEach(t => {
+      sumProgress += Number(t.progress);
+      if (t.progress === 0) count0++;
+      else if (t.progress === 25) count25++;
+      else if (t.progress === 50) count50++;
+      else if (t.progress === 75) count75++;
+      else if (t.progress === 100) count100++;
+    });
+
+    const averagePercent = totalCount > 0 ? (sumProgress / totalCount).toFixed(1) : '0.0';
+
+    // Update KPI UI
+    document.getElementById('kpi-aggregate-percent').innerText = `${averagePercent}%`;
+    document.getElementById('gauge-center-text').innerText = `${averagePercent}%`;
+    document.getElementById('kpi-total-tasks-label').innerText = `${totalCount} งาน`;
+
+    document.getElementById('kpi-count-0').innerText = count0;
+    document.getElementById('kpi-count-25').innerText = count25;
+    document.getElementById('kpi-count-50').innerText = count50;
+    document.getElementById('kpi-count-75').innerText = count75;
+    document.getElementById('kpi-count-100').innerText = count100;
+
+    // Animate Circular Gauge
+    // Circumference = 2 * PI * 40 = 251.32
+    const circle = document.getElementById('gauge-circle-bar');
+    const circumference = 251.32;
+    const offset = circumference - (parseFloat(averagePercent) / 100 * circumference);
+    circle.style.strokeDashoffset = offset;
+  }
+
+  // Update Status Step
+  function updateTaskProgress(taskId, newProgress) {
+    const task = shutdownTasks.find(t => t.id === taskId);
+    if (task) {
+      task.progress = Number(newProgress);
+      const now = new Date();
+      task.updatedAt = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} น.`;
+      task.updatedBy = 'E. Somchai (Lead Eng)';
+
+      pushActivityFeed(task.tag, `อัปเดตเป็น ${newProgress}% (${getStageLabel(newProgress)})`);
+      showToast(`อัปเดต ${task.tag} เป็น ${newProgress}% สำเร็จ`, 'ข้อมูลซิงก์สู่ระบบ SCADA เรียบร้อย');
+      renderTable();
+    }
+  }
+
+  function quickAdvanceNextStep(taskId) {
+    const task = shutdownTasks.find(t => t.id === taskId);
+    if (task && task.progress < 100) {
+      updateTaskProgress(taskId, task.progress + 25);
+    }
+  }
+
+  function getStageLabel(prog) {
+    if (prog === 0) return 'ยังไม่เปิด Permit';
+    if (prog === 25) return 'เปิด Permit แล้ว';
+    if (prog === 50) return 'อยู่ระหว่างทำงาน';
+    if (prog === 75) return 'รอปิด Permit';
+    if (prog === 100) return 'ปิด Permit สมบูรณ์';
+    return `${prog}%`;
+  }
+
+  function updateTaskNote(taskId, newNote) {
+    const task = shutdownTasks.find(t => t.id === taskId);
+    if (task) {
+      task.note = newNote;
+      const now = new Date();
+      task.updatedAt = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} น.`;
+      pushActivityFeed(task.tag, `บันทึกโน้ตใหม่: "${newNote.slice(0, 30)}..."`);
+      showToast(`บันทึกข้อความสำหรับ ${task.tag}`, 'อัปเดตลงเซิร์ฟเวอร์เสร็จสิ้น');
+    }
+  }
+
+  // Insert Quick Tags
+  function insertQuickTag(tagText) {
+    if (!activeQuickTargetTaskId) activeQuickTargetTaskId = shutdownTasks[0]?.id;
+    const task = shutdownTasks.find(t => t.id === activeQuickTargetTaskId);
+    if (task) {
+      task.note = `${task.note} [${tagText}]`.trim();
+      const input = document.getElementById(`note-input-${task.id}`);
+      if (input) input.value = task.note;
+      updateTaskNote(task.id, task.note);
+      renderTable();
+    }
+  }
+
+  // Activity Feed Logger
+  function pushActivityFeed(tag, actionDesc) {
+    const feed = document.getElementById('activity-stream');
+    const node = document.createElement('div');
+    node.className = 'p-2.5 rounded-lg bg-surface-container-low flex flex-col gap-1 border-l-2 border-secondary transition-all';
+    node.innerHTML = `
+      <div class="flex items-center justify-between">
+        <span class="font-telemetry-data text-label-caps text-secondary font-bold">${tag}</span>
+        <span class="font-badge-status text-label-caps text-on-surface-variant">เมื่อสักครู่</span>
+      </div>
+      <p class="text-body-sm text-on-surface">E. Somchai ${actionDesc}</p>
+    `;
+    feed.insertBefore(node, feed.firstChild);
+  }
+
+  // Filters
+  function applyAreaFilter(areaKey) {
+    currentAreaFilter = areaKey;
+    const buttons = document.querySelectorAll('#area-filter-container .area-tag');
+    buttons.forEach(btn => {
+      btn.classList.remove('bg-secondary', 'text-on-secondary', 'font-bold');
+      btn.classList.add('bg-surface-container', 'text-on-surface-variant');
+    });
+
+    event.currentTarget.classList.remove('bg-surface-container', 'text-on-surface-variant');
+    event.currentTarget.classList.add('bg-secondary', 'text-on-secondary', 'font-bold');
+    renderTable();
+  }
+
+  function filterByPhase(phase) {
+    if (currentPhaseFilter === phase) {
+      currentPhaseFilter = null;
+      showToast('ยกเลิกตัวกรองตามสถานะ', 'กำลังแสดงงานทุกสถานะ');
+    } else {
+      currentPhaseFilter = phase;
+      showToast(`กรองเฉพาะสถานะ ${phase}%`, 'แสดงเฉพาะงานที่อยู่ในสเตจที่เลือก');
+    }
+    renderTable();
+  }
+
+  function filterTasksRealtime() {
+    renderTable();
+  }
+
+  function resetAllFilters() {
+    currentAreaFilter = 'ALL';
+    currentPhaseFilter = null;
+    document.getElementById('search-input').value = '';
+    const buttons = document.querySelectorAll('#area-filter-container .area-tag');
+    buttons.forEach((btn, idx) => {
+      if (idx === 1) { // ALL button
+        btn.classList.add('bg-secondary', 'text-on-secondary', 'font-bold');
+        btn.classList.remove('bg-surface-container', 'text-on-surface-variant');
+      } else {
+        btn.classList.remove('bg-secondary', 'text-on-secondary', 'font-bold');
+        btn.classList.add('bg-surface-container', 'text-on-surface-variant');
+      }
+    });
+    showToast('ล้างตัวกรองทั้งหมด', 'แสดงรายการเครื่องจักรทั้งหมด');
+    renderTable();
+  }
+
+  // Modal Handling
+  function toggleTaskModal(open) {
+    const modal = document.getElementById('modal-task-backdrop');
+    if (open) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    } else {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }
+
+  function handleCreateTask(e) {
+    e.preventDefault();
+    const tag = document.getElementById('input-tag').value.trim().toUpperCase();
+    const area = document.getElementById('input-area').value;
+    const title = document.getElementById('input-title').value.trim();
+    const assignee = document.getElementById('input-assignee').value.trim();
+    const progress = Number(document.getElementById('input-progress').value);
+    const note = document.getElementById('input-note').value.trim() || 'เปิดงานใหม่ รอการเข้าพื้นที่';
+
+    const newTask = {
+      id: `TASK-${(shutdownTasks.length + 1).toString().padStart(3, '0')}`,
+      tag,
+      title,
+      area,
+      assignee,
+      progress,
+      note,
+      updatedAt: 'เพิ่งสร้าง',
+      updatedBy: 'E. Somchai'
+    };
+
+    shutdownTasks.unshift(newTask);
+    toggleTaskModal(false);
+    e.target.reset();
+
+    showToast(`เพิ่มงานสำหรับ ${tag} สำเร็จ`, 'บันทึกเข้าสู่ตารางงานหยุดซ่อมเรียบร้อย');
+    pushActivityFeed(tag, `สร้างรายการงานใหม่: "${title}"`);
+    renderTable();
+  }
+
+  function deleteTaskPrompt(taskId) {
+    if (confirm('คุณต้องการลบรายการงานซ่อมบำรุงนี้ใช่หรือไม่?')) {
+      const idx = shutdownTasks.findIndex(t => t.id === taskId);
+      if (idx > -1) {
+        const deleted = shutdownTasks.splice(idx, 1)[0];
+        showToast(`ลบรายการ ${deleted.tag} แล้ว`, 'ปรับปรุงค่าความคืบหน้ารวมอัตโนมัติ');
+        renderTable();
+      }
+    }
+  }
+
+  function batchAdvancePrompt() {
+    showToast('โหมดเลือกพร้อมกัน (Batch Mode)', 'กำลังเชื่อมต่อเครื่องอ่านบาร์โค้ดมือถือ');
+  }
+
+  function triggerShiftReport() {
+    showToast('กำลังประมวลผล Daily Shift Report', 'ส่งไฟล์รายงานสรุปไปยังแผนกวิศวกรรมแล้ว');
+  }
+
+  function showToast(title, msg) {
+    const toast = document.getElementById('toast-banner');
+    document.getElementById('toast-title').innerText = title;
+    document.getElementById('toast-message').innerText = msg;
+
+    toast.classList.remove('translate-y-20', 'opacity-0');
+    toast.classList.add('translate-y-0', 'opacity-100');
+
+    setTimeout(() => {
+      toast.classList.remove('translate-y-0', 'opacity-100');
+      toast.classList.add('translate-y-20', 'opacity-0');
+    }, 3200);
+  }
+
+  // Auto-Save ticker simulation
+  setInterval(() => {
+    const counter = document.getElementById('auto-save-counter');
+    if (counter) {
+      counter.innerText = 'บันทึกอัตโนมัติเมื่อสักครู่';
+      setTimeout(() => {
+        counter.innerText = 'บันทึกอัตโนมัติ & เชื่อมต่อสด';
+      }, 2000);
+    }
+  }, 30000);
+
+  // Initial Run
+  document.addEventListener('DOMContentLoaded', () => {
+    renderTable();
+  });
+  renderTable();
+</script></div></main></div>
+
+</body></html>
