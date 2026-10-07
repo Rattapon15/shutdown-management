@@ -332,7 +332,7 @@ tailwind.config = {
         </div>
       </div>
       <!-- Stage Tiles -->
-      <div class="flex-1 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div class="flex-1 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
         <div id="stage-tile-0" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase(0)">
           <div class="h-1 w-full bg-outline-variant/50 absolute top-0 left-0"></div>
           <div class="flex items-center justify-between">
@@ -386,6 +386,17 @@ tailwind.config = {
           <div class="my-2 flex-1 flex flex-col items-center justify-center text-center">
             <div class="text-2xl font-bold text-tertiary font-mono"><span id="cnt-100">0</span> <span class="text-xs font-normal text-on-surface-variant">งาน</span></div>
             <div class="text-xs text-on-surface mt-1">ปิด Work Permit เสร็จแล้ว</div>
+          </div>
+        </div>
+        <div id="stage-tile-cancelled" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase('cancelled')">
+          <div class="h-1 w-full bg-error absolute top-0 left-0"></div>
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-semibold text-error uppercase">CANCEL JOB</span>
+            <span class="material-symbols-outlined text-error group-hover:scale-110 transition-transform" style="font-size:18px">cancel</span>
+          </div>
+          <div class="my-2 flex-1 flex flex-col items-center justify-center text-center">
+            <div class="text-2xl font-bold text-error font-mono"><span id="cnt-cancelled">0</span> <span class="text-xs font-normal text-on-surface-variant">งาน</span></div>
+            <div class="text-xs text-on-surface mt-1">ยกเลิกงาน (Cancel Job)</div>
           </div>
         </div>
       </div>
@@ -770,7 +781,7 @@ let cdPendingValues = new Set(); // values checked in open dropdown (not yet app
 let cdAllValues = [];            // all unique values for current col
 
 function cdGetValue(task, col) {
-  if (col === 'progress') return String(task.progress) + '%';
+  if (col === 'progress') return task.status === 'cancelled' ? 'ยกเลิกงาน (Cancel Job)' : String(task.progress) + '%';
   if (col === 'start_time') return task.start_time || task.end_time ? `${task.start_time||'—'} / ${task.end_time||'—'}` : '';
   return String(task[col] || '');
 }
@@ -786,7 +797,13 @@ function cdOpen(col, headerEl) {
     valSet.set(v, valSet.get(v) + 1);
   }
   cdAllValues = [...valSet.entries()].sort((a,b) => {
-    if (col === 'progress') return Number(a[0]) - Number(b[0]);
+    if (col === 'progress') {
+      const na = Number.parseInt(a[0]), nb = Number.parseInt(b[0]);
+      if (Number.isNaN(na) && Number.isNaN(nb)) return 0;
+      if (Number.isNaN(na)) return 1;
+      if (Number.isNaN(nb)) return -1;
+      return na - nb;
+    }
     return a[0].localeCompare(b[0], 'th');
   });
 
@@ -1132,8 +1149,9 @@ function renderTable() {
   if (clearBtn) clearBtn.classList.toggle('hidden', !searchVal);
 
   let filtered = allTasks.filter(t => {
-    const matchPhase = activePhase === null || t.progress === activePhase;
-    const matchSearch = !searchVal || [t.id, t.tag, t.title, t.area, t.assignee, t.note, t.start_time||'', t.end_time||'', t.duration||'', String(t.progress)+'%'].some(v => String(v||'').toLowerCase().includes(searchVal));
+    const matchPhase = activePhase === null
+      || (activePhase === 'cancelled' ? t.status === 'cancelled' : (t.status !== 'cancelled' && t.progress === activePhase));
+    const matchSearch = !searchVal || [t.id, t.tag, t.title, t.area, t.assignee, t.note, t.start_time||'', t.end_time||'', t.duration||'', cdGetValue(t, 'progress')].some(v => String(v||'').toLowerCase().includes(searchVal));
     // Column filters
     const matchCols = Object.entries(colFilters).every(([col, allowed]) => {
       if (!allowed || allowed.size === 0) return true;
@@ -1148,7 +1166,13 @@ function renderTable() {
     filtered = [...filtered].sort((a, b) => {
       const av = cdGetValue(a, col);
       const bv = cdGetValue(b, col);
-      if (col === 'progress') return ((parseInt(av)||0) - (parseInt(bv)||0)) * colSort.dir;
+      if (col === 'progress') {
+        const na = Number.parseInt(av), nb = Number.parseInt(bv);
+        if (Number.isNaN(na) && Number.isNaN(nb)) return 0;
+        if (Number.isNaN(na)) return colSort.dir;
+        if (Number.isNaN(nb)) return -colSort.dir;
+        return (na - nb) * colSort.dir;
+      }
       return av.localeCompare(bv, 'th') * colSort.dir;
     });
   }
@@ -1158,7 +1182,8 @@ function renderTable() {
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-surface-container transition-colors group fade-in';
 
-    const { badgeCls, stageText } = getStageStyle(task.progress);
+    const { badgeCls, stageText } = getStageStyle(task.progress, task.status);
+    const isCancelled = task.status === 'cancelled';
 
     tr.innerHTML = `
       <td class="py-3 px-4 align-top">
@@ -1202,8 +1227,10 @@ function renderTable() {
             ${[0,25,50,75,100].map(p => {
               const active = task.progress >= p;
               const col = p===0?'bg-outline-variant':p===25?'bg-secondary-container':p===50?'bg-secondary':p===75?'bg-primary-fixed-dim':'bg-tertiary';
-              const cls = active ? col : 'bg-surface-container-high';
-              return `<button title="ปรับเป็น ${p}%" onclick="updateProgress('${task.id}',${p})" class="h-[18px] rounded transition-all ${cls} hover:opacity-80 hover:scale-y-110 cursor-pointer"></button>`;
+              const cls = isCancelled ? 'bg-surface-container-high opacity-50' : (active ? col : 'bg-surface-container-high');
+              const interactive = isCancelled ? '' : `onclick="updateProgress('${task.id}',${p})" class="h-[18px] rounded transition-all ${cls} hover:opacity-80 hover:scale-y-110 cursor-pointer"`;
+              const disabledAttr = isCancelled ? `class="h-[18px] rounded transition-all ${cls} cursor-not-allowed"` : '';
+              return `<button title="ปรับเป็น ${p}%" ${isCancelled ? disabledAttr + ' disabled' : interactive}></button>`;
             }).join('')}
           </div>
         </div>
@@ -1222,9 +1249,16 @@ function renderTable() {
       </td>
       <td class="py-3 px-4 align-top text-right">
         <div class="flex items-center justify-end gap-1">
+          ${isCancelled ? `
+          <button onclick="restoreTask('${task.id}')" title="เปิดงานกลับมาใช้งาน" class="p-1 rounded hover:bg-surface-container-high text-secondary transition-colors">
+            <span class="material-symbols-outlined" style="font-size:18px">restart_alt</span>
+          </button>` : `
           <button onclick="advanceTask('${task.id}')" title="เลื่อนสู่ขั้นถัดไป (+25%)" class="p-1 rounded hover:bg-surface-container-high text-secondary transition-colors">
             <span class="material-symbols-outlined" style="font-size:18px">forward</span>
           </button>
+          <button onclick="cancelTask('${task.id}')" title="ยกเลิกงาน (Cancel Job)" class="p-1 rounded hover:bg-error-container/20 text-outline hover:text-error transition-colors">
+            <span class="material-symbols-outlined" style="font-size:18px">cancel</span>
+          </button>`}
           <button onclick="deleteTask('${task.id}')" title="ลบรายการ" class="p-1 rounded hover:bg-error-container/20 text-outline hover:text-error transition-colors">
             <span class="material-symbols-outlined" style="font-size:18px">delete</span>
           </button>
@@ -1237,7 +1271,8 @@ function renderTable() {
   document.getElementById('showing-count').textContent = filtered.length;
 }
 
-function getStageStyle(p) {
+function getStageStyle(p, status) {
+  if (status === 'cancelled') return { badgeCls: 'text-error bg-error-container border border-error/40', stageText: 'ยกเลิกงาน (Cancel Job)' };
   if (p === 0)   return { badgeCls: 'text-outline-variant bg-surface-container',                          stageText: '0% รอเปิด Work Permit' };
   if (p === 25)  return { badgeCls: 'text-secondary bg-secondary-container/20 border border-secondary/30', stageText: '25% เปิด Work Permit แล้ว' };
   if (p === 50)  return { badgeCls: 'text-secondary bg-secondary/15 border border-secondary/40',           stageText: '50% อยู่ระหว่างทำงาน' };
@@ -1253,22 +1288,26 @@ const PIE_STAGES = [
   { p: 50,  label: 'อยู่ระหว่างทำงาน',   color: '#3b82f6' },
   { p: 75,  label: 'รอปิด Work Permit',         color: '#a855f7' },
   { p: 100, label: 'ปิด Work Permit เสร็จแล้ว',  color: '#10b981' },
+  { p: 'cancelled', label: 'ยกเลิกงาน (Cancel Job)', color: '#ba1a1a' },
 ];
 
 function updateKPIs() {
   const total = allTasks.length;
-  const sum = allTasks.reduce((a, t) => a + t.progress, 0);
-  const avg = total > 0 ? (sum / total).toFixed(1) : '0.0';
+  const activeTasks = allTasks.filter(t => t.status !== 'cancelled');
+  const sum = activeTasks.reduce((a, t) => a + t.progress, 0);
+  const avg = activeTasks.length > 0 ? (sum / activeTasks.length).toFixed(1) : '0.0';
 
   document.getElementById('kpi-percent').textContent = avg + '%';
   document.getElementById('kpi-total').textContent = total + ' งาน';
   document.getElementById('gauge-text').textContent = avg + '%';
   document.getElementById('gauge-total-text').textContent = total + ' งาน';
 
-  // Count per stage
+  // Count per stage (cancelled tasks only count toward the cancelled slice)
   const counts = {};
   PIE_STAGES.forEach(s => {
-    counts[s.p] = allTasks.filter(t => t.progress === s.p).length;
+    counts[s.p] = s.p === 'cancelled'
+      ? allTasks.filter(t => t.status === 'cancelled').length
+      : allTasks.filter(t => t.status !== 'cancelled' && t.progress === s.p).length;
     const el = document.getElementById(`cnt-${s.p}`);
     if (el) el.textContent = counts[s.p];
   });
@@ -1389,6 +1428,36 @@ async function updateNote(id, note) {
 async function advanceTask(id) {
   const task = allTasks.find(t => t.id === id);
   if (task && task.progress < 100) await updateProgress(id, task.progress + 25);
+}
+
+async function setTaskStatus(id, status) {
+  await fetch(`/api/tasks/${id}/status`, {
+    method: 'PUT', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ status, updated_by: currentUser?.username || 'User', plant: currentPlant })
+  });
+  const task = allTasks.find(t => t.id === id);
+  if (task) {
+    task.status = status;
+    const now = new Date();
+    task.updated_at = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')} น.`;
+    task.updated_by = currentUser?.username || 'User';
+  }
+  renderTable();
+  updateKPIs();
+  loadActivity();
+}
+
+async function cancelTask(id) {
+  const task = allTasks.find(t => t.id === id);
+  if (!confirm(`ยืนยันยกเลิกงาน "${task?.tag}" ใช่หรือไม่?`)) return;
+  await setTaskStatus(id, 'cancelled');
+  showToast(`ยกเลิกงาน ${task?.tag} แล้ว`, 'งานถูกย้ายไปสถานะ Cancel Job');
+}
+
+async function restoreTask(id) {
+  const task = allTasks.find(t => t.id === id);
+  await setTaskStatus(id, 'active');
+  showToast(`เปิดงาน ${task?.tag} กลับมาใช้งาน`, 'สถานะกลับเป็นปกติ');
 }
 
 async function deleteTask(id) {
@@ -1521,7 +1590,7 @@ function insertQuickTag(tagText) {
 }
 
 // ─── Filters ──────────────────────────────────────────────────────────────────
-const STAGE_PHASES = [0, 25, 50, 75, 100];
+const STAGE_PHASES = [0, 25, 50, 75, 100, 'cancelled'];
 
 function updateStageTileHighlight() {
   STAGE_PHASES.forEach(p => {
@@ -1768,7 +1837,7 @@ async function deleteSafetyItem(category, id) {
 // ─── Export Report ────────────────────────────────────────────────────────────
 function exportReport() {
   const rows = [['ID','Tag','Title','Area','Start Time','End Time','Duration','Assignee','Progress','Note','Updated At','Updated By']];
-  allTasks.forEach(t => rows.push([t.id,t.tag,t.title,t.area,t.start_time,t.end_time,t.duration,t.assignee,t.progress+'%',t.note,t.updated_at,t.updated_by]));
+  allTasks.forEach(t => rows.push([t.id,t.tag,t.title,t.area,t.start_time,t.end_time,t.duration,t.assignee,cdGetValue(t,'progress'),t.note,t.updated_at,t.updated_by]));
   const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);

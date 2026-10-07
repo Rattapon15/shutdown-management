@@ -45,6 +45,11 @@ CREATE TABLE IF NOT EXISTS ai_project.shutdown_mnm_tasks (
 CREATE INDEX IF NOT EXISTS shutdown_mnm_tasks_plant_seq_idx
   ON ai_project.shutdown_mnm_tasks (plant, seq);
 
+-- 'active' | 'cancelled' — kept separate from the 0/25/50/75/100 progress
+-- stages so a cancelled job doesn't disturb the linear progression math.
+ALTER TABLE ai_project.shutdown_mnm_tasks
+  ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active';
+
 CREATE TABLE IF NOT EXISTS ai_project.shutdown_mnm_activity (
   id          BIGSERIAL PRIMARY KEY,
   plant       TEXT NOT NULL REFERENCES ai_project.shutdown_mnm_plants(name) ON DELETE CASCADE,

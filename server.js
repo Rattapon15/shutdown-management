@@ -176,6 +176,16 @@ app.put('/api/tasks/:id/progress', requireAuth, ah(async (req, res) => {
   res.json({ ok: true });
 }));
 
+app.put('/api/tasks/:id/status', requireAuth, ah(async (req, res) => {
+  const { status, updated_by } = req.body;
+  const plant = getPlant(req);
+  if (!['active', 'cancelled'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
+  const task = await db.updateTaskStatus(req.params.id, status, updated_by, plant);
+  if (!task) return res.status(404).json({ error: 'Task not found' });
+  await db.logActivity(task.tag, status === 'cancelled' ? 'ยกเลิกงาน (Cancel Job)' : 'เปิดงานกลับมาใช้งาน', updated_by || 'User', plant);
+  res.json({ ok: true });
+}));
+
 app.put('/api/tasks/:id/note', requireAuth, ah(async (req, res) => {
   const { note, updated_by } = req.body;
   const plant = getPlant(req);

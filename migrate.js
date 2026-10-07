@@ -93,12 +93,12 @@ async function importData() {
         if (!isNaN(n) && n > maxTaskNum) maxTaskNum = n;
         await client.query(
           `INSERT INTO shutdown_mnm_tasks
-             (plant, id, tag, title, area, assignee, progress, note, duration,
+             (plant, id, tag, title, area, assignee, progress, status, note, duration,
               start_time, end_time, updated_at, updated_by, created_at)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
            ON CONFLICT (plant, id) DO NOTHING`,
           [plantName, t.id, t.tag || '', t.title || '', t.area || '', t.assignee || '',
-           Number(t.progress) || 0, t.note || '', t.duration || '',
+           Number(t.progress) || 0, t.status || 'active', t.note || '', t.duration || '',
            t.start_time || '', t.end_time || '', t.updated_at || '', t.updated_by || '',
            tsOr(t.created_at, fallbackTs)]
         );

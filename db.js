@@ -32,7 +32,7 @@ function emptySchedule() {
 function taskRow(r) {
   return {
     id: r.id, tag: r.tag, title: r.title, area: r.area, assignee: r.assignee,
-    progress: r.progress, note: r.note, duration: r.duration,
+    progress: r.progress, status: r.status, note: r.note, duration: r.duration,
     start_time: r.start_time, end_time: r.end_time,
     updated_at: r.updated_at, updated_by: r.updated_by,
     created_at: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
@@ -205,8 +205,8 @@ const db = {
       const id = `TASK-${String(seqRow.task_seq).padStart(3, '0')}`;
       const { rows: [row] } = await client.query(
         `INSERT INTO shutdown_mnm_tasks
-           (plant, id, tag, title, area, assignee, progress, note, duration, start_time, end_time, updated_at, updated_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+           (plant, id, tag, title, area, assignee, progress, status, note, duration, start_time, end_time, updated_at, updated_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'active',$8,$9,$10,$11,$12,$13) RETURNING *`,
         [p, id, String(tag).toUpperCase(), title, area, assignee, Number(progress) || 0,
          note, duration, start_time, end_time, nowTime(), updated_by]
       );
@@ -219,6 +219,15 @@ const db = {
       `UPDATE shutdown_mnm_tasks SET progress = $3, updated_at = $4, updated_by = $5
        WHERE plant = $1 AND id = $2 RETURNING *`,
       [plantKey(plant), id, Number(progress) || 0, nowTime(), updated_by]
+    );
+    return rows.length ? taskRow(rows[0]) : null;
+  },
+
+  async updateTaskStatus(id, status, updated_by = 'User', plant) {
+    const { rows } = await query(
+      `UPDATE shutdown_mnm_tasks SET status = $3, updated_at = $4, updated_by = $5
+       WHERE plant = $1 AND id = $2 RETURNING *`,
+      [plantKey(plant), id, status, nowTime(), updated_by]
     );
     return rows.length ? taskRow(rows[0]) : null;
   },
@@ -290,8 +299,8 @@ const db = {
         counter++;
         await client.query(
           `INSERT INTO shutdown_mnm_tasks
-             (plant, id, tag, title, area, assignee, progress, note, duration, start_time, end_time, updated_at, updated_by)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+             (plant, id, tag, title, area, assignee, progress, status, note, duration, start_time, end_time, updated_at, updated_by)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,'active',$8,$9,$10,$11,$12,$13)`,
           [p, `TASK-${String(counter).padStart(3, '0')}`,
            t.tag || '', t.title || '', t.area || '', t.assignee || '',
            Number(t.progress) || 0, t.note || '', t.duration || '',
