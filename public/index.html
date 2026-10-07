@@ -1293,9 +1293,8 @@ const PIE_STAGES = [
 
 function updateKPIs() {
   const total = allTasks.length;
-  const activeTasks = allTasks.filter(t => t.status !== 'cancelled');
-  const sum = activeTasks.reduce((a, t) => a + t.progress, 0);
-  const avg = activeTasks.length > 0 ? (sum / activeTasks.length).toFixed(1) : '0.0';
+  const doneCount = allTasks.filter(t => t.status !== 'cancelled' && t.progress === 100).length;
+  const avg = total > 0 ? (doneCount / total * 100).toFixed(1) : '0.0';
 
   document.getElementById('kpi-percent').textContent = avg + '%';
   document.getElementById('kpi-total').textContent = total + ' งาน';
