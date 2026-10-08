@@ -91,9 +91,28 @@ tailwind.config = {
   body.readonly [onclick*="updateProgress"] { display:block !important; pointer-events:none; cursor:default; }
 
   /* Main content tabs (Tab 1 / Tab 2) */
-  .main-tab-btn { background:#e2e4ed; color:#44464f; }
-  .main-tab-btn:hover { background:#dcdee7; }
-  .main-tab-btn.active { background:#ff6a00; color:#ffffff; box-shadow:0 2px 8px rgba(255,106,0,.35); }
+  /* Segmented control: track in surface-container-high, active segment lifts to white */
+  .main-tab-group { display:inline-flex; gap:2px; padding:3px; border-radius:10px; background:#e2e4ed; border:1px solid rgba(196,198,208,.6); }
+  .main-tab-btn { display:inline-flex; align-items:center; gap:6px; padding:6px 18px; border-radius:7px;
+    font-size:13px; font-weight:600; color:#74767f; background:transparent; transition:all .15s ease; }
+  .main-tab-btn .material-symbols-outlined { font-size:17px; }
+  .main-tab-btn:hover:not(.active) { color:#1a1b22; background:rgba(255,255,255,.45); }
+  .main-tab-btn.active { background:#ffffff; color:#1a1b22; box-shadow:0 1px 3px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.04); }
+  .main-tab-btn.active .material-symbols-outlined { color:#0077b6; }
+
+  /* Gantt timeline (Tab 2) */
+  .gantt-left-col { width:560px; min-width:560px; flex-shrink:0; display:grid; grid-template-columns:90px 100px 230px 140px; align-items:center; }
+  .gantt-left-col > * { padding:0 8px; min-width:0; }
+  .gantt-time-input { width:56px; padding:1px 2px; border:1px solid transparent; border-radius:4px; background:transparent;
+    font-family:'JetBrains Mono',monospace; font-size:10px; color:inherit; text-align:center; }
+  .gantt-time-input:hover { border-color:#c4c6d0; }
+  .gantt-time-input:focus { outline:none; border-color:#0077b6; background:#fff; box-shadow:0 0 0 1px #0077b6; }
+  .gantt-time-input.invalid { border-color:#ba1a1a; box-shadow:0 0 0 1px #ba1a1a; }
+  body.readonly .gantt-time-input { pointer-events:none; }
+  #gantt-rows, #gantt-notime-rows {
+    background-image: repeating-linear-gradient(to right, rgba(0,0,0,.06) 0, rgba(0,0,0,.06) 1px, transparent 1px, transparent 72px);
+    background-position: 560px 0; /* start gridlines after .gantt-left-col */
+  }
 </style>
 </head>
 <body class="bg-surface text-on-surface antialiased text-sm">
@@ -277,11 +296,13 @@ tailwind.config = {
 <main class="relative pt-16 bg-surface min-h-screen">
 
 <!-- ── Main content tabs ── -->
-<div class="px-5 pt-5 flex items-center gap-2">
-  <button id="main-tab-btn-1" onclick="setMainTab(1)"
-    class="main-tab-btn active px-5 py-2 rounded-lg text-xs font-bold tracking-wide transition-all">TAB 1</button>
-  <button id="main-tab-btn-2" onclick="setMainTab(2)"
-    class="main-tab-btn px-5 py-2 rounded-lg text-xs font-bold tracking-wide transition-all">TAB 2</button>
+<div id="main-tab-bar" class="px-5 pt-5">
+  <div class="main-tab-group" role="tablist">
+    <button id="main-tab-btn-1" onclick="setMainTab(1)" role="tab" class="main-tab-btn active">
+      <span class="material-symbols-outlined">table_rows</span>TAB 1</button>
+    <button id="main-tab-btn-2" onclick="setMainTab(2)" role="tab" class="main-tab-btn">
+      <span class="material-symbols-outlined">view_timeline</span>TAB 2</button>
+  </div>
 </div>
 
 <div id="main-tab-content-1">
@@ -590,11 +611,47 @@ tailwind.config = {
 
 <div id="main-tab-content-2" class="hidden">
   <div class="w-full px-5 py-5 flex flex-col gap-4">
-    <div class="bg-surface-container-low rounded-xl p-10 flex flex-col items-center justify-center gap-2 shadow-md text-center">
-      <span class="material-symbols-outlined text-outline" style="font-size:40px">construction</span>
-      <p class="text-sm font-semibold text-on-surface-variant">หน้านี้ยังไม่มีข้อมูล</p>
-      <p class="text-xs text-on-surface-variant/70">TAB 2 — อยู่ระหว่างการพัฒนา</p>
+
+    <div class="bg-surface-container-low rounded-xl p-4 flex items-center justify-between gap-2 shadow-md">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary" style="font-size:20px">view_timeline</span>
+        <h2 class="text-sm font-bold text-on-surface">Shutdown Timeline (Gantt View)</h2>
+      </div>
+      <span class="text-[10px] font-mono text-on-surface-variant" id="gantt-range-label"></span>
     </div>
+
+    <div id="gantt-empty" class="hidden bg-surface-container-low rounded-xl p-10 flex flex-col items-center justify-center gap-2 shadow-md text-center">
+      <span class="material-symbols-outlined text-outline" style="font-size:40px">event_busy</span>
+      <p class="text-sm font-semibold text-on-surface-variant">ไม่มีงานที่ระบุเวลาเริ่ม/จบ</p>
+      <p class="text-xs text-on-surface-variant/70">กรุณาระบุเวลาเริ่มงานในรายการงานเพื่อแสดงผล Timeline</p>
+    </div>
+
+    <div id="gantt-card" class="bg-surface-container-lowest rounded-xl shadow-md flex flex-col overflow-hidden">
+      <div class="overflow-x-auto" id="gantt-scroll">
+        <div id="gantt-grid" class="min-w-max">
+          <!-- header row: sticky-left label block + hour ruler -->
+          <div class="flex sticky top-0 z-20 bg-surface-container-low border-b border-outline-variant/40">
+            <div class="gantt-left-col sticky left-0 z-30 bg-surface-container-low text-[10px] font-semibold uppercase text-on-surface-variant py-2 border-r border-outline-variant/40">
+              <div><div class="col-filter-hd" data-scope="gantt" data-col="area">Location <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></div>
+              <div><div class="col-filter-hd" data-scope="gantt" data-col="tag">Section <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></div>
+              <div><div class="col-filter-hd" data-scope="gantt" data-col="title">ชื่องาน <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></div>
+              <div><div class="col-filter-hd" data-scope="gantt" data-col="start_time">เวลาเริ่ม/จบ <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></div>
+            </div>
+            <div id="gantt-hour-header" class="relative flex-1" style="height:40px"></div>
+          </div>
+          <!-- task rows -->
+          <div id="gantt-rows" class="relative"></div>
+          <!-- no-start-time section -->
+          <div id="gantt-notime-section" class="hidden border-t-2 border-outline-variant/60">
+            <div class="px-3 py-1.5 bg-surface-container-low text-[10px] font-semibold uppercase text-on-surface-variant">
+              ไม่ระบุเวลา (No start time)
+            </div>
+            <div id="gantt-notime-rows"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div><!-- /main-tab-content-2 -->
 
@@ -824,6 +881,12 @@ let currentPlant = 'SKIC BM16';
 let currentView = 'progress';
 let currentSafety = { power_outage: [], site_prep: [], high_risk: [] };
 
+// ─── Gantt timeline (Tab 2) state ──────────────────────────────────────────────
+let lastGanttBounds = null;
+const GANTT_PX_PER_HOUR = 72; // must match the 72px gridline spacing in CSS
+const GANTT_MIN_BAR_PX = 18;
+const GANTT_LEFT_COL_PX = 560; // must match .gantt-left-col width in CSS
+
 function plantQS() { return `plant=${encodeURIComponent(currentPlant)}`; }
 
 // ─── Column filter / sort state ───────────────────────────────────────────────
@@ -832,6 +895,12 @@ let colSort = { col: null, dir: 1 };  // dir: 1=asc, -1=desc
 let cdCurrentCol = null;
 let cdPendingValues = new Set(); // values checked in open dropdown (not yet applied)
 let cdAllValues = [];            // all unique values for current col
+// Tab 2 (Gantt) keeps its own filter/sort so it doesn't change what Tab 1 shows.
+const ganttColFilters = {};
+const ganttColSort = { col: null, dir: 1 };
+let cdScope = 'table';
+const cdFiltersFor = scope => scope === 'gantt' ? ganttColFilters : colFilters;
+const cdSortFor    = scope => scope === 'gantt' ? ganttColSort : colSort;
 
 function cdGetValue(task, col) {
   if (col === 'progress') return task.status === 'cancelled' ? 'ยกเลิกงาน (Cancel Job)' : String(task.progress) + '%';
@@ -839,8 +908,11 @@ function cdGetValue(task, col) {
   return String(task[col] || '');
 }
 
-function cdOpen(col, headerEl) {
+function cdOpen(col, headerEl, scope = 'table') {
   cdCurrentCol = col;
+  cdScope = scope;
+  const filters = cdFiltersFor(scope);
+  const sort = cdSortFor(scope);
 
   // Build unique values from all tasks (not filtered)
   const valSet = new Map();
@@ -862,14 +934,14 @@ function cdOpen(col, headerEl) {
 
   // cdPendingValues = set of values that are CHECKED (explicit whitelist).
   // No existing filter → everything starts checked (i.e. "show all").
-  cdPendingValues = colFilters[col] ? new Set(colFilters[col]) : new Set(cdAllValues.map(([v]) => v));
+  cdPendingValues = filters[col] ? new Set(filters[col]) : new Set(cdAllValues.map(([v]) => v));
 
   document.getElementById('cd-col-label').textContent = headerEl.dataset.col.toUpperCase() + ' — FILTER';
   document.getElementById('cd-val-search').value = '';
 
   // Highlight sort buttons
-  document.getElementById('cd-sort-asc').className = 'cd-btn' + (colSort.col===col && colSort.dir===1 ? ' active' : '');
-  document.getElementById('cd-sort-desc').className = 'cd-btn' + (colSort.col===col && colSort.dir===-1 ? ' active' : '');
+  document.getElementById('cd-sort-asc').className = 'cd-btn' + (sort.col===col && sort.dir===1 ? ' active' : '');
+  document.getElementById('cd-sort-desc').className = 'cd-btn' + (sort.col===col && sort.dir===-1 ? ' active' : '');
 
   cdRenderValues(cdAllValues);
 
@@ -884,8 +956,8 @@ function cdOpen(col, headerEl) {
   dd.style.top = top + 'px';
   dd.style.left = left + 'px';
 
-  document.getElementById('cd-sort-asc').onclick = () => { colSort = {col, dir:1}; cdApply(); };
-  document.getElementById('cd-sort-desc').onclick = () => { colSort = {col, dir:-1}; cdApply(); };
+  document.getElementById('cd-sort-asc').onclick = () => { sort.col = col; sort.dir = 1; cdApply(); };
+  document.getElementById('cd-sort-desc').onclick = () => { sort.col = col; sort.dir = -1; cdApply(); };
 
   setTimeout(() => document.addEventListener('mousedown', cdOutsideClick, {once:true}), 10);
 }
@@ -948,36 +1020,45 @@ function cdToggleVal(val, checked) {
 function cdApply() {
   if (cdCurrentCol) {
     // Fully-checked (all values selected) == no filter needed.
+    const filters = cdFiltersFor(cdScope);
     if (cdPendingValues.size === 0 || cdPendingValues.size === cdAllValues.length) {
-      delete colFilters[cdCurrentCol];
+      delete filters[cdCurrentCol];
     } else {
-      colFilters[cdCurrentCol] = new Set(cdPendingValues);
+      filters[cdCurrentCol] = new Set(cdPendingValues);
     }
     updateColHeaders();
   }
   cdClose();
-  renderTable();
+  cdRerender();
 }
 
 function cdClear() {
   cdPendingValues.clear();
-  if (cdCurrentCol) delete colFilters[cdCurrentCol];
+  if (cdCurrentCol) delete cdFiltersFor(cdScope)[cdCurrentCol];
   updateColHeaders();
   cdClose();
-  renderTable();
+  cdRerender();
+}
+
+function cdRerender() {
+  if (cdScope === 'gantt') renderGanttTimeline();
+  else renderTable();
 }
 
 function updateColHeaders() {
   document.querySelectorAll('.col-filter-hd').forEach(hd => {
     const col = hd.dataset.col;
+    const scope = hd.dataset.scope || 'table';
+    const filters = cdFiltersFor(scope);
+    const sort = cdSortFor(scope);
     const dot = hd.querySelector('.col-filter-dot');
     const icon = hd.querySelector('.col-sort-icon');
-    const hasFilter = colFilters[col] && colFilters[col].size > 0;
-    const isSort = colSort.col === col;
+    const hasFilter = filters[col] && filters[col].size > 0;
+    const isSort = sort.col === col;
     hd.classList.toggle('active', hasFilter || isSort);
     if (dot) dot.classList.toggle('hidden', !hasFilter);
     if (icon) {
-      if (isSort) icon.textContent = colSort.dir === 1 ? '↑' : '↓';
+      if (isSort) icon.textContent = sort.dir === 1 ? '↑' : '↓';
       else icon.textContent = '⇅';
     }
   });
@@ -986,8 +1067,37 @@ function updateColHeaders() {
 // Attach click handlers after DOM ready
 function initColHeaders() {
   document.querySelectorAll('.col-filter-hd').forEach(hd => {
-    hd.addEventListener('click', e => { e.stopPropagation(); cdOpen(hd.dataset.col, hd); });
+    hd.addEventListener('click', e => { e.stopPropagation(); cdOpen(hd.dataset.col, hd, hd.dataset.scope || 'table'); });
   });
+}
+
+// Shared by Tab 1's table and Tab 2's Gantt so both filter/sort the same way.
+function applyColFiltersAndSort(tasks, filters, sort) {
+  let out = tasks.filter(t => Object.entries(filters).every(([col, allowed]) =>
+    !allowed || allowed.size === 0 || allowed.has(cdGetValue(t, col))));
+  if (sort.col) {
+    const col = sort.col;
+    const frame = col === 'start_time' ? shutdownFrame() : null;
+    out = [...out].sort((a, b) => {
+      if (col === 'start_time') {
+        // Chronological, so a day-2 "01:00" sorts after a day-1 "22:00"; untimed last.
+        const sa = taskSpan(a, frame).start, sb = taskSpan(b, frame).start;
+        if (sa === null || sb === null) return (sa === null) - (sb === null);
+        return (sa - sb) * sort.dir;
+      }
+      const av = cdGetValue(a, col);
+      const bv = cdGetValue(b, col);
+      if (col === 'progress') {
+        const na = Number.parseInt(av), nb = Number.parseInt(bv);
+        if (Number.isNaN(na) && Number.isNaN(nb)) return 0;
+        if (Number.isNaN(na)) return sort.dir;
+        if (Number.isNaN(nb)) return -sort.dir;
+        return (na - nb) * sort.dir;
+      }
+      return av.localeCompare(bv, 'th') * sort.dir;
+    });
+  }
+  return out;
 }
 
 // ─── Plant tab switching ───────────────────────────────────────────────────────
@@ -1041,6 +1151,7 @@ function setMainTab(tab) {
   document.getElementById('main-tab-content-2').classList.toggle('hidden', tab !== 2);
   document.getElementById('main-tab-btn-1').classList.toggle('active', tab === 1);
   document.getElementById('main-tab-btn-2').classList.toggle('active', tab === 2);
+  if (tab === 2) renderGanttTimeline();
 }
 
 // ─── View tab switching (Progress vs Safety Activities) ───────────────────────
@@ -1058,6 +1169,15 @@ function setViewTab(el, view) {
   });
   document.getElementById('view-progress').classList.toggle('hidden', view !== 'progress');
   document.getElementById('view-safety').classList.toggle('hidden', view !== 'safety');
+  // TAB 1 / TAB 2 belong to Shutdown Progress Update only. Safety lives inside the
+  // TAB 1 container, so show that without forgetting which tab Progress was on.
+  document.getElementById('main-tab-bar').classList.toggle('hidden', view !== 'progress');
+  if (view === 'progress') {
+    setMainTab(currentMainTab);
+  } else {
+    document.getElementById('main-tab-content-1').classList.remove('hidden');
+    document.getElementById('main-tab-content-2').classList.add('hidden');
+  }
   if (view === 'safety') loadSafetyActivities();
 }
 
@@ -1199,36 +1319,106 @@ function renderTimeCell(task) {
     return `<span class="font-mono text-[10px] text-on-surface-variant/40">—</span>`;
   }
 
+  // Which shutdown day each time is on, once the shutdown date is known.
+  const frame = shutdownFrame();
+  const span = frame ? taskSpan({ ...task, start_time: start, end_time: end }, frame) : {};
+  // A literal "24:00" is the end of its own day; "00:00" reads as the next day.
+  const dayOf = (abs, endOfDay) => abs == null ? ''
+    : `<span class="font-mono text-[9px] text-on-surface-variant/70">${frameDayLabel(frame, endOfDay ? abs - 1 : abs)}</span>`;
+
   return `
     <div class="flex flex-col gap-0.5">
       <div class="flex items-center gap-1">
         <span class="material-symbols-outlined text-tertiary" style="font-size:12px">play_circle</span>
         <span class="font-mono text-xs font-semibold text-tertiary">${escHtml(start) || '—'}</span>
+        ${dayOf(span.start, false)}
       </div>
       <div class="flex items-center gap-1">
         <span class="material-symbols-outlined text-secondary" style="font-size:12px">stop_circle</span>
         <span class="font-mono text-xs font-semibold text-secondary">${escHtml(end) || '—'}</span>
+        ${dayOf(span.end, end.startsWith('24:'))}
       </div>
     </div>`;
 }
 
 // ─── Real-time on-time / delay status ───────────────────────────────────────
-// start_time / end_time are "HH:MM" strings with no date, so we compare them
-// against the current wall-clock time-of-day on this computer.
+// start_time / end_time are "HH:MM" strings with no date. The shutdown's date comes
+// from the Excel schedule grid (its first date + first hour column, saved with the
+// last upload), falling back to the "Shutdown" milestone date. Times are placed on
+// one axis in minutes from 00:00 of that first day, e.g. 27 Aug 01:00 = 1500.
 function parseHM(str) {
   const m = String(str || '').match(/^(\d{1,2}):(\d{2})/);
   if (!m) return null;
   return Number(m[1]) * 60 + Number(m[2]);
 }
 
+let lastExcelUpload = null;
+
+// { baseDate:'YYYY-MM-DD', gridStartHour } or null when no shutdown date is known.
+function shutdownFrame() {
+  if (lastExcelUpload?.baseDate) {
+    return { baseDate: lastExcelUpload.baseDate, gridStartHour: lastExcelUpload.gridStartHour || 0 };
+  }
+  const sd = currentSchedule?.shutdown;
+  if (sd?.date) {
+    const h = parseHM(sd.time);
+    return { baseDate: sd.date, gridStartHour: h === null ? 0 : Math.floor(h / 60) };
+  }
+  return null;
+}
+
+// Without a shutdown date the axis is today, and every time falls on that day.
+function frameMidnight(frame) {
+  if (frame) return new Date(`${frame.baseDate}T00:00:00`);
+  const d = new Date(); d.setHours(0, 0, 0, 0); return d;
+}
+
+// Same rule as the Excel bar grid: the grid opens at gridStartHour on day 1, so an
+// earlier start is a day-2 time; an end at or before its start runs into the next day.
+function taskSpan(task, frame = shutdownFrame()) {
+  const gridStart = (frame?.gridStartHour || 0) * 60;
+  const S = parseHM(task.start_time), E = parseHM(task.end_time);
+  const start = S === null ? null : (S < gridStart ? S + 1440 : S);
+  let end = null;
+  if (E !== null) {
+    if (start === null) end = E < gridStart ? E + 1440 : E;
+    else if (E === S) {
+      // "00:00 – 00:00": a zero or a 24 h job is ambiguous, so lean on the duration.
+      const hrs = parseFloat(task.duration);
+      end = hrs > 0 ? start + hrs * 60 : null;
+    } else {
+      end = Math.floor(start / 1440) * 1440 + E;
+      if (end <= start) end += 1440;
+    }
+  }
+  return { start, end };
+}
+
+function minutesSinceFrame(frame, at = new Date()) {
+  return (at - frameMidnight(frame)) / 60000;
+}
+
+const THAI_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+// Minutes on the frame axis → "26-ส.ค.-69", matching the Excel schedule header.
+function frameDayLabel(frame, abs) {
+  const d = frameMidnight(frame);
+  d.setDate(d.getDate() + Math.floor(abs / 1440));
+  return `${d.getDate()}-${THAI_MONTHS_SHORT[d.getMonth()]}-${String((d.getFullYear() + 543) % 100).padStart(2, '0')}`;
+}
+// "24:00" reads better than next-day "00:00" at the end of a bar, as in the Excel file.
+function frameTimeLabel(frame, abs, isEnd = false) {
+  const day = isEnd && abs % 1440 === 0 ? abs - 1 : abs;
+  const mins = isEnd && abs % 1440 === 0 ? 1440 : abs % 1440;
+  return `${frameDayLabel(frame, day)} ${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(Math.round(mins % 60)).padStart(2, '0')}`;
+}
+
 function getTimeStatus(task) {
   if (task.status === 'cancelled') return null;
-  const startMin = parseHM(task.start_time);
-  const endMin   = parseHM(task.end_time);
+  const frame = shutdownFrame();
+  const { start: startMin, end: endMin } = taskSpan(task, frame);
   if (startMin === null && endMin === null) return null;
 
-  const now = new Date();
-  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const nowMin = minutesSinceFrame(frame);
 
   if (task.progress >= 100) {
     // Finished: late only if it was still open past its end time.
@@ -1262,34 +1452,12 @@ function renderTable() {
   const clearBtn = document.getElementById('main-search-clear');
   if (clearBtn) clearBtn.classList.toggle('hidden', !searchVal);
 
-  let filtered = allTasks.filter(t => {
+  const filtered = applyColFiltersAndSort(allTasks.filter(t => {
     const matchPhase = activePhase === null
       || (activePhase === 'cancelled' ? t.status === 'cancelled' : (t.status !== 'cancelled' && t.progress === activePhase));
     const matchSearch = !searchVal || [t.id, t.tag, t.title, t.area, t.assignee, t.note, t.start_time||'', t.end_time||'', t.duration||'', cdGetValue(t, 'progress')].some(v => String(v||'').toLowerCase().includes(searchVal));
-    // Column filters
-    const matchCols = Object.entries(colFilters).every(([col, allowed]) => {
-      if (!allowed || allowed.size === 0) return true;
-      return allowed.has(cdGetValue(t, col));
-    });
-    return matchPhase && matchSearch && matchCols;
-  });
-
-  // Column sort
-  if (colSort.col) {
-    const col = colSort.col;
-    filtered = [...filtered].sort((a, b) => {
-      const av = cdGetValue(a, col);
-      const bv = cdGetValue(b, col);
-      if (col === 'progress') {
-        const na = Number.parseInt(av), nb = Number.parseInt(bv);
-        if (Number.isNaN(na) && Number.isNaN(nb)) return 0;
-        if (Number.isNaN(na)) return colSort.dir;
-        if (Number.isNaN(nb)) return -colSort.dir;
-        return (na - nb) * colSort.dir;
-      }
-      return av.localeCompare(bv, 'th') * colSort.dir;
-    });
-  }
+    return matchPhase && matchSearch;
+  }), colFilters, colSort);
 
   tbody.innerHTML = '';
   filtered.forEach(task => {
@@ -1386,6 +1554,8 @@ function renderTable() {
   });
 
   document.getElementById('showing-count').textContent = filtered.length;
+
+  if (currentMainTab === 2) renderGanttTimeline();
 }
 
 function getStageStyle(p, status) {
@@ -1396,6 +1566,260 @@ function getStageStyle(p, status) {
   if (p === 75)  return { badgeCls: 'text-primary bg-surface-container-high border border-primary/30',     stageText: '75% รอปิด Work Permit' };
   if (p === 100) return { badgeCls: 'text-tertiary bg-tertiary-container border border-tertiary/40',       stageText: '100% ปิด Work Permit เสร็จแล้ว' };
   return { badgeCls: 'text-on-surface-variant bg-surface-container', stageText: `${p}%` };
+}
+
+// ─── Gantt Timeline (Tab 2) ─────────────────────────────────────────────────────
+// Bounds are minutes on the shutdown-frame axis (see taskSpan), so a job that ends
+// at 01:00 on day 2 extends the axis past midnight instead of wrapping.
+function computeGanttBounds(tasks, frame) {
+  let minStart = Infinity, maxEnd = -Infinity;
+  tasks.forEach(t => {
+    const { start, end } = taskSpan(t, frame);
+    if (start === null) return;
+    minStart = Math.min(minStart, start);
+    maxEnd   = Math.max(maxEnd, end ?? start);
+  });
+  if (minStart === Infinity) return null;
+
+  const floorHour = Math.floor(minStart / 60);
+  const ceilHour  = Math.ceil(maxEnd / 60);
+  const spanHours = Math.max(ceilHour - floorHour, 2); // enforce a minimum 2-hour span
+
+  return { frame, startMin: floorHour * 60, endMin: floorHour * 60 + spanHours * 60, spanHours };
+}
+
+function ganttBarColor(task) {
+  if (task.status === 'cancelled') {
+    return { barCls: 'bg-outline-variant/60 text-on-surface-variant line-through', labelCls: '' };
+  }
+  const st = getTimeStatus(task);
+  if (!st) return { barCls: 'bg-outline-variant text-on-surface-variant', labelCls: '' };
+  if (st.label === 'DELAY')    return { barCls: 'bg-error text-on-error', labelCls: '' };
+  if (task.progress >= 100)    return { barCls: 'bg-tertiary text-on-tertiary', labelCls: '' };
+  if (st.label === 'รอเริ่ม')   return { barCls: 'bg-outline text-white', labelCls: '' };
+  return { barCls: 'bg-secondary text-on-secondary', labelCls: '' };
+}
+
+// Each day on the axis, clipped to the bounds: [{ startMin, endMin }] in frame minutes.
+function ganttDays(bounds) {
+  const days = [];
+  for (let d = Math.floor(bounds.startMin / 1440) * 1440; d < bounds.endMin; d += 1440) {
+    days.push({ startMin: Math.max(d, bounds.startMin), endMin: Math.min(d + 1440, bounds.endMin) });
+  }
+  return days;
+}
+
+const ganttPx = (bounds, min) => ((min - bounds.startMin) / 60) * GANTT_PX_PER_HOUR;
+
+// Two-level ruler like the Excel schedule: the date across each day, hours below it.
+function renderGanttHourHeader(bounds) {
+  const el = document.getElementById('gantt-hour-header');
+  if (!el) return;
+  el.style.width = bounds.spanHours * GANTT_PX_PER_HOUR + 'px';
+  let html = ganttDays(bounds).map(day => {
+    const left = ganttPx(bounds, day.startMin);
+    return `<div class="absolute top-0 h-5 border-l-2 border-outline-variant/70 border-b border-b-outline-variant/40 px-2 text-[10px] font-bold text-on-surface whitespace-nowrap overflow-hidden leading-5"
+                 style="left:${left}px; width:${ganttPx(bounds, day.endMin) - left}px">${frameDayLabel(bounds.frame, day.startMin)}</div>`;
+  }).join('');
+  for (let h = 0; h <= bounds.spanHours; h++) {
+    const labelMin = bounds.startMin + h * 60;
+    const hh = Math.floor((labelMin / 60) % 24).toString().padStart(2, '0');
+    const dayEdge = labelMin % 1440 === 0;
+    html += `<div class="absolute top-5 bottom-0 border-l ${dayEdge ? 'border-l-2 border-outline-variant/70' : 'border-outline-variant/30'} text-[10px] font-mono text-on-surface-variant pl-1 leading-5"
+                   style="left:${h * GANTT_PX_PER_HOUR}px">${hh}:00</div>`;
+  }
+  el.innerHTML = html;
+}
+
+function ganttBarRect(task, bounds) {
+  const { start, end } = taskSpan(task, bounds.frame);
+  const left = ganttPx(bounds, start);
+  const width = end !== null
+    ? Math.max(((end - start) / 60) * GANTT_PX_PER_HOUR, GANTT_MIN_BAR_PX)
+    : GANTT_MIN_BAR_PX;
+  return { left, width, start, end };
+}
+
+function ganttNowLeftPx(bounds) {
+  const nowMin = minutesSinceFrame(bounds.frame);
+  if (nowMin < bounds.startMin || nowMin > bounds.endMin) return null;
+  return ganttPx(bounds, nowMin);
+}
+
+function refreshGanttNowLine() {
+  if (currentMainTab !== 2) return;
+  const bounds = lastGanttBounds;
+  const line = document.getElementById('gantt-now-line');
+  const label = document.getElementById('gantt-now-label');
+  if (!bounds || !line || !label) return;
+  const leftPx = ganttNowLeftPx(bounds);
+  if (leftPx === null) {
+    line.classList.add('hidden');
+    label.classList.add('hidden');
+    return;
+  }
+  line.classList.remove('hidden');
+  label.classList.remove('hidden');
+  line.style.left = (GANTT_LEFT_COL_PX + leftPx) + 'px';
+  label.style.left = (GANTT_LEFT_COL_PX + leftPx) + 'px';
+  label.textContent = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' NOW';
+}
+setInterval(refreshGanttNowLine, 30 * 1000);
+
+function ganttMetaBlock(task) {
+  return `
+    <div class="gantt-left-col sticky left-0 z-10 bg-surface-container-lowest border-r border-outline-variant/40 text-[11px]">
+      <span class="text-on-surface-variant truncate" title="${escHtml(task.area)}">${escHtml(task.area) || '—'}</span>
+      <span class="font-mono font-bold text-secondary truncate" title="${escHtml(task.tag)}">${escHtml(task.tag) || '—'}</span>
+      <div class="flex flex-col min-w-0" title="${escHtml(task.title)}">
+        <span class="text-on-surface truncate">${escHtml(task.title)}</span>
+        <span class="text-[10px] text-on-surface-variant/70 truncate">${escHtml(task.assignee)}</span>
+      </div>
+      <div class="flex items-center gap-0.5 text-on-surface-variant whitespace-nowrap">
+        <input class="gantt-time-input" data-id="${escHtml(task.id)}" data-field="start_time" value="${escHtml(task.start_time)}"
+               placeholder="--:--" maxlength="5" title="เวลาเริ่ม (HH:MM)" ${canWrite() ? '' : 'readonly tabindex="-1"'}
+               onchange="saveGanttTime(this)" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value=this.defaultValue;this.blur();}">
+        <span class="text-[10px]">/</span>
+        <input class="gantt-time-input" data-id="${escHtml(task.id)}" data-field="end_time" value="${escHtml(task.end_time)}"
+               placeholder="--:--" maxlength="5" title="เวลาจบ (HH:MM)" ${canWrite() ? '' : 'readonly tabindex="-1"'}
+               onchange="saveGanttTime(this)" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value=this.defaultValue;this.blur();}">
+      </div>
+    </div>`;
+}
+
+// Accepts "9", "930", "0930", "9:30", "9.30" → "09:30"; "" clears; null = invalid.
+function normalizeHM(raw) {
+  const s = String(raw || '').trim().replace('.', ':');
+  if (s === '') return '';
+  let h, m;
+  const colon = s.match(/^(\d{1,2}):(\d{1,2})$/);
+  if (colon) { h = +colon[1]; m = +colon[2]; }
+  else if (/^\d{1,4}$/.test(s)) {
+    if (s.length <= 2) { h = +s; m = 0; }
+    else { h = +s.slice(0, -2); m = +s.slice(-2); }
+  } else return null;
+  if (h === 24 && m === 0) return '24:00';
+  if (h > 23 || m > 59) return null;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+function durationLabelFor(start, end) {
+  const s = parseHM(start), e0 = parseHM(end);
+  if (s === null || e0 === null) return '';
+  let mins = e0 - s;
+  if (mins <= 0) mins += 24 * 60;
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return m ? `${h} ชม. ${m} นาที` : `${h} ชม.`;
+}
+
+async function saveGanttTime(input) {
+  const task = allTasks.find(t => String(t.id) === input.dataset.id);
+  if (!task) return;
+  const value = normalizeHM(input.value);
+  if (value === null) {
+    input.classList.add('invalid');
+    showToast('รูปแบบเวลาไม่ถูกต้อง', 'กรุณาระบุเป็น HH:MM เช่น 09:30', true);
+    return;
+  }
+  input.classList.remove('invalid');
+  input.value = value;
+  if (value === (task[input.dataset.field] || '')) return;
+
+  const next = { start_time: task.start_time || '', end_time: task.end_time || '', [input.dataset.field]: value };
+  const duration = durationLabelFor(next.start_time, next.end_time) || task.duration || '';
+  try {
+    const res = await fetch(`/api/tasks/${encodeURIComponent(task.id)}/times`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...next, duration, updated_by: currentUser?.username || 'User', plant: currentPlant })
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`);
+  } catch (err) {
+    input.value = task[input.dataset.field] || '';
+    showToast('บันทึกเวลาไม่สำเร็จ', err.message, true);
+    return;
+  }
+  Object.assign(task, next, { duration });
+  showToast(`แก้ไขเวลา ${task.tag}`, `${next.start_time || '—'} / ${next.end_time || '—'}`);
+  renderTable(); // also re-renders the Gantt (bar position, colour, axis range)
+  updateKPIs();
+  loadActivity();
+}
+
+function renderGanttTimeline() {
+  const emptyEl = document.getElementById('gantt-empty');
+  const cardEl = document.getElementById('gantt-card');
+  const rangeLabel = document.getElementById('gantt-range-label');
+  const rowsEl = document.getElementById('gantt-rows');
+  const notimeSection = document.getElementById('gantt-notime-section');
+  const notimeRowsEl = document.getElementById('gantt-notime-rows');
+  if (!rowsEl) return;
+
+  const visible = applyColFiltersAndSort(allTasks, ganttColFilters, ganttColSort);
+  const frame = shutdownFrame();
+  const withStart = visible.filter(t => parseHM(t.start_time) !== null);
+  const noStart = visible.filter(t => parseHM(t.start_time) === null);
+  if (!ganttColSort.col) withStart.sort((a, b) => taskSpan(a, frame).start - taskSpan(b, frame).start);
+
+  const bounds = computeGanttBounds(withStart, frame);
+  lastGanttBounds = bounds;
+
+  const ganttFiltered = Object.keys(ganttColFilters).length > 0;
+  if (!bounds && !ganttFiltered) {
+    emptyEl.classList.remove('hidden');
+    cardEl.classList.add('hidden');
+    return;
+  }
+  emptyEl.classList.add('hidden');
+  cardEl.classList.remove('hidden');
+
+  if (!bounds) {
+    // Filters hid every timed task — keep the header so the filter can be undone.
+    document.getElementById('gantt-hour-header').innerHTML = '';
+    rowsEl.innerHTML = `<div class="sticky left-0 px-3 py-6 text-xs text-on-surface-variant italic">ไม่พบงานที่ระบุเวลาตามตัวกรอง</div>`;
+    rangeLabel.textContent = '';
+  } else {
+    renderGanttHourHeader(bounds);
+
+    const totalPx = bounds.spanHours * GANTT_PX_PER_HOUR;
+    const dayLines = ganttDays(bounds).slice(1).map(day =>
+      `<div class="absolute top-0 bottom-0 w-0.5 bg-outline-variant/60 pointer-events-none" style="left:${GANTT_LEFT_COL_PX + ganttPx(bounds, day.startMin)}px"></div>`
+    ).join('');
+    rowsEl.innerHTML = withStart.map(task => {
+      const { left, width, start, end } = ganttBarRect(task, bounds);
+      const { barCls } = ganttBarColor(task);
+      const durationLabel = task.duration ? ` (${escHtml(task.duration)})` : '';
+      const when = `${frameTimeLabel(frame, start)} – ${end === null ? '?' : frameTimeLabel(frame, end, true)}`;
+      return `
+        <div class="flex items-stretch border-b border-surface-container-high hover:bg-surface-container/40" style="height:48px">
+          ${ganttMetaBlock(task)}
+          <div class="relative flex-1" style="width:${totalPx}px; min-width:${totalPx}px">
+            <div class="gantt-bar absolute top-1/2 -translate-y-1/2 h-6 rounded-md shadow-sm flex items-center overflow-hidden ${barCls}"
+                 style="left:${left}px; width:${width}px" title="${escHtml(task.title)}${durationLabel}&#10;${when}">
+              <span class="truncate text-[10px] font-semibold px-1.5 leading-6 whitespace-nowrap">${escHtml(task.title)}${durationLabel}</span>
+            </div>
+          </div>
+        </div>`;
+    }).join('') + dayLines + `
+      <div id="gantt-now-line" class="absolute top-0 bottom-0 w-px bg-error z-10 hidden" style="left:0"></div>
+      <div id="gantt-now-label" class="absolute -top-0.5 -translate-x-1/2 text-[9px] font-mono font-bold text-error bg-surface-container-lowest px-1 rounded z-10 hidden" style="left:0">NOW</div>
+    `;
+
+    rangeLabel.textContent = `ช่วงเวลา ${frameTimeLabel(frame, bounds.startMin)} – ${frameTimeLabel(frame, bounds.endMin, true)}`;
+  }
+
+  if (noStart.length > 0) {
+    notimeSection.classList.remove('hidden');
+    notimeRowsEl.innerHTML = noStart.map(task => `
+      <div class="flex items-stretch border-b border-surface-container-high" style="height:40px">
+        ${ganttMetaBlock(task)}
+        <div class="flex-1 flex items-center px-3 text-[10px] text-on-surface-variant/60 italic">ไม่ระบุเวลาเริ่มงาน</div>
+      </div>`).join('');
+  } else {
+    notimeSection.classList.add('hidden');
+    notimeRowsEl.innerHTML = '';
+  }
+
+  refreshGanttNowLine();
 }
 
 // ─── KPIs ─────────────────────────────────────────────────────────────────────
@@ -1654,6 +2078,8 @@ function setExcelFileName(name, isError = false, uploadedAt = null) {
 async function loadLastExcelUpload() {
   const res = await fetch(`/api/upload/last?${plantQS()}`);
   const info = await res.json();
+  lastExcelUpload = info || null;
+  renderTable(); // dates of the time columns depend on the upload's shutdown date
   if (info && info.fileName) {
     setExcelFileName(info.fileName, false, info.uploadedAt);
   } else {
@@ -1678,6 +2104,7 @@ async function handleExcelUpload(e) {
     document.getElementById('upload-overlay').classList.remove('show');
 
     if (result.ok) {
+      lastExcelUpload = result.lastUpload || null;
       setExcelFileName(file.name, false, result.lastUpload?.uploadedAt);
       showToast(`นำเข้าสำเร็จ ${result.imported} รายการ`, `จากไฟล์ ${file.name} (ทั้งหมด ${result.total} แถว)`);
       await loadTasks();
@@ -1778,6 +2205,7 @@ async function loadSchedule() {
   const res = await fetch(`/api/schedule?${plantQS()}`);
   currentSchedule = await res.json();
   renderScheduleStrip();
+  if (!lastExcelUpload?.baseDate) renderTable(); // the Shutdown date places the task times
 }
 
 function renderScheduleStrip() {
@@ -1843,6 +2271,7 @@ async function saveSchedule(e) {
   if (res.ok) {
     currentSchedule = await res.json();
     renderScheduleStrip();
+    if (!lastExcelUpload?.baseDate) renderTable();
     toggleScheduleModal(false);
     showToast('บันทึกแผนงาน Shutdown สำเร็จ', 'อัปเดตข้อมูล Milestone Schedule แล้ว');
   } else {

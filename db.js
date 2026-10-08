@@ -244,6 +244,15 @@ const db = {
     return rows.length ? taskRow(rows[0]) : null;
   },
 
+  async updateTaskTimes(id, { start_time, end_time, duration }, updated_by = 'User', plant) {
+    const { rows } = await query(
+      `UPDATE shutdown_mnm_tasks SET start_time = $3, end_time = $4, duration = $5, updated_at = $6, updated_by = $7
+       WHERE plant = $1 AND id = $2 RETURNING *`,
+      [plantKey(plant), id, start_time, end_time, duration, nowTime(), updated_by]
+    );
+    return rows.length ? taskRow(rows[0]) : null;
+  },
+
   async deleteTask(id, plant) {
     const { rows } = await query(
       'DELETE FROM shutdown_mnm_tasks WHERE plant = $1 AND id = $2 RETURNING *',

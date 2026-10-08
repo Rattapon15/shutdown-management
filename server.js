@@ -283,6 +283,24 @@ app.put('/api/tasks/:id/note', requireAuth, requireWrite, ah(async (req, res) =>
   res.json({ ok: true });
 }));
 
+// HH:MM (24h, "24:00" allowed as end-of-day) or empty to clear.
+const isValidHM = v => v === '' || /^([01]\d|2[0-3]):[0-5]\d$|^24:00$/.test(v);
+
+app.put('/api/tasks/:id/times', requireAuth, requireWrite, ah(async (req, res) => {
+  const start_time = String(req.body.start_time ?? '').trim();
+  const end_time   = String(req.body.end_time ?? '').trim();
+  const duration   = String(req.body.duration ?? '').trim().slice(0, 40);
+  const { updated_by } = req.body;
+  if (!isValidHM(start_time) || !isValidHM(end_time)) {
+    return res.status(400).json({ error: 'Time must be HH:MM (00:00–24:00)' });
+  }
+  const plant = getPlant(req);
+  const task = await db.updateTaskTimes(req.params.id, { start_time, end_time, duration }, updated_by, plant);
+  if (!task) return res.status(404).json({ error: 'Task not found' });
+  await db.logActivity(task.tag, `แก้ไขเวลา ${start_time || '—'} / ${end_time || '—'}`, updated_by || 'User', plant);
+  res.json({ ok: true, task });
+}));
+
 app.delete('/api/tasks/:id', requireAuth, requireWrite, ah(async (req, res) => {
   const plant = getPlant(req);
   const task = await db.deleteTask(req.params.id, plant);
@@ -362,6 +380,28 @@ function excelTimeToHHMM(val) {
   return String(val || '').trim();
 }
 
+// ── Which day does a task fall on? ──
+// Tasks only carry a time-of-day. The template's hourly bar grid spans ~2 days:
+// one header row has the date serial at the first column of each day, the row
+// below it has each column's hour, and a task's bar is painted wherever the
+// column hour lies between its start and end. The grid opens at its first hour
+// on day 1 (04:00 on 26 Aug in BM #17), so a start before that hour is a day-2
+// time. The client places tasks with that rule, given the grid's first date and hour.
+function findGanttGridStart(rawRows, lastCol) {
+  for (let ri = 0; ri < Math.min(rawRows.length, 8); ri++) {
+    const row = rawRows[ri];
+    for (let ci = 0; ci <= lastCol && ci < row.length; ci++) {
+      if (typeof row[ci] !== 'number' || row[ci] <= 40000 || row[ci] >= 60000) continue;
+      const hour = (rawRows[ri + 1] || [])[ci];
+      return {
+        baseDate: XLSX.SSF.format('yyyy-mm-dd', Math.floor(row[ci])),
+        gridStartHour: typeof hour === 'number' && hour >= 0 && hour < 1 ? Math.round(hour * 24) : 0,
+      };
+    }
+  }
+  return null;
+}
+
 app.post('/api/upload', requireAuth, requireWrite, upload.single('file'), ah(async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
@@ -375,6 +415,7 @@ app.post('/api/upload', requireAuth, requireWrite, upload.single('file'), ah(asy
 
     const toInsert = [];
     const plant = getPlant(req);
+    let ganttGrid = null;
 
     // ── Strategy 1: Shutdown Schedule format (merged-cell, positional columns)
     // Detect: rows where col[2] is a positive integer (item number) and col[3] has text (task name)
@@ -413,6 +454,7 @@ app.post('/api/upload', requireAuth, requireWrite, upload.single('file'), ah(asy
         }
       }
       const baseDateStr = baseDateSerial !== null ? XLSX.SSF.format('yyyy-mm-dd', baseDateSerial) : '';
+      ganttGrid = findGanttGridStart(rawRows, startIdx - 1);
 
       // Carry forward area (col 0) and section (col 1) from the last non-empty row
       let lastArea = '', lastSection = '';
@@ -508,7 +550,7 @@ app.post('/api/upload', requireAuth, requireWrite, upload.single('file'), ah(asy
     const count = await db.bulkInsertTasks(toInsert, plant);
     await db.logActivity('EXCEL', `นำเข้าข้อมูลจาก Excel สำเร็จ ${count} รายการ (${req.file.originalname})`, 'System', plant);
 
-    const uploadInfo = { fileName: req.file.originalname, uploadedAt: new Date().toISOString() };
+    const uploadInfo = { fileName: req.file.originalname, uploadedAt: new Date().toISOString(), ...ganttGrid };
     await db.setLastExcelUpload(plant, uploadInfo);
 
     fs.unlink(req.file.path, () => {});
