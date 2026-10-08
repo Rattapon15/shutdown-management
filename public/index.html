@@ -100,6 +100,14 @@ tailwind.config = {
   .main-tab-btn.active { background:#ffffff; color:#1a1b22; box-shadow:0 1px 3px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.04); }
   .main-tab-btn.active .material-symbols-outlined { color:#0077b6; }
 
+  /* Task table card: rows scroll inside the card (scrollbar on its right), header stays put */
+  #tasks-scroll { max-height:calc(100vh - 160px); min-height:320px; scrollbar-gutter:stable; }
+  #tasks-scroll thead th { position:sticky; top:0; z-index:5; background:#eef0fa; box-shadow:inset 0 -1px 0 rgba(196,198,208,.6); }
+  #tasks-scroll::-webkit-scrollbar { width:10px; height:10px; }
+  #tasks-scroll::-webkit-scrollbar-track { background:#f3f3fd; }
+  #tasks-scroll::-webkit-scrollbar-thumb { background:#c4c6d0; border-radius:5px; border:2px solid #f3f3fd; }
+  #tasks-scroll::-webkit-scrollbar-thumb:hover { background:#74767f; }
+
   /* Gantt timeline (Tab 2) */
   .gantt-left-col { width:560px; min-width:560px; flex-shrink:0; display:grid; grid-template-columns:90px 100px 230px 140px; align-items:center; }
   .gantt-left-col > * { padding:0 8px; min-width:0; }
@@ -109,6 +117,17 @@ tailwind.config = {
   .gantt-time-input:focus { outline:none; border-color:#0077b6; background:#fff; box-shadow:0 0 0 1px #0077b6; }
   .gantt-time-input.invalid { border-color:#ba1a1a; box-shadow:0 0 0 1px #ba1a1a; }
   body.readonly .gantt-time-input { pointer-events:none; }
+  /* Gantt card scrolls vertically itself; horizontal scrolling goes through #gantt-hscroll,
+     which sits under the time area only (the left columns never move sideways anyway). */
+  #gantt-scroll { max-height:calc(100vh - 160px); min-height:320px; overflow-x:hidden; overflow-y:auto; scrollbar-gutter:stable; }
+  /* margin-right matches #gantt-scroll's 10px vertical scrollbar gutter so both scroll ranges line up */
+  #gantt-hscroll { margin-left:560px; margin-right:10px; overflow-x:auto; overflow-y:hidden; border-top:1px solid rgba(196,198,208,.6); background:#f3f3fd; }
+  #gantt-hscroll.hidden { display:none; }
+  #gantt-hscroll-inner { height:1px; }
+  #gantt-scroll::-webkit-scrollbar, #gantt-hscroll::-webkit-scrollbar { width:10px; height:10px; }
+  #gantt-scroll::-webkit-scrollbar-track, #gantt-hscroll::-webkit-scrollbar-track { background:#f3f3fd; }
+  #gantt-scroll::-webkit-scrollbar-thumb, #gantt-hscroll::-webkit-scrollbar-thumb { background:#c4c6d0; border-radius:5px; border:2px solid #f3f3fd; }
+  #gantt-scroll::-webkit-scrollbar-thumb:hover, #gantt-hscroll::-webkit-scrollbar-thumb:hover { background:#74767f; }
   #gantt-rows, #gantt-notime-rows {
     background-image: repeating-linear-gradient(to right, rgba(0,0,0,.06) 0, rgba(0,0,0,.06) 1px, transparent 1px, transparent 72px);
     background-position: 560px 0; /* start gridlines after .gantt-left-col */
@@ -519,7 +538,7 @@ tailwind.config = {
 
         <!-- Table -->
         <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-md flex flex-col">
-          <div class="overflow-x-auto">
+          <div class="overflow-auto" id="tasks-scroll">
             <table class="w-full text-left border-collapse" id="tasks-table">
               <thead>
                 <tr class="bg-surface-container-low text-on-surface-variant text-[10px] font-semibold uppercase tracking-wider select-none">
@@ -627,7 +646,7 @@ tailwind.config = {
     </div>
 
     <div id="gantt-card" class="bg-surface-container-lowest rounded-xl shadow-md flex flex-col overflow-hidden">
-      <div class="overflow-x-auto" id="gantt-scroll">
+      <div id="gantt-scroll">
         <div id="gantt-grid" class="min-w-max">
           <!-- header row: sticky-left label block + hour ruler -->
           <div class="flex sticky top-0 z-20 bg-surface-container-low border-b border-outline-variant/40">
@@ -650,6 +669,8 @@ tailwind.config = {
           </div>
         </div>
       </div>
+      <!-- horizontal scrollbar for the time area only (synced with #gantt-scroll) -->
+      <div id="gantt-hscroll"><div id="gantt-hscroll-inner"></div></div>
     </div>
 
   </div>
@@ -1820,7 +1841,35 @@ function renderGanttTimeline() {
   }
 
   refreshGanttNowLine();
+  syncGanttHScroll();
 }
+
+// The time-area scrollbar is a proxy: its inner width mirrors the grid's overflow
+// past the sticky left columns, and the two scroll positions are kept in step.
+function syncGanttHScroll() {
+  const scrollEl = document.getElementById('gantt-scroll');
+  const barEl = document.getElementById('gantt-hscroll');
+  if (!scrollEl || !barEl) return;
+  document.getElementById('gantt-hscroll-inner').style.width = `${Math.max(0, scrollEl.scrollWidth - GANTT_LEFT_COL_PX)}px`;
+  barEl.classList.toggle('hidden', scrollEl.scrollWidth <= scrollEl.clientWidth);
+  barEl.scrollLeft = scrollEl.scrollLeft;
+}
+
+(function initGanttScrollSync() {
+  const scrollEl = document.getElementById('gantt-scroll');
+  const barEl = document.getElementById('gantt-hscroll');
+  const follow = (from, to) => () => { if (to.scrollLeft !== from.scrollLeft) to.scrollLeft = from.scrollLeft; };
+  barEl.addEventListener('scroll', follow(barEl, scrollEl));
+  scrollEl.addEventListener('scroll', follow(scrollEl, barEl));
+  // #gantt-scroll hides its own horizontal scrollbar, so route shift+wheel / trackpad swipes to the proxy.
+  scrollEl.addEventListener('wheel', e => {
+    const dx = e.shiftKey && !e.deltaX ? e.deltaY : e.deltaX;
+    if (!dx || Math.abs(dx) < Math.abs(e.shiftKey ? 0 : e.deltaY)) return;
+    barEl.scrollLeft += dx;
+    e.preventDefault();
+  }, { passive: false });
+  window.addEventListener('resize', syncGanttHScroll);
+})();
 
 // ─── KPIs ─────────────────────────────────────────────────────────────────────
 const PIE_STAGES = [
