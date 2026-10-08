@@ -89,6 +89,11 @@ tailwind.config = {
   body.readonly [onclick*="restoreTask"],
   body.readonly [onclick*="deleteTask"] { display:none !important; }
   body.readonly [onclick*="updateProgress"] { display:block !important; pointer-events:none; cursor:default; }
+
+  /* Main content tabs (Tab 1 / Tab 2) */
+  .main-tab-btn { background:#e2e4ed; color:#44464f; }
+  .main-tab-btn:hover { background:#dcdee7; }
+  .main-tab-btn.active { background:#ff6a00; color:#ffffff; box-shadow:0 2px 8px rgba(255,106,0,.35); }
 </style>
 </head>
 <body class="bg-surface text-on-surface antialiased text-sm">
@@ -270,6 +275,16 @@ tailwind.config = {
 
 <!-- ═══════════════════════════════════════ MAIN ════════════════════════════ -->
 <main class="relative pt-16 bg-surface min-h-screen">
+
+<!-- ── Main content tabs ── -->
+<div class="px-5 pt-5 flex items-center gap-2">
+  <button id="main-tab-btn-1" onclick="setMainTab(1)"
+    class="main-tab-btn active px-5 py-2 rounded-lg text-xs font-bold tracking-wide transition-all">TAB 1</button>
+  <button id="main-tab-btn-2" onclick="setMainTab(2)"
+    class="main-tab-btn px-5 py-2 rounded-lg text-xs font-bold tracking-wide transition-all">TAB 2</button>
+</div>
+
+<div id="main-tab-content-1">
 
 <div id="view-progress">
 
@@ -491,6 +506,7 @@ tailwind.config = {
                   <th class="py-2 px-4 w-28"><div class="col-filter-hd" data-col="tag">Section <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></th>
                   <th class="py-2 pl-4 pr-1 w-24"><div class="col-filter-hd" data-col="start_time">เวลาเริ่ม / จบ <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></th>
                   <th class="py-2 pl-1 pr-4 w-14"><div class="col-filter-hd" data-col="duration">เวลารวม <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></th>
+                  <th class="py-2 px-3 w-20">สถานะเวลา<br>(ON TIME / DELAY)</th>
                   <th class="py-2 px-4 w-[300px] max-w-[300px]"><div class="col-filter-hd" data-col="title">ชื่องานหยุดซ่อมบำรุง <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></th>
                   <th class="py-2 px-4 min-w-[140px]"><div class="col-filter-hd" data-col="assignee">ผู้รับผิดชอบ / ช่าง <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></th>
                   <th class="py-2 px-4 min-w-[240px]"><div class="col-filter-hd" data-col="progress">ขั้นตอนความคืบหน้า (5-STAGE) <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></th>
@@ -569,6 +585,18 @@ tailwind.config = {
     </div>
   </div>
 </div><!-- /view-safety -->
+
+</div><!-- /main-tab-content-1 -->
+
+<div id="main-tab-content-2" class="hidden">
+  <div class="w-full px-5 py-5 flex flex-col gap-4">
+    <div class="bg-surface-container-low rounded-xl p-10 flex flex-col items-center justify-center gap-2 shadow-md text-center">
+      <span class="material-symbols-outlined text-outline" style="font-size:40px">construction</span>
+      <p class="text-sm font-semibold text-on-surface-variant">หน้านี้ยังไม่มีข้อมูล</p>
+      <p class="text-xs text-on-surface-variant/70">TAB 2 — อยู่ระหว่างการพัฒนา</p>
+    </div>
+  </div>
+</div><!-- /main-tab-content-2 -->
 
 </main>
 <!-- Safety item modal -->
@@ -1005,6 +1033,16 @@ async function setPlantTab(el) {
   await Promise.all([loadTasks(), loadActivity(), loadSchedule(), loadLastExcelUpload()]);
 }
 
+// ─── Main content tab switching (Tab 1 / Tab 2) ───────────────────────────────
+let currentMainTab = 1;
+function setMainTab(tab) {
+  currentMainTab = tab;
+  document.getElementById('main-tab-content-1').classList.toggle('hidden', tab !== 1);
+  document.getElementById('main-tab-content-2').classList.toggle('hidden', tab !== 2);
+  document.getElementById('main-tab-btn-1').classList.toggle('active', tab === 1);
+  document.getElementById('main-tab-btn-2').classList.toggle('active', tab === 2);
+}
+
 // ─── View tab switching (Progress vs Safety Activities) ───────────────────────
 function setViewTab(el, view) {
   currentView = view;
@@ -1091,6 +1129,15 @@ async function doAutoRefresh() {
 
 setInterval(doAutoRefresh, 30 * 60 * 1000);
 
+// ─── Live on-time / delay status refresh (every 30s, no full re-render) ─────
+function refreshTimeStatuses() {
+  allTasks.forEach(task => {
+    const cell = document.getElementById(`time-status-${task.id}`);
+    if (cell) cell.innerHTML = renderTimeStatusCell(task);
+  });
+}
+setInterval(refreshTimeStatuses, 30 * 1000);
+
 // ─── Fetch from API ───────────────────────────────────────────────────────────
 async function loadTasks() {
   const res = await fetch(`/api/tasks?${plantQS()}`);
@@ -1165,6 +1212,48 @@ function renderTimeCell(task) {
     </div>`;
 }
 
+// ─── Real-time on-time / delay status ───────────────────────────────────────
+// start_time / end_time are "HH:MM" strings with no date, so we compare them
+// against the current wall-clock time-of-day on this computer.
+function parseHM(str) {
+  const m = String(str || '').match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  return Number(m[1]) * 60 + Number(m[2]);
+}
+
+function getTimeStatus(task) {
+  if (task.status === 'cancelled') return null;
+  const startMin = parseHM(task.start_time);
+  const endMin   = parseHM(task.end_time);
+  if (startMin === null && endMin === null) return null;
+
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+
+  if (task.progress >= 100) {
+    // Finished: late only if it was still open past its end time.
+    if (endMin !== null && nowMin > endMin) {
+      return { label: 'DELAY', cls: 'text-error bg-error-container border border-error/40' };
+    }
+    return { label: 'ON TIME', cls: 'text-tertiary bg-tertiary-container border border-tertiary/40' };
+  }
+
+  // Still in progress / not started: late if past the end time already.
+  if (endMin !== null && nowMin > endMin) {
+    return { label: 'DELAY', cls: 'text-error bg-error-container border border-error/40' };
+  }
+  if (startMin !== null && nowMin < startMin) {
+    return { label: 'รอเริ่ม', cls: 'text-on-surface-variant bg-surface-container border border-outline-variant/40' };
+  }
+  return { label: 'ON TIME', cls: 'text-secondary bg-secondary-container/30 border border-secondary/40' };
+}
+
+function renderTimeStatusCell(task) {
+  const st = getTimeStatus(task);
+  if (!st) return `<span class="font-mono text-[10px] text-on-surface-variant/40">—</span>`;
+  return `<span class="font-mono text-[10px] px-2 py-0.5 rounded ${st.cls} font-semibold whitespace-nowrap">${st.label}</span>`;
+}
+
 // ─── Render Table ─────────────────────────────────────────────────────────────
 function renderTable() {
   const tbody = document.getElementById('task-tbody');
@@ -1228,6 +1317,9 @@ function renderTable() {
       </td>
       <td class="py-3 pl-1 pr-4 align-top">
         <span class="font-mono text-xs text-on-surface-variant whitespace-nowrap">${escHtml(task.duration) || '—'}</span>
+      </td>
+      <td class="py-3 px-3 align-top" id="time-status-${task.id}">
+        ${renderTimeStatusCell(task)}
       </td>
       <td class="py-3 px-4 align-top max-w-[300px]">
         <div class="flex flex-col">
