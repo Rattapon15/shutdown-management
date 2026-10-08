@@ -9,6 +9,8 @@ const PLANTS = ['SKIC BM1', 'SKIC BM3', 'SKIC BM17', 'SKIC BM16'];
 const SCHEDULE_MILESTONES = ['shutdown', 'repair_done', 'warm_stream', 'function_test', 'startup', 'on_reel'];
 const SAFETY_CATEGORIES = ['power_outage', 'site_prep', 'high_risk'];
 
+const USER_ROLES = ['admin', 'user'];
+
 const ACTIVITY_KEEP = 200; // rows retained per plant
 
 function hashPassword(password, salt) {
@@ -81,6 +83,7 @@ async function init() {
 const db = {
   PLANTS,
   DEFAULT_PLANT,
+  USER_ROLES,
   SCHEDULE_MILESTONES,
   SAFETY_CATEGORIES,
   init,
@@ -319,6 +322,8 @@ const db = {
     );
     if (!rows.length) return null;
     const user = rows[0];
+    // Entra-only accounts have no local password to check against.
+    if (!user.hash || !user.salt) return null;
 
     const expected = Buffer.from(user.hash, 'hex');
     const actual = crypto.scryptSync(password, user.salt, 64);
@@ -337,12 +342,70 @@ const db = {
 
   async listUsers() {
     const { rows } = await query(
-      'SELECT username, role, created_at FROM shutdown_mnm_users ORDER BY created_at'
+      'SELECT username, role, email, entra_oid, created_at FROM shutdown_mnm_users ORDER BY created_at'
     );
-    return rows.map(r => ({ username: r.username, role: r.role, created_at: iso(r.created_at) }));
+    return rows.map(r => ({
+      username: r.username, role: r.role, email: r.email,
+      auth: r.entra_oid ? 'entra' : 'local', created_at: iso(r.created_at),
+    }));
+  },
+
+  // Looks the user up by Entra object id; first sign-in creates a read-only
+  // User. Never links to an existing local account by name — that would let
+  // anyone whose email matches a local username take it over.
+  async findOrCreateEntraUser({ oid, username, email, name }) {
+    const touch = async () => {
+      const { rows } = await query(
+        'SELECT username, role, last_login FROM shutdown_mnm_users WHERE entra_oid = $1', [oid]
+      );
+      if (!rows.length) return null;
+      await query(
+        'UPDATE shutdown_mnm_users SET last_login = now(), email = $2, display_name = $3 WHERE entra_oid = $1',
+        [oid, email, name]
+      );
+      return { username: rows[0].username, role: rows[0].role, last_login: iso(rows[0].last_login) };
+    };
+
+    const existing = await touch();
+    if (existing) return existing;
+    try {
+      await query(
+        `INSERT INTO shutdown_mnm_users (username, role, entra_oid, email, display_name, last_login)
+         VALUES ($1, 'user', $2, $3, $4, now())`,
+        [username, oid, email, name]
+      );
+      return { username, role: 'user', last_login: null };
+    } catch (err) {
+      if (err.code !== '23505') throw err;
+      // Lost a race with a concurrent first sign-in of the same oid, or the name is taken.
+      const raced = await touch();
+      if (raced) return raced;
+      throw new Error('This account name is already used by another user', { cause: err });
+    }
+  },
+
+  async setUserRole(username, role) {
+    if (!USER_ROLES.includes(role)) throw new Error('Invalid role');
+    await withTx(async client => {
+      const { rows } = await client.query(
+        'SELECT role FROM shutdown_mnm_users WHERE username = $1 FOR UPDATE', [username]
+      );
+      if (!rows.length) throw new Error('User not found');
+      if (rows[0].role === 'admin' && role !== 'admin') {
+        const { rows: [c] } = await client.query(
+          `SELECT count(*)::int AS n FROM shutdown_mnm_users WHERE role = 'admin' AND username <> $1`,
+          [username]
+        );
+        if (c.n === 0) throw new Error('Cannot demote the last admin');
+      }
+      await client.query('UPDATE shutdown_mnm_users SET role = $2 WHERE username = $1', [username, role]);
+      // Live sessions carry a copy of the role; keep them in step.
+      await client.query('UPDATE shutdown_mnm_sessions SET role = $2 WHERE username = $1', [username, role]);
+    });
   },
 
   async createUser({ username, password, role = 'user' }) {
+    if (!USER_ROLES.includes(role)) throw new Error('Invalid role');
     const salt = crypto.randomBytes(16).toString('hex');
     try {
       await query(
@@ -350,7 +413,7 @@ const db = {
         [username, role, salt, hashPassword(password, salt)]
       );
     } catch (err) {
-      if (err.code === '23505') throw new Error('Username already exists');
+      if (err.code === '23505') throw new Error('Username already exists', { cause: err });
       throw err;
     }
     return { username, role };

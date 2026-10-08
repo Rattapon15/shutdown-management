@@ -9,7 +9,19 @@ COPY package.json package-lock.json ./
 # anything only needed for local development.
 RUN npm ci --omit=dev && npm cache clean --force
 
-# ── Stage 2: runtime ──────────────────────────────────────────────────────────
+# ── Stage 2: browser bundle ───────────────────────────────────────────────────
+# Compiles src/auth.ts (MSAL sign-in) to public/auth.js. Needs dev dependencies,
+# so it runs in its own stage and only the output reaches the runtime image.
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY tsconfig.json eslint.config.mjs ./
+COPY src ./src
+COPY --from=build /app/public ./public
+RUN npm run typecheck && npm run build
+
+# ── Stage 3: runtime ──────────────────────────────────────────────────────────
 FROM node:20-alpine AS runtime
 WORKDIR /app
 
@@ -25,7 +37,7 @@ COPY --from=deps /app/node_modules ./node_modules
 # Application code — the frontend is static HTML in public/, served by Express,
 # so backend and frontend ship as one artifact with no separate build step.
 COPY package.json ./
-COPY server.js db.js pool.js migrate.js schema.sql ./
+COPY server.js db.js pool.js security.js entra.js migrate.js schema.sql ./
 COPY public ./public
 
 # Excel uploads are parsed and deleted within the request; /tmp is the only

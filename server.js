@@ -7,6 +7,8 @@ const fs      = require('fs');
 const os      = require('os');
 const crypto  = require('crypto');
 const db      = require('./db');
+const { sign, unsign } = require('./security');
+const entra   = require('./entra');
 const { pool } = require('./pool');
 
 const app  = express();
@@ -18,6 +20,12 @@ app.set('trust proxy', true); // Cloud Run terminates TLS upstream
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Entra redirects back here; the SPA's MSAL code finishes the sign-in on this page.
+app.get('/oauth2/callback', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Wraps an async route so a rejected promise becomes a 500 instead of an
 // unhandled rejection that takes the process down.
 const ah = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
@@ -28,9 +36,9 @@ const ah = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(n
 const SESSION_TTL_HOURS = Number(process.env.SESSION_TTL_HOURS || 12);
 const SECURE_COOKIES = process.env.NODE_ENV === 'production';
 
-function cookieAttrs(maxAge) {
+function cookieAttrs(maxAge, cookiePath = '/') {
   return [
-    'HttpOnly', 'Path=/', 'SameSite=Lax',
+    'HttpOnly', `Path=${cookiePath}`, 'SameSite=Lax',
     SECURE_COOKIES ? 'Secure' : null,
     maxAge !== undefined ? `Max-Age=${maxAge}` : null,
   ].filter(Boolean).join('; ');
@@ -48,14 +56,29 @@ function parseCookies(req) {
   return cookies;
 }
 
+// The sid cookie is "<token>.<hmac>"; the signature is checked before the
+// database is touched, so forged or garbage cookies cost nothing.
+function sessionToken(req) {
+  const signed = parseCookies(req).sid;
+  return signed ? unsign(signed) : null;
+}
+
 const requireAuth = ah(async (req, res, next) => {
-  const token = parseCookies(req).sid;
+  const token = sessionToken(req);
   if (!token) return res.status(401).json({ error: 'Not authenticated' });
   const session = await db.getSession(token);
   if (!session) return res.status(401).json({ error: 'Not authenticated' });
   req.user = session;
   next();
 });
+
+// Two roles: 'admin' can edit; 'user' (the default, incl. new Microsoft sign-ins) is read-only.
+function requireWrite(req, res, next) {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Read-only account — ask an admin for edit access' });
+  }
+  next();
+}
 
 function requireAdmin(req, res, next) {
   if (!req.user || req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
@@ -69,7 +92,7 @@ if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 const storage = multer.diskStorage({
   destination: uploadsDir,
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/[^\w.\-]/g, '_'))
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/[^\w.-]/g, '_'))
 });
 const upload = multer({
   storage,
@@ -98,19 +121,72 @@ app.get('/api/ready', ah(async (req, res) => {
 }));
 
 // ─── Auth routes ──────────────────────────────────────────────────────────────
-app.post('/api/login', ah(async (req, res) => {
+// Username/password sign-in is switched off by default: everyone signs in with
+// Microsoft. Set ALLOW_LOCAL_LOGIN=true to bring it (and local-user creation) back.
+const ALLOW_LOCAL_LOGIN = process.env.ALLOW_LOCAL_LOGIN === 'true';
+const requireLocalLogin = (req, res, next) => {
+  if (!ALLOW_LOCAL_LOGIN) return res.status(403).json({ error: 'Password sign-in is disabled — use Microsoft sign-in' });
+  next();
+};
+
+app.post('/api/login', requireLocalLogin, ah(async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
   const user = await db.verifyLogin(username, password);
   if (!user) return res.status(401).json({ error: 'Invalid username or password' });
   const token = crypto.randomBytes(24).toString('hex');
   await db.createSession(token, user.username, user.role, SESSION_TTL_HOURS);
-  res.setHeader('Set-Cookie', `sid=${token}; ${cookieAttrs(SESSION_TTL_HOURS * 3600)}`);
+  res.setHeader('Set-Cookie', `sid=${sign(token)}; ${cookieAttrs(SESSION_TTL_HOURS * 3600)}`);
+  res.json({ ok: true, username: user.username, role: user.role, last_login: user.last_login });
+}));
+
+// ─── Microsoft Entra ID ───────────────────────────────────────────────────────
+app.get('/api/auth/config', (req, res) => {
+  res.json({ ...entra.publicConfig, localLogin: ALLOW_LOCAL_LOGIN });
+});
+
+// Issues the state + nonce for one sign-in attempt and remembers them in a signed
+// cookie. The browser passes both to MSAL, so they come back inside the redirect.
+app.post('/api/auth/start', (req, res) => {
+  const tx = entra.startTransaction();
+  res.setHeader('Set-Cookie', `${entra.TX_COOKIE}=${tx.cookieValue}; ${cookieAttrs(tx.maxAge, '/api/auth')}`);
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ state: tx.state, nonce: tx.nonce });
+});
+
+app.post('/api/auth/entra', ah(async (req, res) => {
+  const txCookie = parseCookies(req)[entra.TX_COOKIE];
+  const clearTx = `${entra.TX_COOKIE}=; ${cookieAttrs(0, '/api/auth')}`;
+  let identity;
+  try {
+    identity = await entra.verifyCallback(req.body || {}, txCookie);
+  } catch (err) {
+    if (!(err instanceof entra.AuthError)) throw err;
+    console.warn('[entra] rejected sign-in:', err.message);
+    res.setHeader('Set-Cookie', clearTx);
+    return res.status(401).json({ error: err.message });
+  }
+
+  let user;
+  try {
+    user = await db.findOrCreateEntraUser(identity);
+  } catch (err) {
+    res.setHeader('Set-Cookie', clearTx);
+    return res.status(409).json({ error: err.message });
+  }
+
+  const token = crypto.randomBytes(24).toString('hex');
+  await db.createSession(token, user.username, user.role, SESSION_TTL_HOURS);
+  // One response, two cookies: start the session and burn the single-use transaction.
+  res.setHeader('Set-Cookie', [
+    `sid=${sign(token)}; ${cookieAttrs(SESSION_TTL_HOURS * 3600)}`,
+    clearTx,
+  ]);
   res.json({ ok: true, username: user.username, role: user.role, last_login: user.last_login });
 }));
 
 app.post('/api/logout', ah(async (req, res) => {
-  const token = parseCookies(req).sid;
+  const token = sessionToken(req);
   if (token) await db.deleteSession(token);
   res.setHeader('Set-Cookie', `sid=; ${cookieAttrs(0)}`);
   res.json({ ok: true });
@@ -124,13 +200,25 @@ app.get('/api/users', requireAuth, requireAdmin, ah(async (req, res) => {
   res.json(await db.listUsers());
 }));
 
-app.post('/api/users', requireAuth, requireAdmin, ah(async (req, res) => {
+app.post('/api/users', requireAuth, requireAdmin, requireLocalLogin, ah(async (req, res) => {
   const { username, password, role } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
   try {
-    const user = await db.createUser({ username, password, role: role === 'admin' ? 'admin' : 'user' });
+    const user = await db.createUser({ username, password, role: db.USER_ROLES.includes(role) ? role : 'user' });
     await db.logActivity('SYSTEM', `เพิ่มผู้ใช้งานใหม่: ${username} (${user.role})`, req.user.username);
     res.json({ ok: true, username: user.username, role: user.role });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}));
+
+app.put('/api/users/:username/role', requireAuth, requireAdmin, ah(async (req, res) => {
+  const { role } = req.body;
+  if (!db.USER_ROLES.includes(role)) return res.status(400).json({ error: 'Invalid role' });
+  try {
+    await db.setUserRole(req.params.username, role);
+    await db.logActivity('SYSTEM', `เปลี่ยนสิทธิ์ผู้ใช้งาน: ${req.params.username} → ${role}`, req.user.username);
+    res.json({ ok: true });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -157,7 +245,7 @@ app.get('/api/tasks', requireAuth, ah(async (req, res) => {
   res.json(await db.getTasks(getPlant(req)));
 }));
 
-app.post('/api/tasks', requireAuth, ah(async (req, res) => {
+app.post('/api/tasks', requireAuth, requireWrite, ah(async (req, res) => {
   const { tag, title, area, assignee, progress, note, start_time, end_time, updated_by } = req.body;
   const plant = getPlant(req);
   if (!tag || !title || !area || !assignee) return res.status(400).json({ error: 'Missing required fields' });
@@ -166,7 +254,7 @@ app.post('/api/tasks', requireAuth, ah(async (req, res) => {
   res.json({ id: task.id, tag: task.tag });
 }));
 
-app.put('/api/tasks/:id/progress', requireAuth, ah(async (req, res) => {
+app.put('/api/tasks/:id/progress', requireAuth, requireWrite, ah(async (req, res) => {
   const { progress, updated_by } = req.body;
   const plant = getPlant(req);
   const labels = { 0:'ยังไม่เปิด Permit', 25:'เปิด Permit แล้ว', 50:'อยู่ระหว่างทำงาน', 75:'รอปิด Permit', 100:'ปิด Permit สมบูรณ์' };
@@ -176,7 +264,7 @@ app.put('/api/tasks/:id/progress', requireAuth, ah(async (req, res) => {
   res.json({ ok: true });
 }));
 
-app.put('/api/tasks/:id/status', requireAuth, ah(async (req, res) => {
+app.put('/api/tasks/:id/status', requireAuth, requireWrite, ah(async (req, res) => {
   const { status, updated_by } = req.body;
   const plant = getPlant(req);
   if (!['active', 'cancelled'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
@@ -186,7 +274,7 @@ app.put('/api/tasks/:id/status', requireAuth, ah(async (req, res) => {
   res.json({ ok: true });
 }));
 
-app.put('/api/tasks/:id/note', requireAuth, ah(async (req, res) => {
+app.put('/api/tasks/:id/note', requireAuth, requireWrite, ah(async (req, res) => {
   const { note, updated_by } = req.body;
   const plant = getPlant(req);
   const task = await db.updateTaskNote(req.params.id, note, updated_by, plant);
@@ -195,7 +283,7 @@ app.put('/api/tasks/:id/note', requireAuth, ah(async (req, res) => {
   res.json({ ok: true });
 }));
 
-app.delete('/api/tasks/:id', requireAuth, ah(async (req, res) => {
+app.delete('/api/tasks/:id', requireAuth, requireWrite, ah(async (req, res) => {
   const plant = getPlant(req);
   const task = await db.deleteTask(req.params.id, plant);
   if (!task) return res.status(404).json({ error: 'Task not found' });
@@ -203,7 +291,7 @@ app.delete('/api/tasks/:id', requireAuth, ah(async (req, res) => {
   res.json({ ok: true });
 }));
 
-app.delete('/api/tasks', requireAuth, ah(async (req, res) => {
+app.delete('/api/tasks', requireAuth, requireWrite, ah(async (req, res) => {
   const plant = getPlant(req);
   const count = await db.clearAllTasks(plant);
   const safetyCount = await db.clearAllSafetyActivities(plant);
@@ -225,7 +313,7 @@ app.get('/api/schedule', requireAuth, ah(async (req, res) => {
   res.json(await db.getSchedule(getPlant(req)));
 }));
 
-app.put('/api/schedule', requireAuth, ah(async (req, res) => {
+app.put('/api/schedule', requireAuth, requireWrite, ah(async (req, res) => {
   const plant = getPlant(req);
   const schedule = await db.saveSchedule(req.body.schedule, plant);
   await db.logActivity('SYSTEM', 'บันทึกแผนงาน Shutdown (Milestone Schedule)', req.user?.username || 'User', plant);
@@ -237,7 +325,7 @@ app.get('/api/safety', requireAuth, ah(async (req, res) => {
   res.json(await db.getSafetyActivities(getPlant(req)));
 }));
 
-app.post('/api/safety/:category', requireAuth, ah(async (req, res) => {
+app.post('/api/safety/:category', requireAuth, requireWrite, ah(async (req, res) => {
   if (!db.SAFETY_CATEGORIES.includes(req.params.category)) return res.status(400).json({ error: 'Invalid category' });
   const plant = getPlant(req);
   const item = await db.createSafetyActivity(req.params.category, req.body, plant);
@@ -245,7 +333,7 @@ app.post('/api/safety/:category', requireAuth, ah(async (req, res) => {
   res.json(item);
 }));
 
-app.put('/api/safety/:category/:id', requireAuth, ah(async (req, res) => {
+app.put('/api/safety/:category/:id', requireAuth, requireWrite, ah(async (req, res) => {
   if (!db.SAFETY_CATEGORIES.includes(req.params.category)) return res.status(400).json({ error: 'Invalid category' });
   const plant = getPlant(req);
   const item = await db.updateSafetyActivity(req.params.category, req.params.id, req.body, plant);
@@ -254,7 +342,7 @@ app.put('/api/safety/:category/:id', requireAuth, ah(async (req, res) => {
   res.json(item);
 }));
 
-app.delete('/api/safety/:category/:id', requireAuth, ah(async (req, res) => {
+app.delete('/api/safety/:category/:id', requireAuth, requireWrite, ah(async (req, res) => {
   if (!db.SAFETY_CATEGORIES.includes(req.params.category)) return res.status(400).json({ error: 'Invalid category' });
   const plant = getPlant(req);
   const item = await db.deleteSafetyActivity(req.params.category, req.params.id, plant);
@@ -274,7 +362,7 @@ function excelTimeToHHMM(val) {
   return String(val || '').trim();
 }
 
-app.post('/api/upload', requireAuth, upload.single('file'), ah(async (req, res) => {
+app.post('/api/upload', requireAuth, requireWrite, upload.single('file'), ah(async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
   try {

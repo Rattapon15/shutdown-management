@@ -9,6 +9,10 @@ node_modules/
 data.json
 data.json.backup-*
 
+# Built from src/auth.ts by `npm run build`
+public/auth.js
+public/auth.js.map
+
 # Runtime artifacts
 uploads/
 server.log

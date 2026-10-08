@@ -1,4 +1,6 @@
 node_modules
+public/auth.js
+public/auth.js.map
 npm-debug.log*
 
 # Secrets — supplied as Cloud Run env vars / Secret Manager, never baked in.

@@ -87,6 +87,21 @@ CREATE TABLE IF NOT EXISTS ai_project.shutdown_mnm_safety (
 CREATE INDEX IF NOT EXISTS shutdown_mnm_safety_plant_cat_idx
   ON ai_project.shutdown_mnm_safety (plant, category, seq);
 
+-- Microsoft Entra ID sign-in: these users have no local password, so salt/hash
+-- become optional. entra_oid (the stable object id claim) is the identity key;
+-- username is just the display handle (the account's email / UPN).
+-- Roles: 'admin' (can edit) | 'user' (read-only, default for new Entra sign-ins).
+-- The short-lived 'employee' role was folded into 'user'.
+UPDATE ai_project.shutdown_mnm_users SET role = 'user' WHERE role = 'employee';
+UPDATE ai_project.shutdown_mnm_sessions SET role = 'user' WHERE role = 'employee';
+ALTER TABLE ai_project.shutdown_mnm_users ALTER COLUMN salt DROP NOT NULL;
+ALTER TABLE ai_project.shutdown_mnm_users ALTER COLUMN hash DROP NOT NULL;
+ALTER TABLE ai_project.shutdown_mnm_users ADD COLUMN IF NOT EXISTS entra_oid     TEXT;
+ALTER TABLE ai_project.shutdown_mnm_users ADD COLUMN IF NOT EXISTS email         TEXT;
+ALTER TABLE ai_project.shutdown_mnm_users ADD COLUMN IF NOT EXISTS display_name  TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS shutdown_mnm_users_entra_oid_idx
+  ON ai_project.shutdown_mnm_users (entra_oid) WHERE entra_oid IS NOT NULL;
+
 -- Login sessions live in the database rather than process memory so that more
 -- than one Cloud Run instance can serve the same signed-in user.
 CREATE TABLE IF NOT EXISTS ai_project.shutdown_mnm_sessions (
