@@ -18,7 +18,7 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY tsconfig.json eslint.config.mjs ./
 COPY src ./src
-COPY --from=build /app/public ./public
+COPY public ./public
 RUN npm run typecheck && npm run build
 
 # ── Stage 3: runtime ──────────────────────────────────────────────────────────
@@ -38,7 +38,7 @@ COPY --from=deps /app/node_modules ./node_modules
 # so backend and frontend ship as one artifact with no separate build step.
 COPY package.json ./
 COPY server.js db.js pool.js security.js entra.js migrate.js schema.sql ./
-COPY public ./public
+COPY --from=build /app/public ./public
 
 # Excel uploads are parsed and deleted within the request; /tmp is the only
 # writable path on Cloud Run.
