@@ -1383,7 +1383,7 @@ function renderOverall(data) {
       const inMonth = entries.filter(e => Number(e.start_date.slice(5, 7)) === i + 1);
       return `<td>${inMonth.length
         ? `<div class="flex flex-col items-center gap-2">${inMonth.map(overallCell).join('')}</div>`
-        : '<div class="ov-running">-<br>RUNNING</div>'}</td>`;
+        : '<div class="ov-running">-<br>NO MSD</div>'}</td>`;
     }).join('');
     return `<tr>
       <td>
