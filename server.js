@@ -311,6 +311,7 @@ app.delete('/api/tasks/:id', requireAuth, requireWrite, ah(async (req, res) => {
 
 app.delete('/api/tasks', requireAuth, requireWrite, ah(async (req, res) => {
   const plant = getPlant(req);
+  await recordShutdown(plant, req.user?.username);
   const count = await db.clearAllTasks(plant);
   const safetyCount = await db.clearAllSafetyActivities(plant);
   await db.logActivity('SYSTEM', `ล้างข้อมูลตารางงานทั้งหมด (${count} รายการ) และ Safety Activities (${safetyCount} รายการ)`, req.user?.username || 'User', plant);
@@ -352,6 +353,70 @@ app.put('/api/shutdown/range', requireAuth, requireWrite, ah(async (req, res) =>
   }
   await db.logActivity('SYSTEM', action, req.user?.username || 'User', plant);
   res.json(result);
+}));
+
+// ─── Shutdown history / Overall Plant ─────────────────────────────────────────
+// Safety net before a clear or a new Excel upload: keeps the current shutdown in
+// history without resetting anything. It must never block those actions (e.g.
+// before `npm run migrate:schema` has created shutdown_mnm_history), so failures
+// are only logged.
+async function recordShutdown(plant, actor) {
+  try { await db.closeShutdown(plant, actor || 'System'); }
+  catch (err) { console.error('[history record]', plant, '-', err.message); }
+}
+
+// "Close shutdown": saves the shutdown to history, then empties the plant
+// (tasks, safety items, milestones, Excel frame) for the next one.
+app.post('/api/shutdown/close', requireAuth, requireWrite, ah(async (req, res) => {
+  const plant = getPlant(req);
+  const actor = req.user?.username || 'User';
+  const rec = await db.closeShutdown(plant, actor, { reset: true });
+  if (!rec) return res.status(400).json({ error: 'ไม่มีข้อมูล Shutdown ให้ปิด (ยังไม่มีรายการงาน หรือยังไม่ได้กำหนดวันที่)' });
+  const pct = rec.total ? (rec.done / rec.total * 100).toFixed(1) : '0.0';
+  await db.logActivity('SYSTEM', `ปิดงาน Shutdown ${rec.start_date} และบันทึก History (${rec.done}/${rec.total} งาน, ${pct}%)`, actor, plant);
+  res.json(rec);
+}));
+
+app.get('/api/history', requireAuth, ah(async (req, res) => {
+  const plant = db.PLANTS.includes(req.query.plant) ? req.query.plant : undefined;
+  const y = Number(req.query.year);
+  const year = Number.isInteger(y) && y >= 2000 && y <= 2100 ? y : undefined;
+  res.json(await db.listHistory({ plant, year }));
+}));
+
+app.get('/api/history/:id', requireAuth, ah(async (req, res) => {
+  const id = Number(req.params.id);
+  const rec = Number.isSafeInteger(id) && id > 0 ? await db.getHistory(id) : null;
+  if (!rec) return res.status(404).json({ error: 'History not found' });
+  res.json(rec);
+}));
+
+app.delete('/api/history/:id', requireAuth, requireWrite, ah(async (req, res) => {
+  const id = Number(req.params.id);
+  const rec = Number.isSafeInteger(id) && id > 0 ? await db.deleteHistory(id) : null;
+  if (!rec) return res.status(404).json({ error: 'History not found' });
+  await db.logActivity('SYSTEM', `ลบ History Shutdown ${rec.start_date}`, req.user?.username || 'User', rec.plant);
+  res.json({ ok: true });
+}));
+
+app.get('/api/overall', requireAuth, ah(async (req, res) => {
+  const y = Number(req.query.year);
+  const year = Number.isInteger(y) && y >= 2000 && y <= 2100 ? y : new Date().getFullYear();
+  let recorded = [];
+  try { recorded = await db.listHistory({ year }); }
+  catch (err) { console.error('[history read]', err.message); }
+  const plants = await Promise.all(db.PLANTS.map(async plant => {
+    const snap = await db.getShutdownSnapshot(plant);
+    const live = snap?.total && { plant, start_date: snap.start_date, end_date: snap.end_date,
+      total: snap.total, done: snap.done, touched: snap.touched };
+    const entries = recorded
+      .filter(r => r.plant === plant && r.start_date !== live?.start_date)
+      .map(r => ({ ...r, live: false }));
+    if (live && live.start_date.startsWith(`${year}-`)) entries.push({ ...live, live: true });
+    entries.sort((a, b) => a.start_date.localeCompare(b.start_date));
+    return { plant, entries };
+  }));
+  res.json({ year, plants });
 }));
 
 // ─── Activity ─────────────────────────────────────────────────────────────────
@@ -492,16 +557,24 @@ app.post('/api/upload', requireAuth, requireWrite, upload.single('file'), ah(asy
       // Carry forward area (col 0) and section (col 1) from the last non-empty row
       let lastArea = '', lastSection = '';
       const powerOutageRows = [];
+      // The power-outage section is named differently per plant ("ตัดไฟ" in BM #17,
+      // "ตัดระบบไฟฟ้า" in BM #1) but never "ตัดลม" (air). Its rows have no item
+      // number and a blank section cell, so it ends at the first blank row or the
+      // next area/section — otherwise the summary rows below it would be swept in.
+      const POWER_SECTION = /^ตัด.*ไฟ/;
+      let inPower = false;
       for (const raw of rawRows) {
         const area    = String(raw[0] || '').trim();
         const section = String(raw[1] || '').trim();
         if (area)    lastArea    = area;
         if (section) lastSection = section;
 
-        // The "ตัดไฟ" (power outage) section has no item number — capture its rows
-        // separately so they can seed the "แผนการดับไฟ" safety-activity card.
+        // Power-outage rows are captured separately so they can seed the
+        // "แผนการดับไฟ" safety-activity card.
         const title = String(raw[3] || '').trim();
-        if (lastSection === 'ตัดไฟ' && title && title !== '-') {
+        if (section) inPower = POWER_SECTION.test(section);
+        else if (area || !title) inPower = false;
+        if (inPower && title && title !== '-') {
           const start_time = (raw[startIdx] !== '' && raw[startIdx] !== undefined) ? excelTimeToHHMM(raw[startIdx]) : '';
           const end_time   = (raw[endIdx] !== '' && raw[endIdx] !== undefined) ? excelTimeToHHMM(raw[endIdx]) : '';
           const assignee   = String(raw[assigneeIdx] || '').trim();
@@ -580,6 +653,7 @@ app.post('/api/upload', requireAuth, requireWrite, upload.single('file'), ah(asy
       }
     }
 
+    if (toInsert.length) await recordShutdown(plant);
     const count = await db.bulkInsertTasks(toInsert, plant);
     await db.logActivity('EXCEL', `นำเข้าข้อมูลจาก Excel สำเร็จ ${count} รายการ (${req.file.originalname})`, 'System', plant);
 

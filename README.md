@@ -59,6 +59,7 @@ carries a `shutdown_mnm_` prefix.
 | `shutdown_mnm_schedule`    | Six milestones per plant                           |
 | `shutdown_mnm_safety`      | Safety activities (`SAFE-nnn`) in three categories |
 | `shutdown_mnm_sessions`    | Login sessions, shared across instances            |
+| `shutdown_mnm_history`     | Closed shutdowns: counts + tasks/safety/milestones |
 
 Schema lives in [schema.sql](schema.sql) and is idempotent (`CREATE TABLE IF NOT EXISTS`).
 

@@ -113,3 +113,28 @@ CREATE TABLE IF NOT EXISTS ai_project.shutdown_mnm_sessions (
 );
 CREATE INDEX IF NOT EXISTS shutdown_mnm_sessions_expires_idx
   ON ai_project.shutdown_mnm_sessions (expires_at);
+
+-- Closed shutdowns, kept for the History view and the Overall Plant year table.
+-- "Close shutdown" (or a clear / new Excel upload, as a safety net) copies the
+-- plant's tasks, safety items and milestones here before they are reset, so the
+-- next shutdown starts empty. One row per (plant, start_date): closing the same
+-- shutdown again overwrites its record.
+CREATE TABLE IF NOT EXISTS ai_project.shutdown_mnm_history (
+  id          BIGSERIAL PRIMARY KEY,
+  plant       TEXT    NOT NULL REFERENCES ai_project.shutdown_mnm_plants(name) ON DELETE CASCADE,
+  start_date  TEXT    NOT NULL,              -- YYYY-MM-DD
+  end_date    TEXT    NOT NULL DEFAULT '',   -- YYYY-MM-DD
+  total       INTEGER NOT NULL DEFAULT 0,
+  done        INTEGER NOT NULL DEFAULT 0,
+  cancelled   INTEGER NOT NULL DEFAULT 0,
+  touched     INTEGER NOT NULL DEFAULT 0,    -- tasks moved past 0% or cancelled
+  file_name   TEXT    NOT NULL DEFAULT '',
+  schedule    JSONB   NOT NULL DEFAULT '{}'::jsonb,
+  tasks       JSONB   NOT NULL DEFAULT '[]'::jsonb,
+  safety      JSONB   NOT NULL DEFAULT '{}'::jsonb,
+  closed_by   TEXT    NOT NULL DEFAULT '',
+  closed_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (plant, start_date)
+);
+CREATE INDEX IF NOT EXISTS shutdown_mnm_history_start_idx
+  ON ai_project.shutdown_mnm_history (start_date);

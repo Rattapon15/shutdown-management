@@ -81,6 +81,8 @@ tailwind.config = {
   body.readonly [onclick*="excel-file-input"],
   body.readonly [onclick*="toggleModal(true)"],
   body.readonly [onclick*="clearAllTasks"],
+  body.readonly [onclick*="closeShutdown"],
+  body.readonly [onclick*="deleteHistory"],
   body.readonly [onclick*="openSafetyModal"],
   body.readonly [onclick*="deleteSafetyItem"],
   body.readonly [onclick*="updateProgress"],
@@ -92,6 +94,24 @@ tailwind.config = {
 
   /* Main content tabs (Tab 1 / Tab 2) */
   /* Segmented control: track in surface-container-high, active segment lifts to white */
+  .overall-table { width:100%; min-width:1180px; border-collapse:collapse; table-layout:fixed; }
+  .overall-table th { padding:14px 4px; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; letter-spacing:.06em;
+    color:#44464f; text-align:center; background:#eef0fa; }
+  .overall-table th:first-child { width:220px; text-align:left; padding-left:20px; }
+  .overall-table td { padding:10px 4px; text-align:center; vertical-align:middle; border-top:1px solid #e2e4ed; height:124px; }
+  .overall-table td:first-child { text-align:left; padding-left:20px; }
+  .ov-cell { display:inline-flex; flex-direction:column; align-items:center; gap:3px; width:62px; padding:6px 0 5px;
+    border-radius:4px; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.08); font-family:'JetBrains Mono',monospace; }
+  .ov-cell.live { outline:2px solid #00325a; outline-offset:2px; }
+  .ov-date { width:50px; padding:3px 0; border-radius:2px; background:#c8e8ff; color:#00325a; font-size:10px; font-weight:700; line-height:1.35; }
+  .ov-date.planned { background:#dde1ff; }
+  .ov-pct { font-size:12px; font-weight:700; color:#00325a; }
+  .ov-pct.planned { color:#0077b6; font-family:Inter,Sarabun,sans-serif; }
+  .ov-bar { width:46px; height:4px; background:#dde1ff; border-radius:1px; overflow:hidden; }
+  .ov-bar > span { display:block; height:100%; }
+  .ov-jobs { font-size:9.5px; color:#44464f; line-height:1.4; }
+  .ov-jobs.full { font-weight:700; color:#1a1b22; }
+  .ov-running { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.04em; color:#a0a3ad; line-height:1.6; }
   .main-tab-group { display:inline-flex; gap:2px; padding:3px; border-radius:10px; background:#e2e4ed; border:1px solid rgba(196,198,208,.6); }
   .main-tab-btn { display:inline-flex; align-items:center; gap:6px; padding:6px 18px; border-radius:7px;
     font-size:13px; font-weight:600; color:#74767f; background:transparent; transition:all .15s ease; }
@@ -197,6 +217,11 @@ tailwind.config = {
         <span class="text-sm font-bold truncate" style="color:#d3e4fe; letter-spacing:0.01em;">Shutdown Management</span>
       </div>
     </div>
+    <nav class="flex flex-col gap-1 px-2 pt-3">
+      <a id="overall-tab" class="flex items-center gap-2 px-3 py-2 rounded transition-colors" style="color:#909097;" href="#" onclick="showOverallView(); return false;">
+        <span class="material-symbols-outlined" style="font-size:18px">dashboard</span><span>Overall Plant</span>
+      </a>
+    </nav>
     <div class="px-3 py-2"><span class="text-[10px] uppercase tracking-widest px-2 font-semibold" style="color:#909097;">Plant Selection</span></div>
     <nav class="flex flex-col gap-1 px-2" id="plant-tab-nav">
       <div class="plant-group flex flex-col">
@@ -209,6 +234,9 @@ tailwind.config = {
           </a>
           <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="safety" onclick="setViewTab(this,'safety')">
             <span class="material-symbols-outlined" style="font-size:14px">health_and_safety</span><span>Shutdown Safety Activities</span>
+          </a>
+          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="history" onclick="setViewTab(this,'history')">
+            <span class="material-symbols-outlined" style="font-size:14px">history</span><span>Shutdown History</span>
           </a>
         </div>
       </div>
@@ -223,6 +251,9 @@ tailwind.config = {
           <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="safety" onclick="setViewTab(this,'safety')">
             <span class="material-symbols-outlined" style="font-size:14px">health_and_safety</span><span>Shutdown Safety Activities</span>
           </a>
+          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="history" onclick="setViewTab(this,'history')">
+            <span class="material-symbols-outlined" style="font-size:14px">history</span><span>Shutdown History</span>
+          </a>
         </div>
       </div>
       <div class="plant-group flex flex-col">
@@ -235,6 +266,9 @@ tailwind.config = {
           </a>
           <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="safety" onclick="setViewTab(this,'safety')">
             <span class="material-symbols-outlined" style="font-size:14px">health_and_safety</span><span>Shutdown Safety Activities</span>
+          </a>
+          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="history" onclick="setViewTab(this,'history')">
+            <span class="material-symbols-outlined" style="font-size:14px">history</span><span>Shutdown History</span>
           </a>
         </div>
       </div>
@@ -249,6 +283,9 @@ tailwind.config = {
           </a>
           <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="safety" onclick="setViewTab(this,'safety')">
             <span class="material-symbols-outlined" style="font-size:14px">health_and_safety</span><span>Shutdown Safety Activities</span>
+          </a>
+          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="history" onclick="setViewTab(this,'history')">
+            <span class="material-symbols-outlined" style="font-size:14px">history</span><span>Shutdown History</span>
           </a>
         </div>
       </div>
@@ -368,6 +405,12 @@ tailwind.config = {
             class="flex items-center gap-1.5 px-4 py-1.5 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container transition-all shadow-md active:scale-95 text-xs font-bold tracking-tight">
             <span class="material-symbols-outlined" style="font-size:18px">add_task</span>
             <span>+ เพิ่มรายการงานหยุดซ่อม</span>
+          </button>
+
+          <button onclick="closeShutdown()" title="ปิดงาน Shutdown ครั้งนี้: บันทึกผลทั้งหมดเป็น History แล้วล้างข้อมูลเพื่อเริ่ม Shutdown ครั้งถัดไป"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-tertiary-container hover:brightness-110 border border-tertiary/40 text-tertiary transition-all active:scale-95 text-xs font-bold">
+            <span class="material-symbols-outlined" style="font-size:18px">task_alt</span>
+            <span>ปิดงาน Shutdown</span>
           </button>
 
           <button onclick="clearAllTasks()" title="ล้างข้อมูลตารางงานทั้งหมด เพื่อเตรียม Upload Excel ครั้งต่อไป"
@@ -538,6 +581,34 @@ tailwind.config = {
 
 </div>
 
+<div id="view-overall" class="hidden">
+  <div class="w-full px-5 py-5 flex flex-col gap-4">
+    <div class="bg-surface-container-low rounded-xl p-4 flex items-center justify-between gap-2 shadow-md">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary" style="font-size:20px">dashboard</span>
+        <h2 class="text-sm font-bold text-on-surface">Overall Plant</h2>
+        <span class="text-xs text-on-surface-variant">— บันทึกผล Actual งาน Monthly Shutdown ประจำปี</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <button onclick="changeOverallYear(-1)" title="ปีก่อนหน้า" class="p-1 rounded hover:bg-surface-container-high text-on-surface-variant">
+          <span class="material-symbols-outlined" style="font-size:18px">chevron_left</span>
+        </button>
+        <span id="overall-year" class="font-mono text-sm font-bold text-on-surface w-12 text-center">—</span>
+        <button onclick="changeOverallYear(1)" title="ปีถัดไป" class="p-1 rounded hover:bg-surface-container-high text-on-surface-variant">
+          <span class="material-symbols-outlined" style="font-size:18px">chevron_right</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-x-auto">
+      <table class="overall-table">
+        <thead><tr id="overall-thead"></tr></thead>
+        <tbody id="overall-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div><!-- /view-overall -->
+
 <div id="main-tab-content-1">
 
 <div id="view-progress">
@@ -638,6 +709,31 @@ tailwind.config = {
     </div>
   </div>
 </div><!-- /view-safety -->
+
+<div id="view-history" class="hidden">
+  <div class="w-full px-5 py-5 flex flex-col gap-4">
+    <div class="bg-surface-container-low rounded-xl p-4 flex items-center gap-2 shadow-md">
+      <span class="material-symbols-outlined text-secondary" style="font-size:20px">history</span>
+      <h2 class="text-sm font-bold text-on-surface">Shutdown History</h2>
+      <span id="history-plant-label" class="text-xs text-on-surface-variant"></span>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead>
+          <tr class="bg-surface-container-low text-on-surface-variant font-mono text-[11px] uppercase tracking-wide">
+            <th class="px-4 py-3">Shutdown</th>
+            <th class="px-4 py-3">Completion Rate</th>
+            <th class="px-4 py-3">งานเสร็จ / ทั้งหมด</th>
+            <th class="px-4 py-3">ยกเลิก</th>
+            <th class="px-4 py-3">ปิดงานโดย</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody id="history-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div><!-- /view-history -->
 
 </div><!-- /main-tab-content-1 -->
 
@@ -851,6 +947,22 @@ tailwind.config = {
         <button type="submit" class="px-5 py-2 rounded bg-primary-container hover:bg-primary text-on-primary-container font-bold transition-all shadow-md">บันทึกแผนงาน</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ HISTORY DETAIL MODAL ══════════════ -->
+<div id="history-modal-backdrop" class="fixed inset-0 bg-black/80 z-50 items-center justify-center p-4 hidden">
+  <div class="bg-surface-container-lowest rounded-xl max-w-6xl w-full max-h-[90vh] p-6 shadow-2xl flex flex-col gap-4 relative border border-outline-variant/30">
+    <div class="flex items-center justify-between pb-2 border-b border-surface-container-high">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary" style="font-size:22px">history</span>
+        <h2 id="history-modal-title" class="text-base font-bold text-on-surface">Shutdown History</h2>
+      </div>
+      <button onclick="toggleHistoryModal(false)" class="p-1 rounded hover:bg-surface-container text-on-surface-variant">
+        <span class="material-symbols-outlined" style="font-size:20px">close</span>
+      </button>
+    </div>
+    <div id="history-modal-body" class="flex flex-col gap-4 overflow-y-auto"></div>
   </div>
 </div>
 
@@ -1173,8 +1285,7 @@ function showPlantSubnav(plant) {
   });
 }
 
-async function setPlantTab(el) {
-  if (el.dataset.plant === currentPlant) { showPlantSubnav(currentPlant); return; }
+function clearPlantTabHighlight() {
   document.querySelectorAll('#plant-tab-nav .plant-tab').forEach(t => {
     t.classList.remove('active', 'bg-surface-container-high', 'text-secondary', 'border-l-2', 'border-secondary', 'font-semibold');
     t.classList.add('text-on-surface-variant');
@@ -1184,6 +1295,115 @@ async function setPlantTab(el) {
     const liveBadge = t.querySelector('.ml-auto');
     if (liveBadge) liveBadge.remove();
   });
+}
+
+function setOverallTabActive(active) {
+  const tab = document.getElementById('overall-tab');
+  tab.classList.toggle('border-l-2', active);
+  tab.classList.toggle('font-semibold', active);
+  tab.style.background = active ? '#1b2b3f' : '';
+  tab.style.color = active ? '#7bd0ff' : '#909097';
+  tab.style.borderColor = active ? '#7bd0ff' : '';
+}
+
+// ─── Overall Plant (landing page after login) ─────────────────────────────────
+let overallMode = false;
+function showOverallView() {
+  overallMode = true;
+  clearPlantTabHighlight();
+  setOverallTabActive(true);
+  showPlantSubnav(null);
+  document.querySelectorAll('#plant-tab-nav .view-tab').forEach(t => {
+    t.classList.remove('active', 'font-semibold');
+    t.style.background = '';
+    t.style.color = '#909097';
+  });
+  ['main-tab-bar', 'progress-summary', 'main-tab-content-1', 'main-tab-content-2']
+    .forEach(id => document.getElementById(id).classList.add('hidden'));
+  document.getElementById('view-overall').classList.remove('hidden');
+  loadOverall();
+}
+
+// ─── Overall Plant annual table ────────────────────────────────────────────────
+const OVERALL_PLANTS = {
+  'SKIC BM1':  { label: 'Board Mill 1',    cycle: 'MSD Every 3M',     dot: '#00325a' },
+  'SKIC BM3':  { label: 'Board Mill 3',    cycle: 'MSD Every 2M',     dot: '#0077b6' },
+  'SKIC BM17': { label: 'Pulp & Board 17', cycle: 'MSD Every 2M',     dot: '#5ab8f0' },
+  'SKIC BM16': { label: 'Kraft Coater 16', cycle: 'MSD Every 45Days', dot: '#6b3a10' },
+};
+const MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+let overallYear = new Date().getFullYear();
+
+function changeOverallYear(delta) { overallYear += delta; loadOverall(); }
+
+async function loadOverall() {
+  document.getElementById('overall-year').textContent = overallYear;
+  const res = await fetch(`/api/overall?year=${overallYear}`);
+  if (!res.ok) return;
+  renderOverall(await res.json());
+}
+
+// "16-18" over "Jan"; a shutdown that runs into the next month shows both months.
+function overallDateLabel(e) {
+  const [, sm, sd] = e.start_date.split('-');
+  const [, em, ed] = (e.end_date || e.start_date).split('-');
+  const month = MONTHS_EN[Number(sm) - 1] + (em !== sm ? `-${MONTHS_EN[Number(em) - 1]}` : '');
+  return `${sd}${ed !== sd || em !== sm ? `-${ed}` : ''}<br>${month}`;
+}
+
+function overallCell(e) {
+  const date = overallDateLabel(e);
+  // No task updated yet: the shutdown is only planned.
+  if (!e.touched) {
+    return `<div class="ov-cell${e.live ? ' live' : ''}">
+      <div class="ov-date planned">${date}</div>
+      <div class="ov-pct planned">Planned</div>
+      <div class="ov-bar"></div>
+      <div class="ov-jobs">${e.total} Jobs<br>Queued</div>
+    </div>`;
+  }
+  // Same formula as OVERALL SHUTDOWN COMPLETION RATE in the plant view.
+  const pct = e.total ? e.done / e.total * 100 : 0;
+  const color = pct >= 95 ? '#00325a' : pct >= 90 ? '#0062a1' : '#3a8fd0';
+  const open = e.id ? ` onclick="openHistoryDetail(${Number(e.id)})" style="cursor:pointer;"` : '';
+  return `<div class="ov-cell${e.live ? ' live' : ''}"${open} title="${e.live ? 'Shutdown ปัจจุบัน (อัปเดตสด)' : 'ปิดงานแล้ว — คลิกเพื่อดู History'}">
+    <div class="ov-date">${date}</div>
+    <div class="ov-pct">${pct >= 100 ? '100' : pct.toFixed(1)}%</div>
+    <div class="ov-bar"><span style="width:${Math.min(pct, 100)}%; background:${color};"></span></div>
+    <div class="ov-jobs${e.done === e.total ? ' full' : ''}">${e.done}/${e.total}<br>Jobs</div>
+  </div>`;
+}
+
+function renderOverall(data) {
+  document.getElementById('overall-thead').innerHTML =
+    `<th>PLANT / เครื่องจักรหลัก</th>` + MONTHS_EN.map(m => `<th>${m.toUpperCase()}</th>`).join('');
+  document.getElementById('overall-tbody').innerHTML = data.plants.map(({ plant, entries }) => {
+    const meta = OVERALL_PLANTS[plant] || { label: '', cycle: '', dot: '#74767f' };
+    const months = MONTHS_EN.map((_, i) => {
+      const inMonth = entries.filter(e => Number(e.start_date.slice(5, 7)) === i + 1);
+      return `<td>${inMonth.length
+        ? `<div class="flex flex-col items-center gap-2">${inMonth.map(overallCell).join('')}</div>`
+        : '<div class="ov-running">-<br>RUNNING</div>'}</td>`;
+    }).join('');
+    return `<tr>
+      <td>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${meta.dot};"></span>
+          <span class="text-lg font-bold" style="color:#00325a;">${escHtml(plant)}</span>
+          <span class="font-mono text-[10px] px-1.5 py-0.5 rounded" style="background:#dde1ff; color:#3f4fa6;">${escHtml(meta.label)}</span>
+        </div>
+        <div class="text-xs text-on-surface-variant mt-1">${escHtml(meta.cycle)}</div>
+      </td>${months}</tr>`;
+  }).join('');
+}
+
+async function setPlantTab(el) {
+  const wasOverall = overallMode;
+  overallMode = false;
+  setOverallTabActive(false);
+  document.getElementById('view-overall').classList.add('hidden');
+  if (el.dataset.plant === currentPlant && !wasOverall) { showPlantSubnav(currentPlant); return; }
+  clearPlantTabHighlight();
   el.classList.add('active', 'bg-surface-container-high', 'text-secondary', 'border-l-2', 'border-secondary', 'font-semibold');
   el.classList.remove('text-on-surface-variant');
   el.style.background = '#1b2b3f';
@@ -1191,6 +1411,12 @@ async function setPlantTab(el) {
   el.style.borderColor = '#7bd0ff';
   if (!el.querySelector('.ml-auto')) {
     el.insertAdjacentHTML('beforeend', '<span class="ml-auto font-mono text-xs px-1.5 py-0.5 rounded" style="background:#001c10; color:#4edea3; border:1px solid rgba(78,222,163,0.4);">LIVE</span>');
+  }
+
+  if (wasOverall && el.dataset.plant === currentPlant) {
+    showPlantSubnav(currentPlant);
+    setViewTab(document.querySelector(`.plant-subnav[data-plant-sub="${currentPlant}"] .view-tab[data-view="progress"]`), 'progress');
+    return;
   }
 
   currentPlant = el.dataset.plant;
@@ -1233,6 +1459,7 @@ function setViewTab(el, view) {
   });
   document.getElementById('view-progress').classList.toggle('hidden', view !== 'progress');
   document.getElementById('view-safety').classList.toggle('hidden', view !== 'safety');
+  document.getElementById('view-history').classList.toggle('hidden', view !== 'history');
   // TAB 1 / TAB 2 belong to Shutdown Progress Update only. Safety lives inside the
   // TAB 1 container, so show that without forgetting which tab Progress was on.
   document.getElementById('main-tab-bar').classList.toggle('hidden', view !== 'progress');
@@ -1244,6 +1471,7 @@ function setViewTab(el, view) {
     document.getElementById('main-tab-content-2').classList.add('hidden');
   }
   if (view === 'safety') loadSafetyActivities();
+  if (view === 'history') loadHistoryList();
 }
 
 // ─── Clock ────────────────────────────────────────────────────────────────────
@@ -1309,6 +1537,7 @@ function updateLastRefreshLabel() {
 async function doAutoRefresh() {
   await Promise.all([loadTasks(), loadActivity(), loadSchedule(), loadLastExcelUpload()]);
   if (currentView === 'safety') await loadSafetyActivities();
+  if (overallMode) await loadOverall();
   updateLastRefreshLabel();
 }
 
@@ -2287,6 +2516,159 @@ async function clearAllTasks() {
   showToast('ล้างข้อมูลสำเร็จ', 'ตารางงานและ Safety Activities ว่างพร้อมสำหรับ Upload Excel แผนงานใหม่');
 }
 
+// ─── Close shutdown → history ─────────────────────────────────────────────────
+async function closeShutdown() {
+  if (allTasks.length === 0) { showToast('ไม่มีข้อมูล', 'ยังไม่มีรายการงานใน Shutdown ครั้งนี้', true); return; }
+  const open = allTasks.filter(t => t.status !== 'cancelled' && t.progress < 100).length;
+  const done = allTasks.filter(t => t.status !== 'cancelled' && t.progress === 100).length;
+  const pct = (done / allTasks.length * 100).toFixed(1);
+  let msg = `ปิดงาน Shutdown ของ ${currentPlant}\n\nผลงาน: ${done}/${allTasks.length} งาน (${pct}%)\n\n`
+    + 'ระบบจะบันทึกรายการงาน, Safety Activities และ Milestone ทั้งหมดเป็น History\n'
+    + 'แล้วล้างข้อมูลเพื่อเริ่ม Shutdown ครั้งถัดไป';
+  if (open) msg = `⚠ ยังมีงานที่ยังไม่ถึง 100% อีก ${open} รายการ\n\n` + msg;
+  if (!confirm(msg + '\n\nต้องการปิดงานหรือไม่?')) return;
+  const res = await fetch('/api/shutdown/close', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ plant: currentPlant }),
+  });
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) { showToast('ปิดงานไม่สำเร็จ', result.error || `HTTP ${res.status}`, true); return; }
+  allTasks = [];
+  lastExcelUpload = null;
+  resetFilters();
+  renderTable();
+  updateKPIs();
+  currentSafety = { power_outage: [], site_prep: [], high_risk: [] };
+  setExcelFileName(null);
+  await Promise.all([loadSchedule(), loadActivity()]);
+  if (currentMainTab === 2) renderGanttTimeline();
+  showToast('ปิดงาน Shutdown สำเร็จ', `บันทึก History ${result.start_date} แล้ว — พร้อมสำหรับ Shutdown ครั้งถัดไป`);
+}
+
+function historyPct(r) { return r.total ? r.done / r.total * 100 : 0; }
+
+function historyRange(r) {
+  const s = formatScheduleDate(r.start_date) || r.start_date;
+  return r.end_date && r.end_date !== r.start_date ? `${s} – ${formatScheduleDate(r.end_date) || r.end_date}` : s;
+}
+
+function formatClosedAt(v) {
+  return v ? new Date(v).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+}
+
+async function loadHistoryList() {
+  document.getElementById('history-plant-label').textContent = `— ${currentPlant}`;
+  const tbody = document.getElementById('history-tbody');
+  const res = await fetch(`/api/history?${plantQS()}`);
+  const rows = res.ok ? await res.json() : [];
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-10 text-center text-on-surface-variant">
+      ยังไม่มี History — กดปุ่ม "ปิดงาน Shutdown" ในหน้า Shutdown Progress Update เมื่อ Update progress ครบแล้ว</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const pct = historyPct(r);
+    return `<tr class="border-t border-surface-container-high hover:bg-surface-container-low cursor-pointer" onclick="openHistoryDetail(${r.id})">
+      <td class="px-4 py-3 font-mono font-bold text-on-surface">${escHtml(historyRange(r))}</td>
+      <td class="px-4 py-3">
+        <div class="flex items-center gap-2">
+          <div class="w-24 h-1.5 rounded bg-surface-container-high overflow-hidden"><div class="h-full bg-secondary" style="width:${Math.min(pct, 100)}%"></div></div>
+          <span class="font-mono font-bold text-on-surface">${pct.toFixed(1)}%</span>
+        </div>
+      </td>
+      <td class="px-4 py-3 font-mono">${r.done} / ${r.total}</td>
+      <td class="px-4 py-3 font-mono">${r.cancelled}</td>
+      <td class="px-4 py-3 text-on-surface-variant">${escHtml(r.closed_by)}<div class="font-mono text-[10px]">${escHtml(formatClosedAt(r.closed_at))}</div></td>
+      <td class="px-4 py-3 text-right whitespace-nowrap">
+        <span class="material-symbols-outlined text-secondary align-middle" style="font-size:18px" title="ดูรายละเอียด">visibility</span>
+        <button onclick="event.stopPropagation(); deleteHistory(${r.id})" title="ลบ History นี้" class="ml-1 p-1 rounded hover:bg-error-container/30 text-on-surface-variant hover:text-error">
+          <span class="material-symbols-outlined align-middle" style="font-size:18px">delete</span>
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function deleteHistory(id) {
+  if (!confirm('ลบ History ของ Shutdown ครั้งนี้อย่างถาวรใช่หรือไม่?')) return;
+  const res = await fetch(`/api/history/${id}`, { method: 'DELETE' });
+  if (!res.ok) { showToast('ลบไม่สำเร็จ', `HTTP ${res.status}`, true); return; }
+  showToast('ลบ History แล้ว', '');
+  loadHistoryList();
+  loadActivity();
+}
+
+function toggleHistoryModal(open) {
+  const m = document.getElementById('history-modal-backdrop');
+  m.classList.toggle('hidden', !open);
+  m.classList.toggle('flex', open);
+}
+
+async function openHistoryDetail(id) {
+  const res = await fetch(`/api/history/${id}`);
+  if (!res.ok) { showToast('ไม่พบ History', `HTTP ${res.status}`, true); return; }
+  renderHistoryDetail(await res.json());
+  toggleHistoryModal(true);
+}
+
+const SAFETY_TITLES = { power_outage: 'แผนการดับไฟ', site_prep: 'การเตรียมพื้นที่หน้างาน', high_risk: 'งานเสี่ยง' };
+
+function renderHistoryDetail(h) {
+  const pct = historyPct(h);
+  document.getElementById('history-modal-title').textContent = `${h.plant} — Shutdown ${historyRange(h)}`;
+  const kpi = (label, value) => `<div class="bg-surface-container-low rounded-lg px-3 py-2">
+      <div class="text-[10px] uppercase tracking-wide text-on-surface-variant">${label}</div>
+      <div class="font-mono text-lg font-bold text-on-surface">${value}</div></div>`;
+  const milestones = SCHEDULE_FIELDS.map(f => {
+    const v = h.schedule?.[f.key] || {};
+    return `<div class="bg-surface-container-low rounded-lg px-3 py-2">
+      <div class="text-[10px] uppercase tracking-wide text-on-surface-variant truncate">${f.label}</div>
+      <div class="font-mono text-xs font-bold text-on-surface">${escHtml(v.time) || '--:--'} <span class="font-normal text-on-surface-variant">${escHtml(formatScheduleDate(v.date)) || ''}</span></div></div>`;
+  }).join('');
+  const tasks = (h.tasks || []).map(t => {
+    const st = getStageStyle(t.progress, t.status);
+    return `<tr class="border-t border-surface-container-high align-top">
+      <td class="px-3 py-2 font-mono font-bold text-secondary whitespace-nowrap">${escHtml(t.tag)}</td>
+      <td class="px-3 py-2 text-on-surface">${escHtml(t.title)}</td>
+      <td class="px-3 py-2">${escHtml(t.area)}</td>
+      <td class="px-3 py-2">${escHtml(t.assignee)}</td>
+      <td class="px-3 py-2 font-mono whitespace-nowrap">${escHtml(t.start_time) || '—'} – ${escHtml(t.end_time) || '—'}</td>
+      <td class="px-3 py-2"><span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap ${st.badgeCls}">${escHtml(st.stageText)}</span></td>
+      <td class="px-3 py-2 text-on-surface-variant">${escHtml(t.note)}</td>
+    </tr>`;
+  }).join('');
+  const safety = Object.keys(SAFETY_TITLES).map(c => {
+    const items = h.safety?.[c] || [];
+    return `<div class="bg-surface-container-low rounded-lg p-3 flex flex-col gap-1.5">
+      <div class="text-xs font-bold text-on-surface">${SAFETY_TITLES[c]} <span class="font-normal text-on-surface-variant">(${items.length})</span></div>
+      ${items.length ? items.map(i => `<div class="text-[11px] text-on-surface">• ${escHtml(i.text)}
+        <span class="text-on-surface-variant">${escHtml(i.responsible)} ${escHtml(i.datetime)}</span></div>`).join('')
+        : '<div class="text-[11px] italic text-on-surface-variant">ไม่มีรายการ</div>'}
+    </div>`;
+  }).join('');
+  document.getElementById('history-modal-body').innerHTML = `
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+      ${kpi('Completion Rate', pct.toFixed(1) + '%')}
+      ${kpi('งานเสร็จ', `${h.done} / ${h.total}`)}
+      ${kpi('ยกเลิก', h.cancelled)}
+      ${kpi('ปิดงานโดย', escHtml(h.closed_by))}
+      ${kpi('ปิดงานเมื่อ', `<span class="text-xs">${escHtml(formatClosedAt(h.closed_at))}</span>`)}
+    </div>
+    ${h.file_name ? `<div class="text-xs text-on-surface-variant">ไฟล์แผนงาน: <span class="font-mono">${escHtml(h.file_name)}</span></div>` : ''}
+    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2">${milestones}</div>
+    <div class="rounded-lg border border-surface-container-high overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead><tr class="bg-surface-container-low text-on-surface-variant font-mono text-[10px] uppercase">
+          <th class="px-3 py-2">Tag</th><th class="px-3 py-2">รายการงาน</th><th class="px-3 py-2">พื้นที่</th>
+          <th class="px-3 py-2">ผู้รับผิดชอบ</th><th class="px-3 py-2">เวลา</th><th class="px-3 py-2">สถานะ</th><th class="px-3 py-2">โน้ต</th>
+        </tr></thead>
+        <tbody>${tasks || '<tr><td colspan="7" class="px-3 py-6 text-center text-on-surface-variant">ไม่มีรายการงาน</td></tr>'}</tbody>
+      </table>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">${safety}</div>`;
+}
+
 async function createTask(e) {
   e.preventDefault();
   const body = {
@@ -2751,6 +3133,7 @@ async function handleMicrosoftLogin() {
 }
 
 function initApp() {
+  showOverallView();
   loadTasks();
   loadActivity();
   loadSchedule();
