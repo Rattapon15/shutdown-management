@@ -321,6 +321,39 @@ app.get('/api/upload/last', requireAuth, ah(async (req, res) => {
   res.json(await db.getLastExcelUpload(getPlant(req)));
 }));
 
+// Shutdown window edited (e.g. postponed): stores the new start/end ("YYYY-MM-DDTHH:MM",
+// local time) and moves every task by deltaMinutes — how far the start moved — along
+// with the date frame (baseDate + the minute of day the schedule grid opens).
+const isLocalDateTime = v => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v) && !Number.isNaN(Date.parse(v));
+
+app.put('/api/shutdown/range', requireAuth, requireWrite, ah(async (req, res) => {
+  const deltaMin = Number(req.body.deltaMinutes);
+  const baseDate = String(req.body.baseDate || '');
+  const gridStartMin = Number(req.body.gridStartMin);
+  const rangeStart = String(req.body.rangeStart || '');
+  const rangeEnd = String(req.body.rangeEnd || '');
+  if (!Number.isInteger(deltaMin) || Math.abs(deltaMin) > 366 * 1440
+      || !/^\d{4}-\d{2}-\d{2}$/.test(baseDate) || Number.isNaN(Date.parse(baseDate))
+      || !Number.isInteger(gridStartMin) || gridStartMin < 0 || gridStartMin >= 1440) {
+    return res.status(400).json({ error: 'Invalid shift' });
+  }
+  if (!isLocalDateTime(rangeStart) || !isLocalDateTime(rangeEnd) || rangeEnd <= rangeStart) {
+    return res.status(400).json({ error: 'End must be after start' });
+  }
+  const plant = getPlant(req);
+  const result = await db.shiftShutdown(plant, deltaMin,
+    { baseDate, gridStartMin, gridStartHour: Math.floor(gridStartMin / 60), rangeStart, rangeEnd });
+  const fmt = v => `${v.slice(8, 10)}/${v.slice(5, 7)}/${v.slice(0, 4)} ${v.slice(11)}`;
+  let action = `แก้ไขช่วงเวลา Shutdown ${fmt(rangeStart)} – ${fmt(rangeEnd)}`;
+  if (deltaMin) {
+    const abs = Math.abs(deltaMin), d = Math.floor(abs / 1440), h = Math.floor(abs % 1440 / 60), m = abs % 60;
+    const amount = [d && `${d} วัน`, h && `${h} ชม.`, m && `${m} นาที`].filter(Boolean).join(' ');
+    action += ` · ${deltaMin < 0 ? 'เลื่อนเร็วขึ้น' : 'เลื่อนออกไป'} ${amount} (${result.shifted} งานปรับเวลา)`;
+  }
+  await db.logActivity('SYSTEM', action, req.user?.username || 'User', plant);
+  res.json(result);
+}));
+
 // ─── Activity ─────────────────────────────────────────────────────────────────
 app.get('/api/activity', requireAuth, ah(async (req, res) => {
   res.json(await db.getActivity(30, getPlant(req)));

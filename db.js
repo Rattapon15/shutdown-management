@@ -24,6 +24,14 @@ function nowTime() {
 
 function plantKey(plant) { return PLANTS.includes(plant) ? plant : DEFAULT_PLANT; }
 
+// "22:30" + 180 → "01:30"; blank or unparseable values are left as they are.
+function shiftHM(hm, deltaMin) {
+  const m = String(hm || '').match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return hm;
+  const mins = (((Number(m[1]) * 60 + Number(m[2]) + deltaMin) % 1440) + 1440) % 1440;
+  return `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
+}
+
 function emptySchedule() {
   const s = {};
   for (const k of SCHEDULE_MILESTONES) s[k] = { date: '', time: '' };
@@ -296,6 +304,43 @@ const db = {
       [plantKey(plant), info]
     );
     return info;
+  },
+
+  // Postpones (or brings forward) the whole shutdown by deltaMin minutes: every task's
+  // HH:MM moves by the same amount and the frame fields (baseDate, gridStartMin, the
+  // rangeStart/rangeEnd window) are merged into last_excel_upload, so each task keeps
+  // its position relative to the others and its duration.
+  async shiftShutdown(plant, deltaMin, frame) {
+    const p = plantKey(plant);
+    return withTx(async client => {
+      let shifted = 0;
+      if (deltaMin % 1440 !== 0) { // whole days only move the dates, not the clock times
+        const { rows } = await client.query(
+          'SELECT id, start_time, end_time FROM shutdown_mnm_tasks WHERE plant = $1 FOR UPDATE', [p]
+        );
+        const ids = [], starts = [], ends = [];
+        for (const r of rows) {
+          const s = shiftHM(r.start_time, deltaMin), e = shiftHM(r.end_time, deltaMin);
+          if (s === r.start_time && e === r.end_time) continue;
+          ids.push(r.id); starts.push(s); ends.push(e);
+        }
+        if (ids.length) {
+          const res = await client.query(
+            `UPDATE shutdown_mnm_tasks t SET start_time = u.s, end_time = u.e
+             FROM unnest($2::text[], $3::text[], $4::text[]) AS u(id, s, e)
+             WHERE t.plant = $1 AND t.id = u.id`,
+            [p, ids, starts, ends]
+          );
+          shifted = res.rowCount;
+        }
+      }
+      const { rows } = await client.query(
+        `UPDATE shutdown_mnm_plants SET last_excel_upload = COALESCE(last_excel_upload, '{}'::jsonb) || $2::jsonb
+         WHERE name = $1 RETURNING last_excel_upload`,
+        [p, JSON.stringify(frame)]
+      );
+      return { shifted, lastUpload: rows.length ? rows[0].last_excel_upload : null };
+    });
   },
 
   async bulkInsertTasks(tasks, plant) {
