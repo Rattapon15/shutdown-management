@@ -50,6 +50,11 @@ CREATE INDEX IF NOT EXISTS shutdown_mnm_tasks_plant_seq_idx
 ALTER TABLE ai_project.shutdown_mnm_tasks
   ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active';
 
+-- When the job last changed stage (progress step or cancel/restore), ISO 8601.
+-- Shown under the job's Gantt bar, e.g. "ปิดเวลา 10:00". Empty until first update.
+ALTER TABLE ai_project.shutdown_mnm_tasks
+  ADD COLUMN IF NOT EXISTS stage_at TEXT NOT NULL DEFAULT '';
+
 CREATE TABLE IF NOT EXISTS ai_project.shutdown_mnm_activity (
   id          BIGSERIAL PRIMARY KEY,
   plant       TEXT NOT NULL REFERENCES ai_project.shutdown_mnm_plants(name) ON DELETE CASCADE,

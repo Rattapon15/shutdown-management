@@ -44,7 +44,7 @@ function taskRow(r) {
     id: r.id, tag: r.tag, title: r.title, area: r.area, assignee: r.assignee,
     progress: r.progress, status: r.status, note: r.note, duration: r.duration,
     start_time: r.start_time, end_time: r.end_time,
-    updated_at: r.updated_at, updated_by: r.updated_by,
+    updated_at: r.updated_at, updated_by: r.updated_by, stage_at: r.stage_at || '',
     created_at: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
   };
 }
@@ -235,18 +235,18 @@ const db = {
 
   async updateTaskProgress(id, progress, updated_by = 'User', plant) {
     const { rows } = await query(
-      `UPDATE shutdown_mnm_tasks SET progress = $3, updated_at = $4, updated_by = $5
+      `UPDATE shutdown_mnm_tasks SET progress = $3, updated_at = $4, updated_by = $5, stage_at = $6
        WHERE plant = $1 AND id = $2 RETURNING *`,
-      [plantKey(plant), id, Number(progress) || 0, nowTime(), updated_by]
+      [plantKey(plant), id, Number(progress) || 0, nowTime(), updated_by, new Date().toISOString()]
     );
     return rows.length ? taskRow(rows[0]) : null;
   },
 
   async updateTaskStatus(id, status, updated_by = 'User', plant) {
     const { rows } = await query(
-      `UPDATE shutdown_mnm_tasks SET status = $3, updated_at = $4, updated_by = $5
+      `UPDATE shutdown_mnm_tasks SET status = $3, updated_at = $4, updated_by = $5, stage_at = $6
        WHERE plant = $1 AND id = $2 RETURNING *`,
-      [plantKey(plant), id, status, nowTime(), updated_by]
+      [plantKey(plant), id, status, nowTime(), updated_by, new Date().toISOString()]
     );
     return rows.length ? taskRow(rows[0]) : null;
   },
