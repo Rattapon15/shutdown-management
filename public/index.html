@@ -1326,10 +1326,10 @@ function showOverallView() {
 
 // ─── Overall Plant annual table ────────────────────────────────────────────────
 const OVERALL_PLANTS = {
-  'SKIC BM1':  { label: 'Board Mill 1',    cycle: 'MSD Every 3M',     dot: '#00325a' },
-  'SKIC BM3':  { label: 'Board Mill 3',    cycle: 'MSD Every 2M',     dot: '#0077b6' },
-  'SKIC BM17': { label: 'Pulp & Board 17', cycle: 'MSD Every 2M',     dot: '#5ab8f0' },
-  'SKIC BM16': { label: 'Kraft Coater 16', cycle: 'MSD Every 45Days', dot: '#6b3a10' },
+  'SKIC BM1':  { cycle: 'MSD Every 3M',     dot: '#00325a' },
+  'SKIC BM3':  { cycle: 'MSD Every 2M',     dot: '#0077b6' },
+  'SKIC BM17': { cycle: 'MSD Every 2M',     dot: '#5ab8f0' },
+  'SKIC BM16': { cycle: 'MSD Every 45Days', dot: '#6b3a10' },
 };
 const MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 let overallYear = new Date().getFullYear();
@@ -1378,7 +1378,7 @@ function renderOverall(data) {
   document.getElementById('overall-thead').innerHTML =
     `<th>PLANT / เครื่องจักรหลัก</th>` + MONTHS_EN.map(m => `<th>${m.toUpperCase()}</th>`).join('');
   document.getElementById('overall-tbody').innerHTML = data.plants.map(({ plant, entries }) => {
-    const meta = OVERALL_PLANTS[plant] || { label: '', cycle: '', dot: '#74767f' };
+    const meta = OVERALL_PLANTS[plant] || { cycle: '', dot: '#74767f' };
     const months = MONTHS_EN.map((_, i) => {
       const inMonth = entries.filter(e => Number(e.start_date.slice(5, 7)) === i + 1);
       return `<td>${inMonth.length
@@ -1390,7 +1390,6 @@ function renderOverall(data) {
         <div class="flex items-center gap-2 flex-wrap">
           <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${meta.dot};"></span>
           <span class="text-lg font-bold" style="color:#00325a;">${escHtml(plant)}</span>
-          <span class="font-mono text-[10px] px-1.5 py-0.5 rounded" style="background:#dde1ff; color:#3f4fa6;">${escHtml(meta.label)}</span>
         </div>
         <div class="text-xs text-on-surface-variant mt-1">${escHtml(meta.cycle)}</div>
       </td>${months}</tr>`;
