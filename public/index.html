@@ -299,7 +299,7 @@ tailwind.config = {
     <div class="flex items-center justify-between pb-2 mb-2 shrink-0" style="border-bottom:1px solid #1b2b3f;">
       <div class="flex items-center gap-2">
         <span class="material-symbols-outlined" style="font-size:18px; color:#7bd0ff;">rss_feed</span>
-        <span class="text-xs font-bold" style="color:#d3e4fe;">ฟีดอัปเดตหน้างานสด</span>
+        <span class="text-xs font-bold" style="color:#d3e4fe;">Live Event Update</span>
       </div>
       <span class="w-2 h-2 rounded-full animate-ping" style="background:#4edea3;"></span>
     </div>
@@ -1521,7 +1521,7 @@ async function checkServerStatus() {
 setInterval(checkServerStatus, 15000);
 checkServerStatus();
 
-// ─── Auto Refresh (every 30 min) ─────────────────────────────────────────────
+// ─── Auto Refresh (every 15 min) ─────────────────────────────────────────────
 function updateLastRefreshLabel() {
   const row = document.getElementById('last-refresh-row');
   const el  = document.getElementById('last-refresh-text');
@@ -1542,7 +1542,7 @@ async function doAutoRefresh() {
   updateLastRefreshLabel();
 }
 
-setInterval(doAutoRefresh, 30 * 60 * 1000);
+setInterval(doAutoRefresh, 15 * 60 * 1000);
 
 // ─── Live on-time / delay status refresh (every 30s, no full re-render) ─────
 function refreshTimeStatuses() {
