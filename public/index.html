@@ -632,7 +632,6 @@ tailwind.config = {
                   <th class="py-2 px-4 w-28"><div class="col-filter-hd" data-col="tag">Section <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></th>
                   <th class="py-2 pl-4 pr-1 w-24"><div class="col-filter-hd" data-col="start_time">เวลาเริ่ม / จบ <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></th>
                   <th class="py-2 pl-1 pr-4 w-14"><div class="col-filter-hd" data-col="duration">เวลารวม <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></th>
-                  <th class="py-2 px-3 w-20">สถานะเวลา<br>(ON TIME / DELAY)</th>
                   <th class="py-2 px-4 w-[300px] max-w-[300px]"><div class="col-filter-hd" data-col="title">ชื่องานหยุดซ่อมบำรุง <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></th>
                   <th class="py-2 px-4 min-w-[140px]"><div class="col-filter-hd" data-col="assignee">ผู้รับผิดชอบ / ช่าง <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></th>
                   <th class="py-2 px-4 min-w-[240px]"><div class="col-filter-hd" data-col="progress">ขั้นตอนความคืบหน้า (5-STAGE) <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></th>
@@ -1544,15 +1543,6 @@ async function doAutoRefresh() {
 
 setInterval(doAutoRefresh, 15 * 60 * 1000);
 
-// ─── Live on-time / delay status refresh (every 30s, no full re-render) ─────
-function refreshTimeStatuses() {
-  allTasks.forEach(task => {
-    const cell = document.getElementById(`time-status-${task.id}`);
-    if (cell) cell.innerHTML = renderTimeStatusCell(task);
-  });
-}
-setInterval(refreshTimeStatuses, 30 * 1000);
-
 // ─── Fetch from API ───────────────────────────────────────────────────────────
 async function loadTasks() {
   const res = await fetch(`/api/tasks?${plantQS()}`);
@@ -1737,12 +1727,6 @@ function getTimeStatus(task) {
   return { label: 'ON TIME', cls: 'text-secondary bg-secondary-container/30 border border-secondary/40' };
 }
 
-function renderTimeStatusCell(task) {
-  const st = getTimeStatus(task);
-  if (!st) return `<span class="font-mono text-[10px] text-on-surface-variant/40">—</span>`;
-  return `<span class="font-mono text-[10px] px-2 py-0.5 rounded ${st.cls} font-semibold whitespace-nowrap">${st.label}</span>`;
-}
-
 // Stage-tile phase + main search box — the summary section above the tabs drives both TAB 1 and TAB 2.
 function summaryFilteredTasks() {
   const mainEl = document.getElementById('main-search-input');
@@ -1790,9 +1774,6 @@ function renderTable() {
       </td>
       <td class="py-3 pl-1 pr-4 align-top">
         <span class="font-mono text-xs text-on-surface-variant whitespace-nowrap">${escHtml(task.duration) || '—'}</span>
-      </td>
-      <td class="py-3 px-3 align-top" id="time-status-${task.id}">
-        ${renderTimeStatusCell(task)}
       </td>
       <td class="py-3 px-4 align-top max-w-[300px]">
         <div class="flex flex-col">
