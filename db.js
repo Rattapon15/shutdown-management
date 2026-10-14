@@ -45,6 +45,7 @@ function taskRow(r) {
     progress: r.progress, status: r.status, note: r.note, duration: r.duration,
     start_time: r.start_time, end_time: r.end_time,
     updated_at: r.updated_at, updated_by: r.updated_by, stage_at: r.stage_at || '',
+    cancel_reason: r.cancel_reason || '',
     created_at: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
   };
 }
@@ -242,11 +243,12 @@ const db = {
     return rows.length ? taskRow(rows[0]) : null;
   },
 
-  async updateTaskStatus(id, status, updated_by = 'User', plant) {
+  async updateTaskStatus(id, status, updated_by = 'User', plant, cancel_reason = '') {
     const { rows } = await query(
-      `UPDATE shutdown_mnm_tasks SET status = $3, updated_at = $4, updated_by = $5, stage_at = $6
+      `UPDATE shutdown_mnm_tasks SET status = $3, updated_at = $4, updated_by = $5, stage_at = $6, cancel_reason = $7
        WHERE plant = $1 AND id = $2 RETURNING *`,
-      [plantKey(plant), id, status, nowTime(), updated_by, new Date().toISOString()]
+      [plantKey(plant), id, status, nowTime(), updated_by, new Date().toISOString(),
+       status === 'cancelled' ? cancel_reason : '']
     );
     return rows.length ? taskRow(rows[0]) : null;
   },

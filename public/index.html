@@ -114,6 +114,7 @@ tailwind.config = {
   .ov-running { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.04em; color:#a0a3ad; line-height:1.6; }
   .gantt-stage-stamp { position:absolute; top:calc(50% + 13px); padding-left:6px; font-size:10px; line-height:13px;
     color:#44464f; white-space:nowrap; pointer-events:auto; }
+  .gantt-cancel-reason { color:#ba1a1a; font-weight:600; }
   .main-tab-group { display:inline-flex; gap:2px; padding:3px; border-radius:10px; background:#e2e4ed; border:1px solid rgba(196,198,208,.6); }
   .main-tab-btn { display:inline-flex; align-items:center; gap:6px; padding:6px 18px; border-radius:7px;
     font-size:13px; font-weight:600; color:#74767f; background:transparent; transition:all .15s ease; }
@@ -131,9 +132,10 @@ tailwind.config = {
   #tasks-scroll::-webkit-scrollbar-thumb:hover { background:#74767f; }
 
   /* Gantt timeline (Tab 2) */
-  .gantt-left-col { width:820px; min-width:820px; flex-shrink:0; display:grid; grid-template-columns:90px 100px 210px 110px 240px 70px; align-items:center; }
+  .gantt-left-col { width:864px; min-width:864px; flex-shrink:0; display:grid; grid-template-columns:90px 100px 210px 110px 240px 44px 70px; align-items:center; }
   .gantt-left-col > * { padding:0 8px; min-width:0; }
-  .gantt-left-col > .gantt-time-cell { padding:0 4px; }
+  .gantt-left-col > .gantt-time-cell, .gantt-left-col > .gantt-cancel-cell { padding:0 4px; }
+  .gantt-cancel-cell { text-align:center; }
   .gantt-left-col > .gantt-stage-cell { padding:0 16px; } /* same 240px / px-4 as Tab 1's 5-stage column */
   /* task name wraps to two lines, then ellipsis — fits the fixed 56px row (as does the 5-stage cell) */
   .gantt-title { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; line-height:1.3; word-break:break-word; }
@@ -149,7 +151,7 @@ tailwind.config = {
      which sits under the time area only (the left columns never move sideways anyway). */
   #gantt-scroll { max-height:calc(100vh - 160px); min-height:320px; overflow-x:hidden; overflow-y:auto; scrollbar-gutter:stable; }
   /* margin-right matches #gantt-scroll's 10px vertical scrollbar gutter so both scroll ranges line up */
-  .gantt-hbar { margin-left:820px; margin-right:10px; overflow-x:auto; overflow-y:hidden; background:#f3f3fd; }
+  .gantt-hbar { margin-left:864px; margin-right:10px; overflow-x:auto; overflow-y:hidden; background:#f3f3fd; }
   #gantt-hscroll { border-top:1px solid rgba(196,198,208,.6); }
   #gantt-hscroll-top { border-bottom:1px solid rgba(196,198,208,.6); }
   .gantt-hbar.hidden { display:none; }
@@ -160,7 +162,7 @@ tailwind.config = {
   #gantt-scroll::-webkit-scrollbar-thumb:hover, .gantt-hbar::-webkit-scrollbar-thumb:hover { background:#74767f; }
   #gantt-rows, #gantt-notime-rows {
     background-image: repeating-linear-gradient(to right, rgba(0,0,0,.06) 0, rgba(0,0,0,.06) 1px, transparent 1px, transparent 72px);
-    background-position: 820px 0; /* start gridlines after .gantt-left-col */
+    background-position: 864px 0; /* start gridlines after .gantt-left-col */
   }
 </style>
 </head>
@@ -794,6 +796,7 @@ tailwind.config = {
               <div><div class="col-filter-hd" data-scope="gantt" data-col="title">ชื่องาน <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></div>
               <div><div class="col-filter-hd" data-scope="gantt" data-col="assignee">ผู้รับผิดชอบ <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></div>
               <div class="gantt-stage-cell"><div class="col-filter-hd" data-scope="gantt" data-col="progress">ขั้นตอนความคืบหน้า (5-STAGE) <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></div>
+              <div class="gantt-cancel-cell normal-case">ยกเลิก</div>
               <div class="gantt-time-cell"><div class="col-filter-hd" data-scope="gantt" data-col="start_time">เริ่ม/จบ <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></div>
             </div>
             <div id="gantt-hour-header" class="relative flex-1" style="height:40px"></div>
@@ -817,6 +820,33 @@ tailwind.config = {
 </div><!-- /main-tab-content-2 -->
 
 </main>
+<!-- Cancel job modal -->
+<div id="cancel-modal-backdrop" class="fixed inset-0 bg-black/80 z-50 items-center justify-center p-4 hidden">
+  <div class="bg-surface-container-lowest rounded-xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 relative border border-outline-variant/30">
+    <div class="flex items-center justify-between pb-2 border-b border-surface-container-high">
+      <h2 class="text-base font-bold text-on-surface flex items-center gap-2">
+        <span class="material-symbols-outlined text-error" style="font-size:20px">cancel</span>
+        ยกเลิกงาน <span id="cancel-modal-tag" class="font-mono text-secondary"></span>
+      </h2>
+      <button onclick="toggleCancelModal(false)" class="text-on-surface-variant hover:text-on-surface">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <form onsubmit="submitCancelTask(event)" class="flex flex-col gap-3">
+      <input type="hidden" id="cancel-form-id">
+      <p id="cancel-modal-title" class="text-xs text-on-surface-variant break-words"></p>
+      <div>
+        <label for="cancel-form-reason" class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">สาเหตุของการยกเลิกงาน</label>
+        <textarea id="cancel-form-reason" required maxlength="500" rows="3" placeholder="ระบุสาเหตุ เช่น ติดงานเร่งด่วน, อะไหล่ไม่พร้อมใช้งาน ..."
+          class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary"></textarea>
+      </div>
+      <div class="flex justify-end gap-2 mt-1">
+        <button type="button" onclick="toggleCancelModal(false)" class="px-4 py-2 rounded text-on-surface-variant hover:bg-surface-container-high font-semibold transition-colors">ปิด</button>
+        <button type="submit" id="cancel-form-submit" class="px-4 py-2 rounded bg-error hover:bg-error/90 text-on-error font-bold transition-all shadow-md">ยืนยันยกเลิกงาน</button>
+      </div>
+    </form>
+  </div>
+</div>
 <!-- Safety item modal -->
 <div id="safety-modal-backdrop" class="fixed inset-0 bg-black/80 z-50 items-center justify-center p-4 hidden">
   <div class="bg-surface-container-lowest rounded-xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 relative border border-outline-variant/30">
@@ -1062,7 +1092,7 @@ let currentSafety = { power_outage: [], site_prep: [], high_risk: [] };
 let lastGanttBounds = null;
 const GANTT_PX_PER_HOUR = 72; // must match the 72px gridline spacing in CSS
 const GANTT_MIN_BAR_PX = 18;
-const GANTT_LEFT_COL_PX = 820; // must match .gantt-left-col width in CSS
+const GANTT_LEFT_COL_PX = 864; // must match .gantt-left-col width in CSS
 
 function plantQS() { return `plant=${encodeURIComponent(currentPlant)}`; }
 
@@ -1805,15 +1835,9 @@ function renderTable() {
       </td>
       <td class="py-3 px-4 align-top text-right">
         <div class="flex items-center justify-end gap-1">
-          ${isCancelled ? `
-          <button onclick="restoreTask('${task.id}')" title="เปิดงานกลับมาใช้งาน" class="p-1 rounded hover:bg-surface-container-high text-secondary transition-colors">
-            <span class="material-symbols-outlined" style="font-size:18px">restart_alt</span>
-          </button>` : `
+          ${isCancelled ? '' : `
           <button onclick="advanceTask('${task.id}')" title="เลื่อนสู่ขั้นถัดไป (+25%)" class="p-1 rounded hover:bg-surface-container-high text-secondary transition-colors">
             <span class="material-symbols-outlined" style="font-size:18px">forward</span>
-          </button>
-          <button onclick="cancelTask('${task.id}')" title="ยกเลิกงาน (Cancel Job)" class="p-1 rounded hover:bg-error-container/20 text-outline hover:text-error transition-colors">
-            <span class="material-symbols-outlined" style="font-size:18px">cancel</span>
           </button>`}
           <button onclick="deleteTask('${task.id}')" title="ลบรายการ" class="p-1 rounded hover:bg-error-container/20 text-outline hover:text-error transition-colors">
             <span class="material-symbols-outlined" style="font-size:18px">delete</span>
@@ -1902,10 +1926,17 @@ function ganttStageStamp(task) {
   if (!d || isNaN(d)) return null;
   const label = task.status === 'cancelled' ? 'ยกเลิกงาน' : STAGE_STAMP_LABELS[task.progress];
   if (!label) return null;
+  const reason = task.status === 'cancelled' ? task.cancel_reason || '' : '';
   return {
     text: `${label} ${hm(d)}`,
-    title: `${label} ${d.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}${task.updated_by ? ' โดย ' + task.updated_by : ''}`,
+    reason,
+    title: `${label} ${d.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}${task.updated_by ? ' โดย ' + task.updated_by : ''}${reason ? '\nสาเหตุ: ' + reason : ''}`,
   };
+}
+
+function ganttStampHtml(stamp, left) {
+  return `<div class="gantt-stage-stamp" style="left:${left}px" title="${escHtml(stamp.title)}">${escHtml(stamp.text)}${
+    stamp.reason ? `<span class="gantt-cancel-reason"> · สาเหตุ: ${escHtml(stamp.reason)}</span>` : ''}</div>`;
 }
 
 function ganttBarColor(task) {
@@ -1994,6 +2025,14 @@ function ganttMetaBlock(task) {
       <span class="gantt-title text-on-surface" title="${escHtml(task.title)}">${escHtml(task.title)}</span>
       <span class="text-on-surface-variant truncate" title="${escHtml(task.assignee)}">${escHtml(task.assignee) || '—'}</span>
       <div class="gantt-stage-cell">${renderStageCell(task, true)}</div>
+      <div class="gantt-cancel-cell">${task.status === 'cancelled' ? `
+        <button onclick="restoreTask('${task.id}')" title="เปิดงานกลับมาใช้งาน" class="p-1 rounded hover:bg-surface-container-high text-secondary transition-colors">
+          <span class="material-symbols-outlined" style="font-size:18px">restart_alt</span>
+        </button>` : `
+        <button onclick="cancelTask('${task.id}')" title="ยกเลิกงาน (Cancel Job)" class="p-1 rounded hover:bg-error-container/20 text-outline hover:text-error transition-colors">
+          <span class="material-symbols-outlined" style="font-size:18px">cancel</span>
+        </button>`}
+      </div>
       <div class="gantt-time-cell flex flex-col items-center gap-0.5 text-on-surface-variant whitespace-nowrap">
         <input class="gantt-time-input" data-id="${escHtml(task.id)}" data-field="start_time" value="${escHtml(task.start_time)}"
                placeholder="--:--" maxlength="5" title="เวลาเริ่ม (HH:MM)" ${canWrite() ? '' : 'readonly tabindex="-1"'}
@@ -2116,7 +2155,7 @@ function renderGanttTimeline() {
                  style="left:${left}px; width:${width}px" title="${escHtml(task.title)}${durationLabel}&#10;${when}">
               <span class="truncate text-[10px] font-semibold px-1.5 leading-6 whitespace-nowrap">${escHtml(task.title)}${durationLabel}</span>
             </div>
-            ${stamp ? `<div class="gantt-stage-stamp" style="left:${left}px" title="${escHtml(stamp.title)}">${escHtml(stamp.text)}</div>` : ''}
+            ${stamp ? ganttStampHtml(stamp, left) : ''}
           </div>
         </div>`;
     }).join('') + dayLines + `
@@ -2457,14 +2496,16 @@ async function advanceTask(id) {
   if (task && task.progress < 100) await updateProgress(id, task.progress + 25);
 }
 
-async function setTaskStatus(id, status) {
-  await fetch(`/api/tasks/${id}/status`, {
+async function setTaskStatus(id, status, reason = '') {
+  const res = await fetch(`/api/tasks/${id}/status`, {
     method: 'PUT', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ status, updated_by: currentUser?.username || 'User', plant: currentPlant })
+    body: JSON.stringify({ status, reason, updated_by: currentUser?.username || 'User', plant: currentPlant })
   });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`);
   const task = allTasks.find(t => t.id === id);
   if (task) {
     task.status = status;
+    task.cancel_reason = status === 'cancelled' ? reason : '';
     const now = new Date();
     task.stage_at = now.toISOString();
     task.updated_at = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')} น.`;
@@ -2475,16 +2516,50 @@ async function setTaskStatus(id, status) {
   loadActivity();
 }
 
-async function cancelTask(id) {
+function cancelTask(id) {
   const task = allTasks.find(t => t.id === id);
-  if (!confirm(`ยืนยันยกเลิกงาน "${task?.tag}" ใช่หรือไม่?`)) return;
-  await setTaskStatus(id, 'cancelled');
-  showToast(`ยกเลิกงาน ${task?.tag} แล้ว`, 'งานถูกย้ายไปสถานะ Cancel Job');
+  if (!task) return;
+  document.getElementById('cancel-form-id').value = id;
+  document.getElementById('cancel-modal-tag').textContent = task.tag;
+  document.getElementById('cancel-modal-title').textContent = task.title;
+  document.getElementById('cancel-form-reason').value = '';
+  toggleCancelModal(true);
+  document.getElementById('cancel-form-reason').focus();
+}
+
+function toggleCancelModal(open) {
+  const m = document.getElementById('cancel-modal-backdrop');
+  m.classList.toggle('hidden', !open);
+  m.classList.toggle('flex', open);
+}
+
+async function submitCancelTask(e) {
+  e.preventDefault();
+  const id = document.getElementById('cancel-form-id').value;
+  const reason = document.getElementById('cancel-form-reason').value.trim();
+  if (!reason) { document.getElementById('cancel-form-reason').focus(); return; }
+  const task = allTasks.find(t => t.id === id);
+  const btn = document.getElementById('cancel-form-submit');
+  btn.disabled = true;
+  try {
+    await setTaskStatus(id, 'cancelled', reason);
+    toggleCancelModal(false);
+    showToast(`ยกเลิกงาน ${task?.tag} แล้ว`, `สาเหตุ: ${reason}`);
+  } catch (err) {
+    showToast('ยกเลิกงานไม่สำเร็จ', err.message, true);
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 async function restoreTask(id) {
   const task = allTasks.find(t => t.id === id);
-  await setTaskStatus(id, 'active');
+  try {
+    await setTaskStatus(id, 'active');
+  } catch (err) {
+    showToast('เปิดงานไม่สำเร็จ', err.message, true);
+    return;
+  }
   showToast(`เปิดงาน ${task?.tag} กลับมาใช้งาน`, 'สถานะกลับเป็นปกติ');
 }
 

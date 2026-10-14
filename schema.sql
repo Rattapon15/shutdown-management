@@ -55,6 +55,11 @@ ALTER TABLE ai_project.shutdown_mnm_tasks
 ALTER TABLE ai_project.shutdown_mnm_tasks
   ADD COLUMN IF NOT EXISTS stage_at TEXT NOT NULL DEFAULT '';
 
+-- Why the job was cancelled, typed in when cancelling; cleared on restore.
+-- Shown under the job's Gantt bar next to the cancel time.
+ALTER TABLE ai_project.shutdown_mnm_tasks
+  ADD COLUMN IF NOT EXISTS cancel_reason TEXT NOT NULL DEFAULT '';
+
 CREATE TABLE IF NOT EXISTS ai_project.shutdown_mnm_activity (
   id          BIGSERIAL PRIMARY KEY,
   plant       TEXT NOT NULL REFERENCES ai_project.shutdown_mnm_plants(name) ON DELETE CASCADE,

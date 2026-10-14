@@ -268,9 +268,13 @@ app.put('/api/tasks/:id/status', requireAuth, requireWrite, ah(async (req, res) 
   const { status, updated_by } = req.body;
   const plant = getPlant(req);
   if (!['active', 'cancelled'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
-  const task = await db.updateTaskStatus(req.params.id, status, updated_by, plant);
+  const reason = String(req.body.reason || '').trim().slice(0, 500);
+  if (status === 'cancelled' && !reason) return res.status(400).json({ error: 'กรุณาระบุสาเหตุของการยกเลิกงาน' });
+  const task = await db.updateTaskStatus(req.params.id, status, updated_by, plant, reason);
   if (!task) return res.status(404).json({ error: 'Task not found' });
-  await db.logActivity(task.tag, status === 'cancelled' ? 'ยกเลิกงาน (Cancel Job)' : 'เปิดงานกลับมาใช้งาน', updated_by || 'User', plant);
+  await db.logActivity(task.tag,
+    status === 'cancelled' ? `ยกเลิกงาน (Cancel Job): "${reason.slice(0, 60)}"` : 'เปิดงานกลับมาใช้งาน',
+    updated_by || 'User', plant);
   res.json({ ok: true });
 }));
 
