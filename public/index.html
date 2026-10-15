@@ -131,12 +131,12 @@ tailwind.config = {
   #tasks-scroll::-webkit-scrollbar-thumb { background:#c4c6d0; border-radius:5px; border:2px solid #f3f3fd; }
   #tasks-scroll::-webkit-scrollbar-thumb:hover { background:#74767f; }
 
-  /* Gantt timeline (Tab 2) */
+  /* Gantt timeline (Tab 1) */
   .gantt-left-col { width:864px; min-width:864px; flex-shrink:0; display:grid; grid-template-columns:90px 100px 210px 110px 240px 44px 70px; align-items:center; }
   .gantt-left-col > * { padding:0 8px; min-width:0; }
   .gantt-left-col > .gantt-time-cell, .gantt-left-col > .gantt-cancel-cell { padding:0 4px; }
   .gantt-cancel-cell { text-align:center; }
-  .gantt-left-col > .gantt-stage-cell { padding:0 16px; } /* same 240px / px-4 as Tab 1's 5-stage column */
+  .gantt-left-col > .gantt-stage-cell { padding:0 16px; } /* same 240px / px-4 as the task table's 5-stage column */
   /* task name wraps to two lines, then ellipsis — fits the fixed 56px row (as does the 5-stage cell) */
   .gantt-title { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; line-height:1.3; word-break:break-word; }
   .gantt-time-input { width:44px; padding:0 2px; border:1px solid transparent; border-radius:4px; background:transparent;
@@ -366,10 +366,10 @@ tailwind.config = {
 <!-- ── Main content tabs ── -->
 <div id="main-tab-bar" class="px-5 pt-5">
   <div class="main-tab-group" role="tablist">
-    <button id="main-tab-btn-1" onclick="setMainTab(1)" role="tab" class="main-tab-btn active">
-      <span class="material-symbols-outlined">table_rows</span>TAB 1</button>
-    <button id="main-tab-btn-2" onclick="setMainTab(2)" role="tab" class="main-tab-btn">
-      <span class="material-symbols-outlined">view_timeline</span>TAB 2</button>
+    <button id="main-tab-btn-gantt" onclick="setMainTab('gantt')" role="tab" class="main-tab-btn active">
+      <span class="material-symbols-outlined">view_timeline</span>TAB 1</button>
+    <button id="main-tab-btn-table" onclick="setMainTab('table')" role="tab" class="main-tab-btn">
+      <span class="material-symbols-outlined">table_rows</span>TAB 2</button>
   </div>
 </div>
 
@@ -613,7 +613,7 @@ tailwind.config = {
   </div>
 </div><!-- /view-overall -->
 
-<div id="main-tab-content-1">
+<div id="main-tab-content-table" class="hidden">
 
 <div id="view-progress">
 
@@ -738,9 +738,9 @@ tailwind.config = {
   </div>
 </div><!-- /view-history -->
 
-</div><!-- /main-tab-content-1 -->
+</div><!-- /main-tab-content-table -->
 
-<div id="main-tab-content-2" class="hidden">
+<div id="main-tab-content-gantt">
   <div class="w-full px-5 py-5 flex flex-col gap-4">
 
     <div class="bg-surface-container-low rounded-xl p-4 flex items-center justify-between gap-2 shadow-md">
@@ -817,7 +817,7 @@ tailwind.config = {
     </div>
 
   </div>
-</div><!-- /main-tab-content-2 -->
+</div><!-- /main-tab-content-gantt -->
 
 </main>
 <!-- Cancel job modal -->
@@ -1088,7 +1088,7 @@ let currentPlant = 'SKIC BM16';
 let currentView = 'progress';
 let currentSafety = { power_outage: [], site_prep: [], high_risk: [] };
 
-// ─── Gantt timeline (Tab 2) state ──────────────────────────────────────────────
+// ─── Gantt timeline (Tab 1) state ──────────────────────────────────────────────
 let lastGanttBounds = null;
 const GANTT_PX_PER_HOUR = 72; // must match the 72px gridline spacing in CSS
 const GANTT_MIN_BAR_PX = 18;
@@ -1102,7 +1102,7 @@ let colSort = { col: null, dir: 1 };  // dir: 1=asc, -1=desc
 let cdCurrentCol = null;
 let cdPendingValues = new Set(); // values checked in open dropdown (not yet applied)
 let cdAllValues = [];            // all unique values for current col
-// Tab 2 (Gantt) keeps its own filter/sort so it doesn't change what Tab 1 shows.
+// The Gantt keeps its own filter/sort so it doesn't change what the task table shows.
 const ganttColFilters = {};
 const ganttColSort = { col: null, dir: 1 };
 let cdScope = 'table';
@@ -1278,7 +1278,7 @@ function initColHeaders() {
   });
 }
 
-// Shared by Tab 1's table and Tab 2's Gantt so both filter/sort the same way.
+// Shared by the task table and the Gantt so both filter/sort the same way.
 function applyColFiltersAndSort(tasks, filters, sort) {
   let out = tasks.filter(t => Object.entries(filters).every(([col, allowed]) =>
     !allowed || allowed.size === 0 || allowed.has(cdGetValue(t, col))));
@@ -1349,7 +1349,7 @@ function showOverallView() {
     t.style.background = '';
     t.style.color = '#909097';
   });
-  ['main-tab-bar', 'progress-summary', 'main-tab-content-1', 'main-tab-content-2']
+  ['main-tab-bar', 'progress-summary', 'main-tab-content-table', 'main-tab-content-gantt']
     .forEach(id => document.getElementById(id).classList.add('hidden'));
   document.getElementById('view-overall').classList.remove('hidden');
   loadOverall();
@@ -1463,15 +1463,15 @@ async function setPlantTab(el) {
   await Promise.all([loadTasks(), loadActivity(), loadSchedule(), loadLastExcelUpload()]);
 }
 
-// ─── Main content tab switching (Tab 1 / Tab 2) ───────────────────────────────
-let currentMainTab = 1;
+// ─── Main content tab switching (TAB 1 = Gantt, TAB 2 = task table) ───────────
+let currentMainTab = 'gantt';
 function setMainTab(tab) {
   currentMainTab = tab;
-  document.getElementById('main-tab-content-1').classList.toggle('hidden', tab !== 1);
-  document.getElementById('main-tab-content-2').classList.toggle('hidden', tab !== 2);
-  document.getElementById('main-tab-btn-1').classList.toggle('active', tab === 1);
-  document.getElementById('main-tab-btn-2').classList.toggle('active', tab === 2);
-  if (tab === 2) renderGanttTimeline();
+  for (const t of ['gantt', 'table']) {
+    document.getElementById(`main-tab-content-${t}`).classList.toggle('hidden', tab !== t);
+    document.getElementById(`main-tab-btn-${t}`).classList.toggle('active', tab === t);
+  }
+  if (tab === 'gantt') renderGanttTimeline();
 }
 
 // ─── View tab switching (Progress vs Safety Activities) ───────────────────────
@@ -1490,15 +1490,15 @@ function setViewTab(el, view) {
   document.getElementById('view-progress').classList.toggle('hidden', view !== 'progress');
   document.getElementById('view-safety').classList.toggle('hidden', view !== 'safety');
   document.getElementById('view-history').classList.toggle('hidden', view !== 'history');
-  // TAB 1 / TAB 2 belong to Shutdown Progress Update only. Safety lives inside the
-  // TAB 1 container, so show that without forgetting which tab Progress was on.
+  // TAB 1 / TAB 2 belong to Shutdown Progress Update only. Safety and History live
+  // inside the table container, so show that without forgetting which tab Progress was on.
   document.getElementById('main-tab-bar').classList.toggle('hidden', view !== 'progress');
   document.getElementById('progress-summary').classList.toggle('hidden', view !== 'progress');
   if (view === 'progress') {
     setMainTab(currentMainTab);
   } else {
-    document.getElementById('main-tab-content-1').classList.remove('hidden');
-    document.getElementById('main-tab-content-2').classList.add('hidden');
+    document.getElementById('main-tab-content-table').classList.remove('hidden');
+    document.getElementById('main-tab-content-gantt').classList.add('hidden');
   }
   if (view === 'safety') loadSafetyActivities();
   if (view === 'history') loadHistoryList();
@@ -1850,10 +1850,10 @@ function renderTable() {
 
   document.getElementById('showing-count').textContent = filtered.length;
 
-  if (currentMainTab === 2) renderGanttTimeline();
+  if (currentMainTab === 'gantt') renderGanttTimeline();
 }
 
-// 5-stage badge + clickable stage bar — shared by Tab 1's table and Tab 2's Gantt.
+// 5-stage badge + clickable stage bar — shared by the task table and the Gantt.
 // compact drops the bar's top margin so it fits the Gantt's fixed-height rows.
 function renderStageCell(task, compact = false) {
   const { badgeCls, stageText } = getStageStyle(task.progress, task.status);
@@ -1887,7 +1887,7 @@ function getStageStyle(p, status) {
   return { badgeCls: 'text-on-surface-variant bg-surface-container', stageText: `${p}%` };
 }
 
-// ─── Gantt Timeline (Tab 2) ─────────────────────────────────────────────────────
+// ─── Gantt Timeline (Tab 1) ─────────────────────────────────────────────────────
 // Bounds are minutes on the shutdown-frame axis (see taskSpan), so a job that ends
 // at 01:00 on day 2 extends the axis past midnight instead of wrapping.
 function computeGanttBounds(tasks, frame) {
@@ -1998,7 +1998,7 @@ function ganttNowLeftPx(bounds) {
 }
 
 function refreshGanttNowLine() {
-  if (currentMainTab !== 2) return;
+  if (currentMainTab !== 'gantt') return;
   const bounds = lastGanttBounds;
   const line = document.getElementById('gantt-now-line');
   const label = document.getElementById('gantt-now-label');
@@ -2616,7 +2616,7 @@ async function closeShutdown() {
   currentSafety = { power_outage: [], site_prep: [], high_risk: [] };
   setExcelFileName(null);
   await Promise.all([loadSchedule(), loadActivity()]);
-  if (currentMainTab === 2) renderGanttTimeline();
+  if (currentMainTab === 'gantt') renderGanttTimeline();
   showToast('ปิดงาน Shutdown สำเร็จ', `บันทึก History ${result.start_date} แล้ว — พร้อมสำหรับ Shutdown ครั้งถัดไป`);
 }
 
