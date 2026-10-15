@@ -72,7 +72,8 @@ const requireAuth = ah(async (req, res, next) => {
   next();
 });
 
-// Two roles: 'admin' can edit; 'user' (the default, incl. new Microsoft sign-ins) is read-only.
+// Two roles: 'admin' can edit everything; 'user' (the default, incl. new Microsoft sign-ins)
+// may only move tasks through the 5-stage progress and cancel/restore them.
 function requireWrite(req, res, next) {
   if (!req.user || req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Read-only account — ask an admin for edit access' });
@@ -254,17 +255,18 @@ app.post('/api/tasks', requireAuth, requireWrite, ah(async (req, res) => {
   res.json({ id: task.id, tag: task.tag });
 }));
 
-app.put('/api/tasks/:id/progress', requireAuth, requireWrite, ah(async (req, res) => {
+app.put('/api/tasks/:id/progress', requireAuth, ah(async (req, res) => {
   const { progress, updated_by } = req.body;
   const plant = getPlant(req);
   const labels = { 0:'ยังไม่เปิด Permit', 25:'เปิด Permit แล้ว', 50:'อยู่ระหว่างทำงาน', 75:'รอปิด Permit', 100:'ปิด Permit สมบูรณ์' };
+  if (!(progress in labels)) return res.status(400).json({ error: 'Invalid progress' });
   const task = await db.updateTaskProgress(req.params.id, progress, updated_by, plant);
   if (!task) return res.status(404).json({ error: 'Task not found' });
   await db.logActivity(task.tag, `อัปเดตเป็น ${progress}% (${labels[progress] || progress+'%'})`, updated_by || 'User', plant);
   res.json({ ok: true });
 }));
 
-app.put('/api/tasks/:id/status', requireAuth, requireWrite, ah(async (req, res) => {
+app.put('/api/tasks/:id/status', requireAuth, ah(async (req, res) => {
   const { status, updated_by } = req.body;
   const plant = getPlant(req);
   if (!['active', 'cancelled'].includes(status)) return res.status(400).json({ error: 'Invalid status' });

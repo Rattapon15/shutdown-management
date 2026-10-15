@@ -75,8 +75,8 @@ tailwind.config = {
   .cd-apply { flex:1; padding:5px; background:#0077b6; color:#fff; border:none; border-radius:5px; font-weight:700; font-size:11px; cursor:pointer; }
   .cd-clear { padding:5px 10px; background:transparent; color:#74767f; border:1px solid #c4c6d0; border-radius:5px; font-size:11px; cursor:pointer; }
   .cd-clear:hover { color:#ba1a1a; border-color:#ba1a1a; }
-  /* Employee accounts are read-only: hide every control that writes. The server
-     enforces this too (403) — this just keeps the UI honest. */
+  /* Employee accounts may only update 5-stage progress and cancel/restore jobs: hide every
+     other control that writes. The server enforces this too (403) — this just keeps the UI honest. */
   body.readonly [onclick*="openScheduleModal"],
   body.readonly [onclick*="excel-file-input"],
   body.readonly [onclick*="toggleModal(true)"],
@@ -85,12 +85,7 @@ tailwind.config = {
   body.readonly [onclick*="deleteHistory"],
   body.readonly [onclick*="openSafetyModal"],
   body.readonly [onclick*="deleteSafetyItem"],
-  body.readonly [onclick*="updateProgress"],
-  body.readonly [onclick*="advanceTask"],
-  body.readonly [onclick*="cancelTask"],
-  body.readonly [onclick*="restoreTask"],
   body.readonly [onclick*="deleteTask"] { display:none !important; }
-  body.readonly [onclick*="updateProgress"] { display:block !important; pointer-events:none; cursor:default; }
 
   /* Main content tabs (Tab 1 / Tab 2) */
   /* Segmented control: track in surface-container-high, active segment lifts to white */
