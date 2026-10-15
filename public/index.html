@@ -364,7 +364,7 @@ tailwind.config = {
 <main class="relative pt-16 bg-surface min-h-screen">
 
 <!-- ── Main content tabs ── -->
-<div id="main-tab-bar" class="px-5 pt-5">
+<div id="main-tab-bar" class="px-5 pt-3">
   <div class="main-tab-group" role="tablist">
     <button id="main-tab-btn-gantt" onclick="setMainTab('gantt')" role="tab" class="main-tab-btn active">
       <span class="material-symbols-outlined">view_timeline</span>TAB 1</button>
@@ -374,10 +374,10 @@ tailwind.config = {
 </div>
 
 <!-- ── Progress summary: banner, KPIs, search, phase legend — shared by TAB 1 and TAB 2 ── -->
-<div id="progress-summary" class="w-full px-5 pt-5 flex flex-col gap-4">
+<div id="progress-summary" class="w-full px-5 pt-3 flex flex-col gap-3">
 
     <!-- ── HEADER BANNER ── -->
-    <div class="bg-surface-container-low rounded-xl p-5 flex flex-col gap-4 shadow-md">
+    <div class="bg-surface-container-low rounded-xl p-3 flex flex-col gap-3 shadow-md">
       <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
         <button onclick="openScheduleModal()"
           class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container transition-all shadow-md active:scale-95 text-xs font-bold tracking-tight w-fit">
@@ -436,16 +436,16 @@ tailwind.config = {
     </div>
 
     <!-- ── KPI TILES ── -->
-    <div class="flex flex-col xl:flex-row gap-4 w-full">
+    <div class="flex flex-col xl:flex-row gap-3 w-full">
       <!-- Pie Chart -->
-      <div class="xl:w-2/5 bg-surface-container-lowest rounded-xl p-5 flex flex-col gap-3 shadow-sm">
+      <div class="xl:w-2/5 bg-surface-container-lowest rounded-xl px-4 py-3 flex flex-col gap-2 shadow-sm">
         <div class="flex items-center justify-between">
           <span class="text-[10px] font-semibold text-on-surface-variant tracking-widest uppercase">OVERALL SHUTDOWN COMPLETION RATE</span>
           <span class="font-mono text-2xl font-bold text-on-surface" id="kpi-percent">0.0%</span>
         </div>
         <div class="flex items-center gap-4">
           <div class="shrink-0">
-            <svg id="pie-chart-svg" viewBox="0 0 200 200" width="180" height="180">
+            <svg id="pie-chart-svg" viewBox="0 0 200 200" width="150" height="150">
               <!-- pie slices injected by JS before this group -->
               <g id="pie-center-group">
                 <circle cx="100" cy="100" r="54" fill="#ffffff"/>
@@ -454,76 +454,76 @@ tailwind.config = {
               </g>
             </svg>
           </div>
-          <div class="flex flex-col gap-1.5 flex-1 min-w-0">
-            <p class="text-xs text-on-surface-variant/80 mb-1">จำนวนงานทั้งหมด <span class="text-secondary font-semibold font-mono" id="kpi-total">0 งาน</span></p>
-            <div id="pie-legend" class="flex flex-col gap-2"></div>
+          <div class="flex flex-col gap-1 flex-1 min-w-0">
+            <p class="text-xs text-on-surface-variant/80">จำนวนงานทั้งหมด <span class="text-secondary font-semibold font-mono" id="kpi-total">0 งาน</span></p>
+            <div id="pie-legend" class="flex flex-col gap-1"></div>
           </div>
         </div>
       </div>
       <!-- Stage Tiles -->
-      <div class="flex-1 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-        <div id="stage-tile-0" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase(0)">
+      <div class="flex-1 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+        <div id="stage-tile-0" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-3 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase(0)">
           <div class="h-1 w-full bg-outline-variant/50 absolute top-0 left-0"></div>
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-semibold text-on-surface-variant uppercase">STAGE 1 // 0%</span>
             <span class="material-symbols-outlined text-outline group-hover:scale-110 transition-transform" style="font-size:18px">lock_clock</span>
           </div>
-          <div class="my-2 flex-1 flex flex-col items-center justify-center text-center">
+          <div class="my-1 flex-1 flex flex-col items-center justify-center text-center">
             <div class="text-2xl font-bold text-on-surface font-mono"><span id="cnt-0">0</span> <span class="text-xs font-normal text-on-surface-variant">งาน</span></div>
             <div class="text-xs text-on-surface-variant mt-1">รอเปิด Work Permit</div>
           </div>
         </div>
-        <div id="stage-tile-25" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase(25)">
+        <div id="stage-tile-25" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-3 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase(25)">
           <div class="h-1 w-full bg-secondary-container absolute top-0 left-0"></div>
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-semibold text-secondary-fixed-dim uppercase">STAGE 2 // 25%</span>
             <span class="material-symbols-outlined text-secondary group-hover:scale-110 transition-transform" style="font-size:18px">assignment_turned_in</span>
           </div>
-          <div class="my-2 flex-1 flex flex-col items-center justify-center text-center">
+          <div class="my-1 flex-1 flex flex-col items-center justify-center text-center">
             <div class="text-2xl font-bold text-secondary font-mono"><span id="cnt-25">0</span> <span class="text-xs font-normal text-on-surface-variant">งาน</span></div>
             <div class="text-xs text-on-surface mt-1">เปิด Work Permit แล้ว</div>
           </div>
         </div>
-        <div id="stage-tile-50" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase(50)">
+        <div id="stage-tile-50" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-3 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase(50)">
           <div class="h-1 w-full bg-secondary absolute top-0 left-0"></div>
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-semibold text-secondary uppercase">STAGE 3 // 50%</span>
             <span class="material-symbols-outlined text-secondary group-hover:scale-110 transition-transform" style="font-size:18px">handyman</span>
           </div>
-          <div class="my-2 flex-1 flex flex-col items-center justify-center text-center">
+          <div class="my-1 flex-1 flex flex-col items-center justify-center text-center">
             <div class="text-2xl font-bold text-on-surface font-mono"><span id="cnt-50">0</span> <span class="text-xs font-normal text-on-surface-variant">งาน</span></div>
             <div class="text-xs text-on-surface mt-1">อยู่ระหว่างทำงาน</div>
           </div>
         </div>
-        <div id="stage-tile-75" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase(75)">
+        <div id="stage-tile-75" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-3 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase(75)">
           <div class="h-1 w-full bg-primary-fixed-dim absolute top-0 left-0"></div>
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-semibold text-primary uppercase">STAGE 4 // 75%</span>
             <span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform" style="font-size:18px">fact_check</span>
           </div>
-          <div class="my-2 flex-1 flex flex-col items-center justify-center text-center">
+          <div class="my-1 flex-1 flex flex-col items-center justify-center text-center">
             <div class="text-2xl font-bold text-primary font-mono"><span id="cnt-75">0</span> <span class="text-xs font-normal text-on-surface-variant">งาน</span></div>
             <div class="text-xs text-on-surface mt-1">รอปิด Work Permit</div>
           </div>
         </div>
-        <div id="stage-tile-100" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase(100)">
+        <div id="stage-tile-100" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-3 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase(100)">
           <div class="h-1 w-full bg-tertiary absolute top-0 left-0"></div>
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-semibold text-tertiary uppercase">STAGE 5 // 100%</span>
             <span class="material-symbols-outlined text-tertiary group-hover:scale-110 transition-transform" style="font-size:18px">verified</span>
           </div>
-          <div class="my-2 flex-1 flex flex-col items-center justify-center text-center">
+          <div class="my-1 flex-1 flex flex-col items-center justify-center text-center">
             <div class="text-2xl font-bold text-tertiary font-mono"><span id="cnt-100">0</span> <span class="text-xs font-normal text-on-surface-variant">งาน</span></div>
             <div class="text-xs text-on-surface mt-1">ปิด Work Permit เสร็จแล้ว</div>
           </div>
         </div>
-        <div id="stage-tile-cancelled" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase('cancelled')">
+        <div id="stage-tile-cancelled" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-3 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase('cancelled')">
           <div class="h-1 w-full bg-error absolute top-0 left-0"></div>
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-semibold text-error uppercase">CANCEL JOB</span>
             <span class="material-symbols-outlined text-error group-hover:scale-110 transition-transform" style="font-size:18px">cancel</span>
           </div>
-          <div class="my-2 flex-1 flex flex-col items-center justify-center text-center">
+          <div class="my-1 flex-1 flex flex-col items-center justify-center text-center">
             <div class="text-2xl font-bold text-error font-mono"><span id="cnt-cancelled">0</span> <span class="text-xs font-normal text-on-surface-variant">งาน</span></div>
             <div class="text-xs text-on-surface mt-1">ยกเลิกงาน (Cancel Job)</div>
           </div>
@@ -531,31 +531,8 @@ tailwind.config = {
       </div>
     </div>
 
-    <!-- ── SEARCH BAR ── -->
-    <div class="bg-surface-container-lowest rounded-xl p-3 flex items-center gap-3 shadow-sm">
-      <span class="material-symbols-outlined text-secondary shrink-0" style="font-size:22px">manage_search</span>
-      <div class="flex-1 relative">
-        <input id="main-search-input" oninput="renderTable()" autocomplete="off" spellcheck="false"
-          placeholder="ค้นหาได้จากทุกคอลัมน์ — ชื่องาน, ผู้รับผิดชอบ, Section, พื้นที่, เวลา, สถานะ (เช่น 100%), หมายเหตุ..."
-          class="w-full bg-surface-container border border-outline-variant/50 rounded-lg px-4 py-2.5 font-sans text-sm text-on-surface placeholder:text-outline/60 focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all">
-        <span id="main-search-clear" onclick="clearMainSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-outline hover:text-on-surface transition-colors">
-          <span class="material-symbols-outlined" style="font-size:18px">close</span>
-        </span>
-      </div>
-      <div class="shrink-0 flex items-center gap-1.5 text-[10px] font-mono text-on-surface-variant/60 select-none">
-        <span class="px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30">Section</span>
-        <span class="px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30">ชื่องาน</span>
-        <span class="px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30">ผู้รับผิดชอบ</span>
-        <span class="px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30">เวลา</span>
-        <span class="px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30">%</span>
-      </div>
-      <button onclick="resetFilters()" class="shrink-0 p-2 rounded bg-surface-container hover:bg-surface-bright text-on-surface-variant hover:text-on-surface transition-colors" title="ล้างตัวกรอง">
-        <span class="material-symbols-outlined" style="font-size:18px">filter_alt_off</span>
-      </button>
-    </div>
-
     <!-- Phase legend -->
-    <div class="bg-surface-container-low rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+    <div class="bg-surface-container-low rounded-xl px-3 py-2 flex flex-wrap items-center justify-between gap-3 shadow-sm">
       <div class="flex items-center gap-2">
         <span class="material-symbols-outlined text-secondary" style="font-size:20px">tune</span>
         <span class="text-[10px] font-bold uppercase text-on-surface tracking-wider">5-PHASE STATUS PROGRESSION STANDARD</span>
@@ -617,7 +594,9 @@ tailwind.config = {
 
 <div id="view-progress">
 
-  <div class="w-full px-5 py-5 flex flex-col gap-4">
+  <div class="w-full px-5 pt-3 pb-5 flex flex-col gap-3">
+
+    <div id="search-slot-table"></div>
 
     <!-- ── MAIN LAYOUT: TABLE ── -->
     <div class="grid grid-cols-1 gap-4 items-start">
@@ -741,9 +720,9 @@ tailwind.config = {
 </div><!-- /main-tab-content-table -->
 
 <div id="main-tab-content-gantt">
-  <div class="w-full px-5 py-5 flex flex-col gap-4">
+  <div class="w-full px-5 pt-3 pb-5 flex flex-col gap-3">
 
-    <div class="bg-surface-container-low rounded-xl p-4 flex items-center justify-between gap-2 shadow-md">
+    <div class="bg-surface-container-low rounded-xl px-4 py-2.5 flex items-center justify-between gap-2 shadow-md">
       <div class="flex items-center gap-2">
         <span class="material-symbols-outlined text-secondary" style="font-size:20px">view_timeline</span>
         <h2 class="text-sm font-bold text-on-surface">Shutdown Timeline (Gantt View)</h2>
@@ -774,6 +753,32 @@ tailwind.config = {
             <button type="button" id="gantt-shift-save" onclick="applyShutdownShift()" class="px-3 py-1.5 rounded text-xs font-semibold bg-secondary text-on-secondary hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed">บันทึก</button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Search bar filters both tabs; setMainTab() moves it into the active tab's #search-slot-* -->
+    <div id="search-slot-gantt">
+      <div id="main-search-bar" class="bg-surface-container-lowest rounded-xl px-3 py-2 flex items-center gap-3 shadow-sm">
+        <span class="material-symbols-outlined text-secondary shrink-0" style="font-size:22px">manage_search</span>
+        <div class="flex-1 relative">
+          <input id="main-search-input" oninput="renderTable()" autocomplete="off" spellcheck="false"
+            placeholder="ค้นหาได้จากทุกคอลัมน์ — ชื่องาน, ผู้รับผิดชอบ, Section, พื้นที่, เวลา, สถานะ (เช่น 100%), หมายเหตุ..."
+            class="w-full bg-surface-container border border-outline-variant/50 rounded-lg px-4 py-2 font-sans text-sm text-on-surface placeholder:text-outline/60 focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all">
+          <span id="main-search-clear" onclick="clearMainSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-outline hover:text-on-surface transition-colors">
+            <span class="material-symbols-outlined" style="font-size:18px">close</span>
+          </span>
+        </div>
+        <div class="shrink-0 flex items-center gap-1.5 text-[10px] font-mono text-on-surface-variant/60 select-none">
+          <span class="px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30">Section</span>
+          <span class="px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30">ชื่องาน</span>
+          <span class="px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30">ผู้รับผิดชอบ</span>
+          <span class="px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30">เวลา</span>
+          <span class="px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30">%</span>
+        </div>
+        <button onclick="resetFilters()" class="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded bg-surface-container hover:bg-surface-bright text-on-surface-variant hover:text-on-surface transition-colors whitespace-nowrap" title="ล้างตัวกรองทั้งหมด">
+          <span class="material-symbols-outlined" style="font-size:18px">filter_alt_off</span>
+          <span class="text-xs font-semibold">ล้างตัวกรองทั้งหมด</span>
+        </button>
       </div>
     </div>
 
@@ -1250,6 +1255,7 @@ function cdClear() {
 function cdRerender() {
   if (cdScope === 'gantt') renderGanttTimeline();
   else renderTable();
+  updateKPIs();
 }
 
 function updateColHeaders() {
@@ -1471,7 +1477,9 @@ function setMainTab(tab) {
     document.getElementById(`main-tab-content-${t}`).classList.toggle('hidden', tab !== t);
     document.getElementById(`main-tab-btn-${t}`).classList.toggle('active', tab === t);
   }
+  document.getElementById(`search-slot-${tab}`).appendChild(document.getElementById('main-search-bar'));
   if (tab === 'gantt') renderGanttTimeline();
+  updateKPIs();
 }
 
 // ─── View tab switching (Progress vs Safety Activities) ───────────────────────
@@ -2357,13 +2365,20 @@ const PIE_STAGES = [
   { p: 'cancelled', label: 'ยกเลิกงาน (Cancel Job)', color: '#ba1a1a' },
 ];
 
+// The summary follows the column filters of whichever tab is showing.
+function kpiTasks() {
+  const filters = currentMainTab === 'gantt' ? ganttColFilters : colFilters;
+  return { tasks: applyColFiltersAndSort(allTasks, filters, { col: null }), filtered: Object.keys(filters).length > 0 };
+}
+
 function updateKPIs() {
-  const total = allTasks.length;
-  const doneCount = allTasks.filter(t => t.status !== 'cancelled' && t.progress === 100).length;
+  const { tasks, filtered } = kpiTasks();
+  const total = tasks.length;
+  const doneCount = tasks.filter(t => t.status !== 'cancelled' && t.progress === 100).length;
   const avg = total > 0 ? (doneCount / total * 100).toFixed(1) : '0.0';
 
   document.getElementById('kpi-percent').textContent = avg + '%';
-  document.getElementById('kpi-total').textContent = total + ' งาน';
+  document.getElementById('kpi-total').textContent = total + ' งาน' + (filtered ? ' (ตามตัวกรอง)' : '');
   document.getElementById('gauge-text').textContent = avg + '%';
   document.getElementById('gauge-total-text').textContent = total + ' งาน';
 
@@ -2371,8 +2386,8 @@ function updateKPIs() {
   const counts = {};
   PIE_STAGES.forEach(s => {
     counts[s.p] = s.p === 'cancelled'
-      ? allTasks.filter(t => t.status === 'cancelled').length
-      : allTasks.filter(t => t.status !== 'cancelled' && t.progress === s.p).length;
+      ? tasks.filter(t => t.status === 'cancelled').length
+      : tasks.filter(t => t.status !== 'cancelled' && t.progress === s.p).length;
     const el = document.getElementById(`cnt-${s.p}`);
     if (el) el.textContent = counts[s.p];
   });
@@ -2892,6 +2907,7 @@ function resetFilters() {
   if (clearBtn) clearBtn.classList.add('hidden');
   updateColHeaders();
   renderTable();
+  updateKPIs();
 }
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
@@ -2933,7 +2949,7 @@ function renderScheduleStrip() {
     const v = currentSchedule[f.key] || { date: '', time: '' };
     const hasValue = v.date || v.time;
     return `
-      <div class="bg-surface-container-lowest rounded-lg px-3 py-2 flex flex-col gap-0.5 border border-outline-variant/20">
+      <div class="bg-surface-container-lowest rounded-lg px-3 py-1.5 flex flex-col gap-0.5 border border-outline-variant/20">
         <div class="flex items-center gap-1.5 text-on-surface-variant">
           <span class="material-symbols-outlined" style="font-size:14px">${f.icon}</span>
           <span class="text-[10px] font-semibold uppercase tracking-wide truncate">${f.label}</span>
@@ -2941,7 +2957,7 @@ function renderScheduleStrip() {
         ${hasValue
           ? `<div class="font-mono text-sm font-bold text-on-surface">${escHtml(v.time) || '--:--'} <span class="text-[10px] font-normal text-on-surface-variant">น.</span></div>
              <div class="font-mono text-[10px] text-on-surface-variant">${escHtml(formatScheduleDate(v.date)) || '-'}</div>`
-          : `<div class="text-xs text-on-surface-variant/60 italic mt-1">ยังไม่กรอกข้อมูล</div>`}
+          : `<div class="text-xs text-on-surface-variant/60 italic">ยังไม่กรอกข้อมูล</div>`}
       </div>
     `;
   }).join('');
