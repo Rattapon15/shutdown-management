@@ -2587,11 +2587,23 @@ async function deleteTask(id) {
   loadActivity();
 }
 
+// Upload Excel, clear-all and close-shutdown are admin-only; the server enforces it too.
+function requireAdminUI() {
+  if (canWrite()) return true;
+  showToast('ไม่มีสิทธิ์', 'เฉพาะ Admin เท่านั้นที่ทำรายการนี้ได้', true);
+  return false;
+}
+
 async function clearAllTasks() {
+  if (!requireAdminUI()) return;
   if (allTasks.length === 0) { showToast('ไม่มีข้อมูล', 'ตารางงานว่างอยู่แล้ว'); return; }
   if (!confirm(`คำเตือน: การกระทำนี้จะลบรายการงานทั้งหมด ${allTasks.length} รายการออกจากระบบอย่างถาวร\n\nต้องการดำเนินการต่อหรือไม่?`)) return;
   if (!confirm(`ยืนยันอีกครั้ง: ล้างข้อมูลตารางงานทั้งหมดเพื่อเตรียม Upload Excel ครั้งต่อไปใช่หรือไม่?\n\nกดตกลงเพื่อลบข้อมูลทั้งหมดถาวร`)) return;
-  await fetch(`/api/tasks?${plantQS()}`, { method: 'DELETE' });
+  const res = await fetch(`/api/tasks?${plantQS()}`, { method: 'DELETE' });
+  if (!res.ok) {
+    showToast('ล้างข้อมูลไม่สำเร็จ', (await res.json().catch(() => ({}))).error || `HTTP ${res.status}`, true);
+    return;
+  }
   allTasks = [];
   resetFilters();
   renderTable();
@@ -2605,6 +2617,7 @@ async function clearAllTasks() {
 
 // ─── Close shutdown → history ─────────────────────────────────────────────────
 async function closeShutdown() {
+  if (!requireAdminUI()) return;
   if (allTasks.length === 0) { showToast('ไม่มีข้อมูล', 'ยังไม่มีรายการงานใน Shutdown ครั้งนี้', true); return; }
   const open = allTasks.filter(t => t.status !== 'cancelled' && t.progress < 100).length;
   const done = allTasks.filter(t => t.status !== 'cancelled' && t.progress === 100).length;
@@ -2820,6 +2833,7 @@ async function handleExcelUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
   e.target.value = '';
+  if (!requireAdminUI()) return;
 
   setExcelFileName(file.name);
   document.getElementById('upload-overlay').classList.add('show');
