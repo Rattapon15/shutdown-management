@@ -139,7 +139,6 @@ tailwind.config = {
   .gantt-time-input:hover { border-color:#c4c6d0; }
   .gantt-time-input:focus { outline:none; border-color:#0077b6; background:#fff; box-shadow:0 0 0 1px #0077b6; }
   .gantt-time-input.invalid { border-color:#ba1a1a; box-shadow:0 0 0 1px #ba1a1a; }
-  body.readonly .gantt-time-input { pointer-events:none; }
   body.readonly #gantt-range-btn { pointer-events:none; }
   body.readonly .gantt-range-edit { display:none; }
   /* Gantt card scrolls vertically itself; horizontal scrolling goes through #gantt-hscroll,
@@ -2038,10 +2037,10 @@ function ganttMetaBlock(task) {
       </div>
       <div class="gantt-time-cell flex flex-col items-center gap-0.5 text-on-surface-variant whitespace-nowrap">
         <input class="gantt-time-input" data-id="${escHtml(task.id)}" data-field="start_time" value="${escHtml(task.start_time)}"
-               placeholder="--:--" maxlength="5" title="เวลาเริ่ม (HH:MM)" ${canWrite() ? '' : 'readonly tabindex="-1"'}
+               placeholder="--:--" maxlength="5" title="เวลาเริ่ม (HH:MM)"
                onchange="saveGanttTime(this)" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value=this.defaultValue;this.blur();}">
         <input class="gantt-time-input" data-id="${escHtml(task.id)}" data-field="end_time" value="${escHtml(task.end_time)}"
-               placeholder="--:--" maxlength="5" title="เวลาจบ (HH:MM)" ${canWrite() ? '' : 'readonly tabindex="-1"'}
+               placeholder="--:--" maxlength="5" title="เวลาจบ (HH:MM)"
                onchange="saveGanttTime(this)" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value=this.defaultValue;this.blur();}">
       </div>
     </div>`;
@@ -2473,10 +2472,14 @@ function updateKPIs() {
 
 // ─── Actions ─────────────────────────────────────────────────────────────────
 async function updateProgress(id, progress) {
-  await fetch(`/api/tasks/${id}/progress`, {
+  const res = await fetch(`/api/tasks/${id}/progress`, {
     method: 'PUT', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ progress, updated_by: currentUser?.username || 'User', plant: currentPlant })
   });
+  if (!res.ok) {
+    showToast('อัปเดตไม่สำเร็จ', (await res.json().catch(() => ({}))).error || `HTTP ${res.status}`, true);
+    return;
+  }
   const task = allTasks.find(t => t.id === id);
   if (task) {
     task.progress = progress;

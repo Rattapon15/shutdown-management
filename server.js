@@ -73,7 +73,7 @@ const requireAuth = ah(async (req, res, next) => {
 });
 
 // Two roles: 'admin' can edit everything; 'user' (the default, incl. new Microsoft sign-ins)
-// may only move tasks through the 5-stage progress and cancel/restore them.
+// may only update a task's 5-stage progress, start/end times, and cancel/restore it.
 function requireWrite(req, res, next) {
   if (!req.user || req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Read-only account — ask an admin for edit access' });
@@ -292,7 +292,7 @@ app.put('/api/tasks/:id/note', requireAuth, requireWrite, ah(async (req, res) =>
 // HH:MM (24h, "24:00" allowed as end-of-day) or empty to clear.
 const isValidHM = v => v === '' || /^([01]\d|2[0-3]):[0-5]\d$|^24:00$/.test(v);
 
-app.put('/api/tasks/:id/times', requireAuth, requireWrite, ah(async (req, res) => {
+app.put('/api/tasks/:id/times', requireAuth, ah(async (req, res) => {
   const start_time = String(req.body.start_time ?? '').trim();
   const end_time   = String(req.body.end_time ?? '').trim();
   const duration   = String(req.body.duration ?? '').trim().slice(0, 40);
