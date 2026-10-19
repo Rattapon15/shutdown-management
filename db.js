@@ -555,8 +555,8 @@ const db = {
   },
 
   // Copies the current shutdown (tasks, safety items, milestones) into history.
-  // With reset, the plant is then emptied so the next shutdown starts from scratch;
-  // without it (clear / new upload) this is only a safety net. Returns the record,
+  // With reset, the plant is then emptied so the next shutdown starts from scratch.
+  // Only "Close shutdown" calls this. Returns the record,
   // or null when there is nothing to keep (no tasks, or no shutdown date).
   async closeShutdown(plant, closedBy = 'User', { reset = false } = {}) {
     const p = plantKey(plant);

@@ -317,7 +317,6 @@ app.delete('/api/tasks/:id', requireAuth, requireWrite, ah(async (req, res) => {
 
 app.delete('/api/tasks', requireAuth, requireWrite, ah(async (req, res) => {
   const plant = getPlant(req);
-  await recordShutdown(plant, req.user?.username);
   const count = await db.clearAllTasks(plant);
   const safetyCount = await db.clearAllSafetyActivities(plant);
   await db.logActivity('SYSTEM', `ล้างข้อมูลตารางงานทั้งหมด (${count} รายการ) และ Safety Activities (${safetyCount} รายการ)`, req.user?.username || 'User', plant);
@@ -362,17 +361,9 @@ app.put('/api/shutdown/range', requireAuth, requireWrite, ah(async (req, res) =>
 }));
 
 // ─── Shutdown history / Overall Plant ─────────────────────────────────────────
-// Safety net before a clear or a new Excel upload: keeps the current shutdown in
-// history without resetting anything. It must never block those actions (e.g.
-// before `npm run migrate:schema` has created shutdown_mnm_history), so failures
-// are only logged.
-async function recordShutdown(plant, actor) {
-  try { await db.closeShutdown(plant, actor || 'System'); }
-  catch (err) { console.error('[history record]', plant, '-', err.message); }
-}
-
 // "Close shutdown": saves the shutdown to history, then empties the plant
-// (tasks, safety items, milestones, Excel frame) for the next one.
+// (tasks, safety items, milestones, Excel frame) for the next one. This is the
+// only path that writes history — Clear All and Excel upload never do.
 app.post('/api/shutdown/close', requireAuth, requireWrite, ah(async (req, res) => {
   const plant = getPlant(req);
   const actor = req.user?.username || 'User';
@@ -659,7 +650,6 @@ app.post('/api/upload', requireAuth, requireWrite, upload.single('file'), ah(asy
       }
     }
 
-    if (toInsert.length) await recordShutdown(plant);
     const count = await db.bulkInsertTasks(toInsert, plant);
     await db.logActivity('EXCEL', `นำเข้าข้อมูลจาก Excel สำเร็จ ${count} รายการ (${req.file.originalname})`, 'System', plant);
 
