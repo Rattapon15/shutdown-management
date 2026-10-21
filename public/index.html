@@ -222,71 +222,6 @@ tailwind.config = {
     </nav>
     <div class="px-3 py-2"><span class="text-[10px] uppercase tracking-widest px-2 font-semibold" style="color:#909097;">Plant Selection</span></div>
     <nav class="flex flex-col gap-1 px-2" id="plant-tab-nav">
-      <div class="plant-group flex flex-col">
-        <a class="plant-tab flex items-center gap-2 px-3 py-2 rounded transition-colors" style="color:#909097;" href="#" data-plant="SKIC BM1" onclick="setPlantTab(this)">
-          <span class="material-symbols-outlined" style="font-size:18px">factory</span><span>SKIC BM1</span>
-        </a>
-        <div class="plant-subnav hidden flex-col gap-0.5 pl-8 pr-1 py-1" data-plant-sub="SKIC BM1">
-          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="progress" onclick="setViewTab(this,'progress')">
-            <span class="material-symbols-outlined" style="font-size:14px">monitoring</span><span>Shutdown Progress Update</span>
-          </a>
-          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="safety" onclick="setViewTab(this,'safety')">
-            <span class="material-symbols-outlined" style="font-size:14px">health_and_safety</span><span>Shutdown Safety Activities</span>
-          </a>
-          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="history" onclick="setViewTab(this,'history')">
-            <span class="material-symbols-outlined" style="font-size:14px">history</span><span>Shutdown History</span>
-          </a>
-        </div>
-      </div>
-      <div class="plant-group flex flex-col">
-        <a class="plant-tab flex items-center gap-2 px-3 py-2 rounded transition-colors" style="color:#909097;" href="#" data-plant="SKIC BM3" onclick="setPlantTab(this)">
-          <span class="material-symbols-outlined" style="font-size:18px">factory</span><span>SKIC BM3</span>
-        </a>
-        <div class="plant-subnav hidden flex-col gap-0.5 pl-8 pr-1 py-1" data-plant-sub="SKIC BM3">
-          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="progress" onclick="setViewTab(this,'progress')">
-            <span class="material-symbols-outlined" style="font-size:14px">monitoring</span><span>Shutdown Progress Update</span>
-          </a>
-          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="safety" onclick="setViewTab(this,'safety')">
-            <span class="material-symbols-outlined" style="font-size:14px">health_and_safety</span><span>Shutdown Safety Activities</span>
-          </a>
-          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="history" onclick="setViewTab(this,'history')">
-            <span class="material-symbols-outlined" style="font-size:14px">history</span><span>Shutdown History</span>
-          </a>
-        </div>
-      </div>
-      <div class="plant-group flex flex-col">
-        <a class="plant-tab flex items-center gap-2 px-3 py-2 rounded transition-colors" style="color:#909097;" href="#" data-plant="SKIC BM17" onclick="setPlantTab(this)">
-          <span class="material-symbols-outlined" style="font-size:18px">factory</span><span>SKIC BM17</span>
-        </a>
-        <div class="plant-subnav hidden flex-col gap-0.5 pl-8 pr-1 py-1" data-plant-sub="SKIC BM17">
-          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="progress" onclick="setViewTab(this,'progress')">
-            <span class="material-symbols-outlined" style="font-size:14px">monitoring</span><span>Shutdown Progress Update</span>
-          </a>
-          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="safety" onclick="setViewTab(this,'safety')">
-            <span class="material-symbols-outlined" style="font-size:14px">health_and_safety</span><span>Shutdown Safety Activities</span>
-          </a>
-          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="history" onclick="setViewTab(this,'history')">
-            <span class="material-symbols-outlined" style="font-size:14px">history</span><span>Shutdown History</span>
-          </a>
-        </div>
-      </div>
-      <div class="plant-group flex flex-col">
-        <a class="plant-tab active flex items-center gap-2 px-3 py-2 rounded border-l-2 font-semibold" style="background:#1b2b3f; color:#7bd0ff; border-color:#7bd0ff;" href="#" data-plant="SKIC BM16" onclick="setPlantTab(this)">
-          <span class="material-symbols-outlined" style="font-size:18px">factory</span><span>SKIC BM16</span>
-          <span class="ml-auto font-mono text-xs px-1.5 py-0.5 rounded" style="background:#001c10; color:#4edea3; border:1px solid rgba(78,222,163,0.4);">LIVE</span>
-        </a>
-        <div class="plant-subnav flex flex-col gap-0.5 pl-8 pr-1 py-1" data-plant-sub="SKIC BM16">
-          <a class="view-tab active flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-semibold transition-colors" style="background:#102034; color:#7bd0ff;" href="#" data-view="progress" onclick="setViewTab(this,'progress')">
-            <span class="material-symbols-outlined" style="font-size:14px">monitoring</span><span>Shutdown Progress Update</span>
-          </a>
-          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="safety" onclick="setViewTab(this,'safety')">
-            <span class="material-symbols-outlined" style="font-size:14px">health_and_safety</span><span>Shutdown Safety Activities</span>
-          </a>
-          <a class="view-tab flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors" style="color:#909097;" href="#" data-view="history" onclick="setViewTab(this,'history')">
-            <span class="material-symbols-outlined" style="font-size:14px">history</span><span>Shutdown History</span>
-          </a>
-        </div>
-      </div>
     </nav>
   </div>
 
@@ -1095,6 +1030,71 @@ const GANTT_LEFT_COL_PX = 864; // must match .gantt-left-col width in CSS
 
 function plantQS() { return `plant=${encodeURIComponent(currentPlant)}`; }
 
+// ─── Plant Selection sidebar ──────────────────────────────────────────────────
+// Two groups, each a collapsible list of plants. `key` is the plant name the API and
+// database use (the BP plants keep their original "SKIC BMx" keys, so their data is
+// unchanged); `label` is what the sidebar shows.
+const PLANT_GROUPS = [
+  { name: 'SKIC_BP', plants: [
+    { key: 'SKIC BM1',  label: 'BM1' },
+    { key: 'SKIC BM3',  label: 'BM3' },
+    { key: 'SKIC BM17', label: 'BM17' },
+    { key: 'SKIC BM16', label: 'BM16' },
+  ] },
+  { name: 'SKIC_WS', plants: ['BM4', 'BM5', 'BM6', 'BM7', 'BM8', 'BM9'].map(bm => ({ key: `SKIC WS ${bm}`, label: bm })) },
+];
+const LIVE_BADGE_HTML = '<span class="ml-auto font-mono text-xs px-1.5 py-0.5 rounded" style="background:#001c10; color:#4edea3; border:1px solid rgba(78,222,163,0.4);">LIVE</span>';
+const VIEW_TABS = [
+  { view: 'progress', icon: 'monitoring',       label: 'Shutdown Progress Update' },
+  { view: 'safety',   icon: 'health_and_safety', label: 'Shutdown Safety Activities' },
+  { view: 'history',  icon: 'history',          label: 'Shutdown History' },
+];
+
+function renderPlantNav() {
+  const nav = document.getElementById('plant-tab-nav');
+  nav.innerHTML = PLANT_GROUPS.map(group => {
+    const open = group.plants.some(p => p.key === currentPlant);
+    const plants = group.plants.map(p => {
+      const active = p.key === currentPlant;
+      return `<div class="plant-group flex flex-col">
+        <a class="plant-tab${active ? ' active' : ''} flex items-center gap-2 px-3 py-2 rounded transition-colors${active ? ' border-l-2 font-semibold' : ''}"
+           style="${active ? 'background:#1b2b3f; color:#7bd0ff; border-color:#7bd0ff;' : 'color:#909097;'}"
+           href="#" data-plant="${escHtml(p.key)}" onclick="setPlantTab(this); return false;">
+          <span class="material-symbols-outlined" style="font-size:18px">factory</span><span>${escHtml(p.label)}</span>${active ? LIVE_BADGE_HTML : ''}
+        </a>
+        <div class="plant-subnav ${active ? 'flex' : 'hidden'} flex-col gap-0.5 pl-8 pr-1 py-1" data-plant-sub="${escHtml(p.key)}">
+          ${VIEW_TABS.map(v => {
+            const on = active && v.view === currentView;
+            return `<a class="view-tab${on ? ' active font-semibold' : ''} flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors"
+               style="${on ? 'background:#102034; color:#7bd0ff;' : 'color:#909097;'}" href="#" data-view="${v.view}" onclick="setViewTab(this,'${v.view}'); return false;">
+              <span class="material-symbols-outlined" style="font-size:14px">${v.icon}</span><span>${v.label}</span>
+            </a>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="plant-section flex flex-col" data-group="${group.name}">
+      <button type="button" class="plant-section-hd flex items-center gap-2 px-3 py-2 rounded text-xs font-bold tracking-wide transition-colors hover:bg-white/5"
+              style="color:#d3e4fe;" onclick="togglePlantGroup('${group.name}')">
+        <span class="material-symbols-outlined plant-section-chevron" style="font-size:16px">${open ? 'expand_more' : 'chevron_right'}</span>
+        <span>${group.name}</span>
+        <span class="ml-auto font-mono text-[10px]" style="color:#909097;">${group.plants.length}</span>
+      </button>
+      <div class="plant-section-body ${open ? 'flex' : 'hidden'} flex-col gap-1 pl-3">${plants}</div>
+    </div>`;
+  }).join('');
+}
+
+function togglePlantGroup(name) {
+  const section = document.querySelector(`#plant-tab-nav .plant-section[data-group="${name}"]`);
+  const body = section.querySelector('.plant-section-body');
+  const open = body.classList.contains('hidden');
+  body.classList.toggle('hidden', !open);
+  body.classList.toggle('flex', open);
+  section.querySelector('.plant-section-chevron').textContent = open ? 'expand_more' : 'chevron_right';
+}
+renderPlantNav();
+
 // ─── Column filter / sort state ───────────────────────────────────────────────
 const colFilters = {};   // { col: Set of allowed values } — empty Set = show all
 let colSort = { col: null, dir: 1 };  // dir: 1=asc, -1=desc
@@ -1361,6 +1361,12 @@ const OVERALL_PLANTS = {
   'SKIC BM3':  { cycle: 'MSD Every 2M',     dot: '#0077b6' },
   'SKIC BM17': { cycle: 'MSD Every 2M',     dot: '#5ab8f0' },
   'SKIC BM16': { cycle: 'MSD Every 45Days', dot: '#6b3a10' },
+  'SKIC WS BM4': { cycle: '', dot: '#2e7d32' },
+  'SKIC WS BM5': { cycle: '', dot: '#43a047' },
+  'SKIC WS BM6': { cycle: '', dot: '#66bb6a' },
+  'SKIC WS BM7': { cycle: '', dot: '#8e6bbf' },
+  'SKIC WS BM8': { cycle: '', dot: '#b388d6' },
+  'SKIC WS BM9': { cycle: '', dot: '#d1b3ea' },
 };
 const MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 let overallYear = new Date().getFullYear();
@@ -1762,8 +1768,12 @@ function getTimeStatus(task) {
   const nowMin = minutesSinceFrame(frame);
 
   if (task.progress >= 100) {
-    // Finished: late only if it was still open past its end time.
-    if (endMin !== null && nowMin > endMin) {
+    // Finished: late only if it was closed after its end time. Judge by when it reached
+    // 100% (stage_at), not by the clock now, so a job closed on time stays green after
+    // its day ends. Without a stage time (older rows) fall back to the current time.
+    const closedAt = task.stage_at ? new Date(task.stage_at) : null;
+    const closedMin = closedAt && !isNaN(closedAt) ? minutesSinceFrame(frame, closedAt) : nowMin;
+    if (endMin !== null && closedMin > endMin) {
       return { label: 'DELAY', cls: 'text-error bg-error-container border border-error/40' };
     }
     return { label: 'ON TIME', cls: 'text-tertiary bg-tertiary-container border border-tertiary/40' };
@@ -2502,9 +2512,9 @@ async function updateProgress(id, progress) {
   }
   const task = allTasks.find(t => t.id === id);
   if (task) {
-    task.progress = progress;
     const now = new Date();
-    task.stage_at = now.toISOString();
+    if (task.progress !== progress || !task.stage_at) task.stage_at = now.toISOString();
+    task.progress = progress;
     task.updated_at = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')} น.`;
     task.updated_by = currentUser?.username || 'User';
   }

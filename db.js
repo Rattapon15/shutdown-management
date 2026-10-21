@@ -4,7 +4,8 @@ const crypto = require('crypto');
 const { query, withTx } = require('./pool');
 
 const DEFAULT_PLANT = 'SKIC BM16';
-const PLANTS = ['SKIC BM1', 'SKIC BM3', 'SKIC BM17', 'SKIC BM16'];
+const PLANTS = ['SKIC BM1', 'SKIC BM3', 'SKIC BM17', 'SKIC BM16',
+  'SKIC WS BM4', 'SKIC WS BM5', 'SKIC WS BM6', 'SKIC WS BM7', 'SKIC WS BM8', 'SKIC WS BM9'];
 
 const SCHEDULE_MILESTONES = ['shutdown', 'repair_done', 'warm_stream', 'function_test', 'startup', 'on_reel'];
 const SAFETY_CATEGORIES = ['power_outage', 'site_prep', 'high_risk'];
@@ -252,7 +253,10 @@ const db = {
 
   async updateTaskProgress(id, progress, updated_by = 'User', plant) {
     const { rows } = await query(
-      `UPDATE shutdown_mnm_tasks SET progress = $3, updated_at = $4, updated_by = $5, stage_at = $6
+      // stage_at only moves when the stage changes, so re-clicking 100% doesn't push
+      // the close time (and the on-time/delay verdict) later.
+      `UPDATE shutdown_mnm_tasks SET stage_at = CASE WHEN progress = $3 AND stage_at <> '' THEN stage_at ELSE $6 END,
+         progress = $3, updated_at = $4, updated_by = $5
        WHERE plant = $1 AND id = $2 RETURNING *`,
       [plantKey(plant), id, Number(progress) || 0, nowTime(), updated_by, new Date().toISOString()]
     );
