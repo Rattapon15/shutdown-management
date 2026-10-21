@@ -131,7 +131,7 @@ tailwind.config = {
   .gantt-left-col > * { padding:0 8px; min-width:0; }
   .gantt-left-col > .gantt-time-cell, .gantt-left-col > .gantt-cancel-cell { padding:0 4px; }
   .gantt-cancel-cell { text-align:center; }
-  .gantt-left-col > .gantt-stage-cell { padding:0 16px; } /* same 240px / px-4 as the task table's 5-stage column */
+  .gantt-left-col > .gantt-stage-cell { padding:0 16px; overflow:hidden; } /* same 240px / px-4 as the task table's 5-stage column */
   /* task name wraps to two lines, then ellipsis — fits the fixed 56px row (as does the 5-stage cell) */
   .gantt-title { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; line-height:1.3; word-break:break-word; }
   .gantt-time-input { width:44px; padding:0 2px; border:1px solid transparent; border-radius:4px; background:transparent;
@@ -1882,9 +1882,9 @@ function renderStageCell(task, compact = false) {
   const isCancelled = task.status === 'cancelled';
   return `
         <div class="flex flex-col gap-1.5 max-w-xs">
-          <div class="flex items-center justify-between">
-            <span class="font-mono text-[10px] px-2 py-0.5 rounded ${badgeCls} font-semibold">${stageText}</span>
-            <span class="font-mono text-xs font-bold text-on-surface">${task.progress}%</span>
+          <div class="flex items-center justify-between gap-1">
+            <span class="font-mono text-[10px] px-2 py-0.5 rounded ${badgeCls} font-semibold min-w-0 truncate" title="${escHtml(stageText)}">${stageText}</span>
+            <span class="font-mono text-xs font-bold text-on-surface shrink-0 whitespace-nowrap">${task.progress}%</span>
           </div>
           <div class="grid grid-cols-5 gap-1.5 w-full ${compact ? '' : 'mt-1'}">
             ${[0,25,50,75,100].map(p => {
