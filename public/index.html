@@ -1696,9 +1696,29 @@ function frameMidnight(frame) {
 
 // Same rule as the Excel bar grid: the grid opens at gridStartMin on day 1, so an
 // earlier start is a day-2 time; an end at or before its start runs into the next day.
+// Multi-day schedules store a calendar date with each time (start_date / end_date);
+// that pins the time to its day instead of guessing it from the grid.
+function frameDayOffset(frame, date) {
+  const d = String(date || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const b = String(frame?.baseDate || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!d || !b) return null;
+  return Math.round((Date.UTC(+d[1], +d[2] - 1, +d[3]) - Date.UTC(+b[1], +b[2] - 1, +b[3])) / 86400000);
+}
+
 function taskSpan(task, frame = shutdownFrame()) {
   const gridStart = frame?.gridStartMin || 0;
   const S = parseHM(task.start_time), E = parseHM(task.end_time);
+  const sDay = S === null ? null : frameDayOffset(frame, task.start_date);
+  if (sDay !== null) {
+    const start = sDay * 1440 + S;
+    let end = null;
+    if (E !== null) {
+      const eDay = frameDayOffset(frame, task.end_date);
+      end = (eDay ?? sDay) * 1440 + E;
+      if (end <= start) end = eDay === null ? end + 1440 : null;
+    }
+    return { start, end };
+  }
   const start = S === null ? null : (S < gridStart ? S + 1440 : S);
   let end = null;
   if (E !== null) {

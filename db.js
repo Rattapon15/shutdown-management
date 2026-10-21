@@ -32,6 +32,21 @@ function shiftHM(hm, deltaMin) {
   return `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
 }
 
+// Moves a dated time ("2026-09-22", "09:00") by deltaMin, carrying across midnight.
+// Undated or blank times fall back to shiftHM, which only wraps the clock.
+function shiftDateTime(date, hm, deltaMin) {
+  const m = String(hm || '').match(/^(\d{1,2}):(\d{2})$/);
+  const d = String(date || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m || !d) return { date, hm: shiftHM(hm, deltaMin) };
+  const day = Date.UTC(+d[1], +d[2] - 1, +d[3]) / 86400000;
+  const total = day * 1440 + Number(m[1]) * 60 + Number(m[2]) + deltaMin;
+  const newDay = Math.floor(total / 1440), rem = total - newDay * 1440;
+  return {
+    date: new Date(newDay * 86400000).toISOString().slice(0, 10),
+    hm: `${String(Math.floor(rem / 60)).padStart(2, '0')}:${String(rem % 60).padStart(2, '0')}`,
+  };
+}
+
 function emptySchedule() {
   const s = {};
   for (const k of SCHEDULE_MILESTONES) s[k] = { date: '', time: '' };
@@ -44,6 +59,7 @@ function taskRow(r) {
     id: r.id, tag: r.tag, title: r.title, area: r.area, assignee: r.assignee,
     progress: r.progress, status: r.status, note: r.note, duration: r.duration,
     start_time: r.start_time, end_time: r.end_time,
+    start_date: r.start_date || '', end_date: r.end_date || '',
     updated_at: r.updated_at, updated_by: r.updated_by, stage_at: r.stage_at || '',
     cancel_reason: r.cancel_reason || '',
     created_at: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
@@ -324,22 +340,25 @@ const db = {
     const p = plantKey(plant);
     return withTx(async client => {
       let shifted = 0;
-      if (deltaMin % 1440 !== 0) { // whole days only move the dates, not the clock times
+      // Undated tasks only carry a clock time, so a whole-day shift leaves them alone;
+      // multi-day tasks carry their dates too, which always move.
+      if (deltaMin !== 0) {
         const { rows } = await client.query(
-          'SELECT id, start_time, end_time FROM shutdown_mnm_tasks WHERE plant = $1 FOR UPDATE', [p]
+          'SELECT id, start_time, end_time, start_date, end_date FROM shutdown_mnm_tasks WHERE plant = $1 FOR UPDATE', [p]
         );
-        const ids = [], starts = [], ends = [];
+        const ids = [], starts = [], ends = [], sDates = [], eDates = [];
         for (const r of rows) {
-          const s = shiftHM(r.start_time, deltaMin), e = shiftHM(r.end_time, deltaMin);
-          if (s === r.start_time && e === r.end_time) continue;
-          ids.push(r.id); starts.push(s); ends.push(e);
+          const s = shiftDateTime(r.start_date, r.start_time, deltaMin);
+          const e = shiftDateTime(r.end_date, r.end_time, deltaMin);
+          if (s.hm === r.start_time && e.hm === r.end_time && s.date === r.start_date && e.date === r.end_date) continue;
+          ids.push(r.id); starts.push(s.hm); ends.push(e.hm); sDates.push(s.date); eDates.push(e.date);
         }
         if (ids.length) {
           const res = await client.query(
-            `UPDATE shutdown_mnm_tasks t SET start_time = u.s, end_time = u.e
-             FROM unnest($2::text[], $3::text[], $4::text[]) AS u(id, s, e)
+            `UPDATE shutdown_mnm_tasks t SET start_time = u.s, end_time = u.e, start_date = u.sd, end_date = u.ed
+             FROM unnest($2::text[], $3::text[], $4::text[], $5::text[], $6::text[]) AS u(id, s, e, sd, ed)
              WHERE t.plant = $1 AND t.id = u.id`,
-            [p, ids, starts, ends]
+            [p, ids, starts, ends, sDates, eDates]
           );
           shifted = res.rowCount;
         }
@@ -366,12 +385,13 @@ const db = {
         counter++;
         await client.query(
           `INSERT INTO shutdown_mnm_tasks
-             (plant, id, tag, title, area, assignee, progress, status, note, duration, start_time, end_time, updated_at, updated_by)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,'active',$8,$9,$10,$11,$12,$13)`,
+             (plant, id, tag, title, area, assignee, progress, status, note, duration, start_time, end_time, start_date, end_date, updated_at, updated_by)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,'active',$8,$9,$10,$11,$12,$13,$14,$15)`,
           [p, `TASK-${String(counter).padStart(3, '0')}`,
            t.tag || '', t.title || '', t.area || '', t.assignee || '',
            Number(t.progress) || 0, t.note || '', t.duration || '',
-           t.start_time || '', t.end_time || '', t.updated_at || '', t.updated_by || 'Excel Import']
+           t.start_time || '', t.end_time || '', t.start_date || '', t.end_date || '',
+           t.updated_at || '', t.updated_by || 'Excel Import']
         );
       }
       return tasks.length;

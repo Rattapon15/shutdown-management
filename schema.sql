@@ -148,3 +148,11 @@ CREATE TABLE IF NOT EXISTS ai_project.shutdown_mnm_history (
 );
 CREATE INDEX IF NOT EXISTS shutdown_mnm_history_start_idx
   ON ai_project.shutdown_mnm_history (start_date);
+
+-- Calendar date (YYYY-MM-DD) of start_time / end_time for jobs that span several days.
+-- Filled from multi-day Excel schedules, whose Start/End cells are full date-times;
+-- blank for single-day files, where the day is inferred from the hourly grid.
+ALTER TABLE ai_project.shutdown_mnm_tasks
+  ADD COLUMN IF NOT EXISTS start_date TEXT NOT NULL DEFAULT '';
+ALTER TABLE ai_project.shutdown_mnm_tasks
+  ADD COLUMN IF NOT EXISTS end_date TEXT NOT NULL DEFAULT '';

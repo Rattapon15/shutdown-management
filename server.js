@@ -475,6 +475,24 @@ function excelTimeToHHMM(val) {
   return String(val || '').trim();
 }
 
+// A plan Start/End cell is either a bare time of day (0.375 = 09:00) or, in multi-day
+// schedules, a full date-time serial (46287.375 = 22 Sep 09:00). Returns the HH:MM and,
+// for the latter, the calendar date too — otherwise date is '' and the day is inferred
+// from the hourly grid.
+function excelDateTime(val) {
+  if (typeof val === 'number' && isFinite(val) && val > 40000 && val < 60000) {
+    let day = Math.floor(val);
+    let mins = Math.round((val - day) * 1440);
+    if (mins >= 1440) { day += 1; mins -= 1440; }
+    return {
+      date: XLSX.SSF.format('yyyy-mm-dd', day),
+      time: `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`,
+    };
+  }
+  if (val === '' || val === undefined) return { date: '', time: '' };
+  return { date: '', time: excelTimeToHHMM(val) };
+}
+
 // ── Which day does a task fall on? ──
 // Tasks only carry a time-of-day. The template's hourly bar grid spans ~2 days:
 // one header row has the date serial at the first column of each day, the row
@@ -488,9 +506,11 @@ function findGanttGridStart(rawRows, lastCol) {
     for (let ci = 0; ci <= lastCol && ci < row.length; ci++) {
       if (typeof row[ci] !== 'number' || row[ci] <= 40000 || row[ci] >= 60000) continue;
       const hour = (rawRows[ri + 1] || [])[ci];
+      // Single-day files hold a bare hour (0.1667); multi-day ones a full date-time (46286.1667).
+      const frac = typeof hour === 'number' ? hour - (hour > 40000 ? Math.floor(hour) : 0) : -1;
       return {
         baseDate: XLSX.SSF.format('yyyy-mm-dd', Math.floor(row[ci])),
-        gridStartHour: typeof hour === 'number' && hour >= 0 && hour < 1 ? Math.round(hour * 24) : 0,
+        gridStartHour: frac >= 0 && frac < 1 ? Math.round(frac * 24) % 24 : 0,
       };
     }
   }
@@ -572,32 +592,34 @@ app.post('/api/upload', requireAuth, requireWrite, upload.single('file'), ah(asy
         if (section) inPower = POWER_SECTION.test(section);
         else if (area || !title) inPower = false;
         if (inPower && title && title !== '-') {
-          const start_time = (raw[startIdx] !== '' && raw[startIdx] !== undefined) ? excelTimeToHHMM(raw[startIdx]) : '';
-          const end_time   = (raw[endIdx] !== '' && raw[endIdx] !== undefined) ? excelTimeToHHMM(raw[endIdx]) : '';
-          const assignee   = String(raw[assigneeIdx] || '').trim();
-          powerOutageRows.push({ title, assignee, start_time, end_time });
+          const start = excelDateTime(raw[startIdx]);
+          const end   = excelDateTime(raw[endIdx]);
+          const assignee = String(raw[assigneeIdx] || '').trim();
+          powerOutageRows.push({ title, assignee, start_time: start.time, end_time: end.time, start_date: start.date });
         }
 
         const itemNo = raw[2];
         if (!Number.isInteger(itemNo) || itemNo <= 0 || !title) continue;
 
         const assignee   = String(raw[assigneeIdx] || '').trim() || 'ไม่ระบุ';
-        const start_time = (raw[startIdx] !== '' && raw[startIdx] !== undefined) ? excelTimeToHHMM(raw[startIdx]) : '';
-        const end_time   = (raw[endIdx] !== '' && raw[endIdx] !== undefined) ? excelTimeToHHMM(raw[endIdx]) : '';
-        const duration   = raw[durationIdx] ? `${raw[durationIdx]} ชม.` : '';
+        const start = excelDateTime(raw[startIdx]);
+        const end   = excelDateTime(raw[endIdx]);
+        const duration  = raw[durationIdx] ? `${raw[durationIdx]} ชม.` : '';
         const tag        = `${(lastSection||lastArea||'SD').replace(/\s+/g,'-').toUpperCase().slice(0,10)}-${String(itemNo).padStart(3,'0')}`;
 
         toInsert.push({
           tag, title,
           area:     lastArea || lastSection || 'General',
-          assignee, progress: 0, note: '', duration, start_time, end_time,
+          assignee, progress: 0, note: '', duration,
+          start_time: start.time, end_time: end.time, start_date: start.date, end_date: end.date,
           updated_at: '', updated_by: 'Excel Import'
         });
       }
 
       if (powerOutageRows.length > 0) {
         for (const row of powerOutageRows) {
-          const datetime = (baseDateStr && row.start_time) ? `${baseDateStr}T${row.start_time}` : '';
+          const day = row.start_date || baseDateStr;
+          const datetime = (day && row.start_time) ? `${day}T${row.start_time}` : '';
           const timeRange = row.start_time && row.end_time ? ` (${row.start_time}-${row.end_time})` : '';
           await db.createSafetyActivity('power_outage', {
             text: `${row.title}${timeRange}`,
