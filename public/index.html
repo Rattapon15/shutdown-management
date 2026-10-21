@@ -57,7 +57,11 @@ tailwind.config = {
   #col-dropdown { display:none; position:fixed; z-index:9000; min-width:220px; max-width:320px;
     background:#ffffff; border:1px solid #c4c6d0; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,.15);
     padding:8px 0; font-family:Inter,Sarabun,sans-serif; font-size:12px; color:#1a1b22; }
-  #col-dropdown.show { display:block; }
+  /* Column layout so that, when the panel is capped to the viewport, only the value list
+     shrinks/scrolls and the ล้าง / ใช้งาน footer always stays visible. */
+  #col-dropdown.show { display:flex; flex-direction:column; }
+  #col-dropdown > * { flex-shrink:0; }
+  #col-dropdown > .cd-values { flex-shrink:1; min-height:48px; }
   .cd-section { padding:4px 12px 2px; font-size:10px; font-weight:700; color:#74767f; letter-spacing:.08em; text-transform:uppercase; }
   .cd-btn { display:flex; align-items:center; gap:8px; width:100%; padding:5px 12px; cursor:pointer; transition:background .1s; }
   .cd-btn:hover { background:rgba(0,119,182,.08); color:#0077b6; }
@@ -75,11 +79,10 @@ tailwind.config = {
   .cd-apply { flex:1; padding:5px; background:#0077b6; color:#fff; border:none; border-radius:5px; font-weight:700; font-size:11px; cursor:pointer; }
   .cd-clear { padding:5px 10px; background:transparent; color:#74767f; border:1px solid #c4c6d0; border-radius:5px; font-size:11px; cursor:pointer; }
   .cd-clear:hover { color:#ba1a1a; border-color:#ba1a1a; }
-  /* Employee accounts may only update 5-stage progress and cancel/restore jobs: hide every
+  /* Employee accounts may only add jobs, update 5-stage progress and cancel/restore jobs: hide every
      other control that writes. The server enforces this too (403) — this just keeps the UI honest. */
   body.readonly [onclick*="openScheduleModal"],
   body.readonly [onclick*="excel-file-input"],
-  body.readonly [onclick*="toggleModal(true)"],
   body.readonly [onclick*="clearAllTasks"],
   body.readonly [onclick*="closeShutdown"],
   body.readonly [onclick*="deleteHistory"],
@@ -127,9 +130,9 @@ tailwind.config = {
   #tasks-scroll::-webkit-scrollbar-thumb:hover { background:#74767f; }
 
   /* Gantt timeline (Tab 1) */
-  .gantt-left-col { width:864px; min-width:864px; flex-shrink:0; display:grid; grid-template-columns:90px 100px 210px 110px 240px 44px 70px; align-items:center; }
+  .gantt-left-col { width:930px; min-width:930px; flex-shrink:0; display:grid; grid-template-columns:90px 100px 210px 110px 240px 44px 44px 92px; align-items:center; }
   .gantt-left-col > * { padding:0 8px; min-width:0; }
-  .gantt-left-col > .gantt-time-cell, .gantt-left-col > .gantt-cancel-cell { padding:0 4px; }
+  .gantt-left-col > .gantt-time-cell, .gantt-left-col > .gantt-cancel-cell, .gantt-left-col > .gantt-note-cell { padding:0 4px; }
   .gantt-cancel-cell { text-align:center; }
   .gantt-left-col > .gantt-stage-cell { padding:0 16px; overflow:hidden; } /* same 240px / px-4 as the task table's 5-stage column */
   /* task name wraps to two lines, then ellipsis — fits the fixed 56px row (as does the 5-stage cell) */
@@ -139,13 +142,26 @@ tailwind.config = {
   .gantt-time-input:hover { border-color:#c4c6d0; }
   .gantt-time-input:focus { outline:none; border-color:#0077b6; background:#fff; box-shadow:0 0 0 1px #0077b6; }
   .gantt-time-input.invalid { border-color:#ba1a1a; box-shadow:0 0 0 1px #ba1a1a; }
+  /* Start / end as two stacked "date + time" blocks, split by a hairline. */
+  .gantt-time-cell { display:flex; flex-direction:column; justify-content:center; gap:2px; }
+  .gantt-dt { display:flex; flex-direction:column; align-items:center; line-height:1; }
+  .gantt-dt + .gantt-dt { padding-top:2px; border-top:1px dashed rgba(196,198,208,.8); }
+  .gantt-dt .gantt-time-input { height:12px; line-height:12px; padding-top:0; padding-bottom:0; }
+  /* Date shown as "20-ต.ค.-69"; a transparent native date input on top opens the picker. */
+  .gantt-dt-date { position:relative; width:72px; height:12px; display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono',monospace; font-size:9px; color:#74767f; border:1px solid transparent; border-radius:4px; }
+  .gantt-dt-date:hover { border-color:#c4c6d0; color:#0077b6; }
+  .gantt-dt-date input[type=date] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+  .gantt-dt-date input[type=date]::-webkit-calendar-picker-indicator { position:absolute; inset:0; width:auto; height:auto; cursor:pointer; }
+  .gantt-note-cell { text-align:center; }
+  .gantt-note-text { color:#8a5a00; font-weight:600; }
   body.readonly #gantt-range-btn { pointer-events:none; }
   body.readonly .gantt-range-edit { display:none; }
   /* Gantt card scrolls vertically itself; horizontal scrolling goes through #gantt-hscroll,
      which sits under the time area only (the left columns never move sideways anyway). */
   #gantt-scroll { max-height:calc(100vh - 160px); min-height:320px; overflow-x:hidden; overflow-y:auto; scrollbar-gutter:stable; }
   /* margin-right matches #gantt-scroll's 10px vertical scrollbar gutter so both scroll ranges line up */
-  .gantt-hbar { margin-left:864px; margin-right:10px; overflow-x:auto; overflow-y:hidden; background:#f3f3fd; }
+  .gantt-hbar { margin-left:930px; margin-right:10px; overflow-x:auto; overflow-y:hidden; background:#f3f3fd; }
   #gantt-hscroll { border-top:1px solid rgba(196,198,208,.6); }
   #gantt-hscroll-top { border-bottom:1px solid rgba(196,198,208,.6); }
   .gantt-hbar.hidden { display:none; }
@@ -155,8 +171,8 @@ tailwind.config = {
   #gantt-scroll::-webkit-scrollbar-thumb, .gantt-hbar::-webkit-scrollbar-thumb { background:#c4c6d0; border-radius:5px; border:2px solid #f3f3fd; }
   #gantt-scroll::-webkit-scrollbar-thumb:hover, .gantt-hbar::-webkit-scrollbar-thumb:hover { background:#74767f; }
   #gantt-rows, #gantt-notime-rows {
-    background-image: repeating-linear-gradient(to right, rgba(0,0,0,.06) 0, rgba(0,0,0,.06) 1px, transparent 1px, transparent 72px);
-    background-position: 864px 0; /* start gridlines after .gantt-left-col */
+    background-image: repeating-linear-gradient(to right, rgba(0,0,0,.06) 0, rgba(0,0,0,.06) 1px, transparent 1px, transparent 36px);
+    background-position: 930px 0; /* start gridlines after .gantt-left-col */
   }
 </style>
 </head>
@@ -367,7 +383,7 @@ tailwind.config = {
     <!-- ── KPI TILES ── -->
     <div class="flex flex-col xl:flex-row gap-3 w-full">
       <!-- Pie Chart -->
-      <div class="xl:w-2/5 bg-surface-container-lowest rounded-xl px-4 py-3 flex flex-col gap-2 shadow-sm">
+      <div class="xl:w-1/3 bg-surface-container-lowest rounded-xl px-4 py-3 flex flex-col gap-2 shadow-sm">
         <div class="flex items-center justify-between">
           <span class="text-[10px] font-semibold text-on-surface-variant tracking-widest uppercase">OVERALL SHUTDOWN COMPLETION RATE</span>
           <span class="font-mono text-2xl font-bold text-on-surface" id="kpi-percent">0.0%</span>
@@ -390,7 +406,7 @@ tailwind.config = {
         </div>
       </div>
       <!-- Stage Tiles -->
-      <div class="flex-1 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+      <div class="flex-1 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2">
         <div id="stage-tile-0" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-3 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase(0)">
           <div class="h-1 w-full bg-outline-variant/50 absolute top-0 left-0"></div>
           <div class="flex items-center justify-between">
@@ -455,6 +471,17 @@ tailwind.config = {
           <div class="my-1 flex-1 flex flex-col items-center justify-center text-center">
             <div class="text-2xl font-bold text-error font-mono"><span id="cnt-cancelled">0</span> <span class="text-xs font-normal text-on-surface-variant">งาน</span></div>
             <div class="text-xs text-on-surface mt-1">ยกเลิกงาน (Cancel Job)</div>
+          </div>
+        </div>
+        <div id="stage-tile-added" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-3 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase('added')">
+          <div class="h-1 w-full bg-amber-500 absolute top-0 left-0"></div>
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-semibold text-amber-700 uppercase">ADD WORK</span>
+            <span class="material-symbols-outlined text-amber-600 group-hover:scale-110 transition-transform" style="font-size:18px">add_task</span>
+          </div>
+          <div class="my-1 flex-1 flex flex-col items-center justify-center text-center">
+            <div class="text-2xl font-bold text-amber-600 font-mono"><span id="cnt-added">0</span> <span class="text-xs font-normal text-on-surface-variant">งาน</span></div>
+            <div class="text-xs text-on-surface mt-1">งานที่เพิ่มเข้ามา</div>
           </div>
         </div>
       </div>
@@ -731,6 +758,7 @@ tailwind.config = {
               <div><div class="col-filter-hd" data-scope="gantt" data-col="assignee">ผู้รับผิดชอบ <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></div>
               <div class="gantt-stage-cell"><div class="col-filter-hd" data-scope="gantt" data-col="progress">ขั้นตอนความคืบหน้า (5-STAGE) <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></div>
               <div class="gantt-cancel-cell normal-case">ยกเลิก</div>
+              <div class="gantt-note-cell normal-case">Note</div>
               <div class="gantt-time-cell"><div class="col-filter-hd" data-scope="gantt" data-col="start_time">เริ่ม/จบ <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></div>
             </div>
             <div id="gantt-hour-header" class="relative flex-1" style="height:40px"></div>
@@ -777,6 +805,34 @@ tailwind.config = {
       <div class="flex justify-end gap-2 mt-1">
         <button type="button" onclick="toggleCancelModal(false)" class="px-4 py-2 rounded text-on-surface-variant hover:bg-surface-container-high font-semibold transition-colors">ปิด</button>
         <button type="submit" id="cancel-form-submit" class="px-4 py-2 rounded bg-error hover:bg-error/90 text-on-error font-bold transition-all shadow-md">ยืนยันยกเลิกงาน</button>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- Job note modal -->
+<div id="note-modal-backdrop" class="fixed inset-0 bg-black/80 z-50 items-center justify-center p-4 hidden">
+  <div class="bg-surface-container-lowest rounded-xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 relative border border-outline-variant/30">
+    <div class="flex items-center justify-between pb-2 border-b border-surface-container-high">
+      <h2 class="text-base font-bold text-on-surface flex items-center gap-2">
+        <span class="material-symbols-outlined text-amber-600" style="font-size:20px">edit_note</span>
+        Note <span id="note-modal-tag" class="font-mono text-secondary"></span>
+      </h2>
+      <button onclick="toggleNoteModal(false)" class="text-on-surface-variant hover:text-on-surface">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <form onsubmit="submitEventNote(event)" class="flex flex-col gap-3">
+      <input type="hidden" id="note-form-id">
+      <p id="note-modal-title" class="text-xs text-on-surface-variant break-words"></p>
+      <div>
+        <label for="note-form-text" class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">บันทึกเหตุการณ์เพิ่มเติม</label>
+        <textarea id="note-form-text" maxlength="500" rows="3" placeholder="เช่น รออะไหล่, พบความเสียหายเพิ่ม, เลื่อนเวลาเริ่มงาน ..."
+          class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary"></textarea>
+        <p class="text-[10px] text-on-surface-variant/70 mt-1">เว้นว่างแล้วกดบันทึก เพื่อลบ Note</p>
+      </div>
+      <div class="flex justify-end gap-2 mt-1">
+        <button type="button" onclick="toggleNoteModal(false)" class="px-4 py-2 rounded text-on-surface-variant hover:bg-surface-container-high font-semibold transition-colors">ปิด</button>
+        <button type="submit" id="note-form-submit" class="px-4 py-2 rounded bg-amber-500 hover:bg-amber-600 text-white font-bold transition-all shadow-md">บันทึก Note</button>
       </div>
     </form>
   </div>
@@ -1024,9 +1080,9 @@ let currentSafety = { power_outage: [], site_prep: [], high_risk: [] };
 
 // ─── Gantt timeline (Tab 1) state ──────────────────────────────────────────────
 let lastGanttBounds = null;
-const GANTT_PX_PER_HOUR = 72; // must match the 72px gridline spacing in CSS
+const GANTT_PX_PER_HOUR = 36; // must match the 36px gridline spacing in CSS
 const GANTT_MIN_BAR_PX = 18;
-const GANTT_LEFT_COL_PX = 864; // must match .gantt-left-col width in CSS
+const GANTT_LEFT_COL_PX = 930; // must match .gantt-left-col width in CSS
 
 function plantQS() { return `plant=${encodeURIComponent(currentPlant)}`; }
 
@@ -1151,22 +1207,42 @@ function cdOpen(col, headerEl, scope = 'table') {
 
   cdRenderValues(cdAllValues);
 
-  // Position dropdown near the header
   const dd = document.getElementById('col-dropdown');
   dd.classList.add('show');
-  const rect = headerEl.getBoundingClientRect();
-  let top = rect.bottom + 4;
-  let left = rect.left;
-  const ddW = 260;
-  if (left + ddW > window.innerWidth - 8) left = window.innerWidth - ddW - 8;
-  dd.style.top = top + 'px';
-  dd.style.left = left + 'px';
+  cdPosition(headerEl);
 
   document.getElementById('cd-sort-asc').onclick = () => { sort.col = col; sort.dir = 1; cdApply(); };
   document.getElementById('cd-sort-desc').onclick = () => { sort.col = col; sort.dir = -1; cdApply(); };
 
   setTimeout(() => document.addEventListener('mousedown', cdOutsideClick, {once:true}), 10);
 }
+
+// Keep the panel fully on screen: open below the header if it fits, otherwise on whichever
+// side has more room, capped to that space (the value list scrolls; the footer stays put).
+let cdAnchor = null;
+function cdPosition(headerEl) {
+  const dd = document.getElementById('col-dropdown');
+  const M = 8, GAP = 4;
+  cdAnchor = headerEl;
+  dd.style.maxHeight = '';
+  const rect = headerEl.getBoundingClientRect();
+  const natural = dd.offsetHeight;
+  const below = window.innerHeight - rect.bottom - GAP - M;
+  const above = rect.top - GAP - M;
+  const openUp = natural > below && above > below;
+  const h = Math.min(natural, openUp ? above : below);
+  dd.style.maxHeight = h + 'px';
+  dd.style.top = (openUp ? rect.top - GAP - h : rect.bottom + GAP) + 'px';
+  const w = dd.offsetWidth;
+  dd.style.left = Math.max(M, Math.min(rect.left, window.innerWidth - w - M)) + 'px';
+}
+window.addEventListener('resize', () => {
+  if (cdCurrentCol && cdAnchor) cdPosition(cdAnchor);
+});
+// Follow the header when the page or table scrolls; scrolling inside the panel's own list doesn't count.
+document.addEventListener('scroll', e => {
+  if (cdCurrentCol && cdAnchor && !document.getElementById('col-dropdown').contains(e.target)) cdPosition(cdAnchor);
+}, true);
 
 function cdOutsideClick(e) {
   const dd = document.getElementById('col-dropdown');
@@ -1795,6 +1871,7 @@ function summaryFilteredTasks() {
   const searchVal = (mainEl ? mainEl.value : '').toLowerCase().trim();
   return allTasks.filter(t => {
     const matchPhase = activePhase === null
+      || (activePhase === 'added' && t.added)
       || (activePhase === 'cancelled' ? t.status === 'cancelled' : (t.status !== 'cancelled' && t.progress === activePhase));
     const matchSearch = !searchVal || [t.id, t.tag, t.title, t.area, t.assignee, t.note, t.start_time||'', t.end_time||'', t.duration||'', cdGetValue(t, 'progress')].some(v => String(v||'').toLowerCase().includes(searchVal));
     return matchPhase && matchSearch;
@@ -1966,9 +2043,16 @@ function ganttStageStamp(task) {
   };
 }
 
-function ganttStampHtml(stamp, left) {
-  return `<div class="gantt-stage-stamp" style="left:${left}px" title="${escHtml(stamp.title)}">${escHtml(stamp.text)}${
-    stamp.reason ? `<span class="gantt-cancel-reason"> · สาเหตุ: ${escHtml(stamp.reason)}</span>` : ''}</div>`;
+// Line under a bar: stage stamp (and cancel reason), then the job's Note if it has one.
+function ganttStampHtml(stamp, left, note = '') {
+  if (!stamp && !note) return '';
+  const parts = [];
+  if (stamp) {
+    parts.push(escHtml(stamp.text) + (stamp.reason ? `<span class="gantt-cancel-reason"> · สาเหตุ: ${escHtml(stamp.reason)}</span>` : ''));
+  }
+  if (note) parts.push(`<span class="gantt-note-text">Note: ${escHtml(note)}</span>`);
+  const title = [stamp?.title, note ? 'Note: ' + note : ''].filter(Boolean).join('\n');
+  return `<div class="gantt-stage-stamp" style="left:${left}px" title="${escHtml(title)}">${parts.join(' · ')}</div>`;
 }
 
 function ganttBarColor(task) {
@@ -2008,7 +2092,7 @@ function renderGanttHourHeader(bounds) {
     const labelMin = bounds.startMin + h * 60;
     const hh = Math.floor((labelMin / 60) % 24).toString().padStart(2, '0');
     const dayEdge = labelMin % 1440 === 0;
-    html += `<div class="absolute top-5 bottom-0 border-l ${dayEdge ? 'border-l-2 border-outline-variant/70' : 'border-outline-variant/30'} text-[10px] font-mono text-on-surface-variant pl-1 leading-5"
+    html += `<div class="absolute top-5 bottom-0 border-l ${dayEdge ? 'border-l-2 border-outline-variant/70' : 'border-outline-variant/30'} text-[9px] font-mono text-on-surface-variant pl-0.5 leading-5"
                    style="left:${h * GANTT_PX_PER_HOUR}px">${hh}:00</div>`;
   }
   el.innerHTML = html;
@@ -2065,14 +2149,52 @@ function ganttMetaBlock(task) {
           <span class="material-symbols-outlined" style="font-size:18px">cancel</span>
         </button>`}
       </div>
-      <div class="gantt-time-cell flex flex-col items-center gap-0.5 text-on-surface-variant whitespace-nowrap">
-        <input class="gantt-time-input" data-id="${escHtml(task.id)}" data-field="start_time" value="${escHtml(task.start_time)}"
-               placeholder="--:--" maxlength="5" title="เวลาเริ่ม (HH:MM)"
-               onchange="saveGanttTime(this)" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value=this.defaultValue;this.blur();}">
-        <input class="gantt-time-input" data-id="${escHtml(task.id)}" data-field="end_time" value="${escHtml(task.end_time)}"
-               placeholder="--:--" maxlength="5" title="เวลาจบ (HH:MM)"
-               onchange="saveGanttTime(this)" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value=this.defaultValue;this.blur();}">
+      <div class="gantt-note-cell">
+        <button onclick="openEventNote('${task.id}')" title="${task.event_note ? 'Note: ' + escHtml(task.event_note) : 'เพิ่ม Note'}"
+          class="p-1 rounded hover:bg-amber-100 transition-colors ${task.event_note ? 'text-amber-600' : 'text-outline hover:text-amber-600'}">
+          <span class="material-symbols-outlined" style="font-size:18px">${task.event_note ? 'sticky_note_2' : 'edit_note'}</span>
+        </button>
       </div>
+      <div class="gantt-time-cell text-on-surface-variant whitespace-nowrap">
+        ${ganttDateTimeHtml(task, 'start')}
+        ${ganttDateTimeHtml(task, 'end')}
+      </div>
+    </div>`;
+}
+
+// Calendar date of a task's start / end as YYYY-MM-DD: the stored date for multi-day jobs,
+// otherwise the day the shutdown grid places the time on. '' when there's no time.
+function taskEffectiveDate(task, which, frame = shutdownFrame()) {
+  const stored = which === 'start' ? task.start_date : task.end_date;
+  if (stored) return stored;
+  const abs = taskSpan(task, frame)[which];
+  if (abs === null || abs === undefined) return '';
+  const d = frameMidnight(frame);
+  d.setDate(d.getDate() + Math.floor(abs / 1440));
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// "2026-10-20" → "20-ต.ค.-69", the same style as the Gantt day header.
+function thaiShortDate(ymd) {
+  const m = String(ymd || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return '';
+  return `${+m[3]}-${THAI_MONTHS_SHORT[+m[2] - 1]}-${String((+m[1] + 543) % 100).padStart(2, '0')}`;
+}
+
+// One stacked "date over time" block of the เริ่ม/จบ column; both parts are editable.
+function ganttDateTimeHtml(task, which) {
+  const field = which === 'start' ? 'start_time' : 'end_time';
+  const label = which === 'start' ? 'เริ่ม' : 'จบ';
+  const date = taskEffectiveDate(task, which);
+  const id = escHtml(task.id);
+  return `<div class="gantt-dt">
+      <label class="gantt-dt-date" title="วันที่${label} (คลิกเพื่อเปลี่ยน)">
+        <span>${date ? thaiShortDate(date) : '--'}</span>
+        <input type="date" data-id="${id}" data-which="${which}" value="${date}" onchange="saveGanttDate(this)">
+      </label>
+      <input class="gantt-time-input" data-id="${id}" data-field="${field}" value="${escHtml(task[field])}"
+             placeholder="--:--" maxlength="5" title="เวลา${label} (HH:MM)"
+             onchange="saveGanttTime(this)" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value=this.defaultValue;this.blur();}">
     </div>`;
 }
 
@@ -2134,6 +2256,45 @@ async function saveGanttTime(input) {
   loadActivity();
 }
 
+// Changing either date pins both: taskSpan only honours dates when start_date is set,
+// and pinning the other side keeps it where it was shown.
+async function saveGanttDate(input) {
+  const task = allTasks.find(t => String(t.id) === input.dataset.id);
+  if (!task) return;
+  const frame = shutdownFrame();
+  const value = input.value;
+  const start_date = input.dataset.which === 'start' ? value : taskEffectiveDate(task, 'start', frame);
+  const end_date   = input.dataset.which === 'end'   ? value : taskEffectiveDate(task, 'end', frame);
+  if (!value || (task.start_time && !start_date)) {
+    renderTable();
+    showToast('ระบุวันที่ไม่ครบ', 'กรุณาเลือกวันที่', true);
+    return;
+  }
+  const span = taskSpan({ ...task, start_date, end_date }, frame);
+  if (task.start_time && task.end_time && span.end === null) {
+    renderTable();
+    showToast('วันที่ไม่ถูกต้อง', 'วันเวลาจบต้องอยู่หลังวันเวลาเริ่ม', true);
+    return;
+  }
+  const times = { start_time: task.start_time || '', end_time: task.end_time || '', duration: task.duration || '' };
+  try {
+    const res = await fetch(`/api/tasks/${encodeURIComponent(task.id)}/times`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...times, start_date, end_date, updated_by: currentUser?.username || 'User', plant: currentPlant })
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`);
+  } catch (err) {
+    renderTable();
+    showToast('บันทึกวันที่ไม่สำเร็จ', err.message, true);
+    return;
+  }
+  Object.assign(task, { start_date, end_date });
+  showToast(`แก้ไขวันที่ ${task.tag}`, `${thaiShortDate(start_date)} ${task.start_time || ''} / ${thaiShortDate(end_date)} ${task.end_time || ''}`);
+  renderTable();
+  updateKPIs();
+  loadActivity();
+}
+
 function renderGanttTimeline() {
   const emptyEl = document.getElementById('gantt-empty');
   const cardEl = document.getElementById('gantt-card');
@@ -2187,7 +2348,7 @@ function renderGanttTimeline() {
                  style="left:${left}px; width:${width}px" title="${escHtml(task.title)}${durationLabel}&#10;${when}">
               <span class="truncate text-[10px] font-semibold px-1.5 leading-6 whitespace-nowrap">${escHtml(task.title)}${durationLabel}</span>
             </div>
-            ${stamp ? ganttStampHtml(stamp, left) : ''}
+            ${ganttStampHtml(stamp, left, task.event_note)}
           </div>
         </div>`;
     }).join('') + dayLines + `
@@ -2415,6 +2576,9 @@ function updateKPIs() {
     const el = document.getElementById(`cnt-${s.p}`);
     if (el) el.textContent = counts[s.p];
   });
+  // Add Work cuts across stages (hand-added jobs at any stage), so it isn't a pie slice.
+  const addedCount = tasks.filter(t => t.added).length;
+  document.getElementById('cnt-added').textContent = addedCount;
 
   // ── Draw pie chart ──────────────────────────────────────────────
   const svg = document.getElementById('pie-chart-svg');
@@ -2483,7 +2647,10 @@ function updateKPIs() {
   // ── Update legend ───────────────────────────────────────────────
   const legendEl = document.getElementById('pie-legend');
   if (legendEl) {
-    legendEl.innerHTML = PIE_STAGES.map(s => {
+    // Add Work is listed under the stages but has no slice: those jobs already sit in one.
+    const legendRows = [...PIE_STAGES, { p: 'added', label: 'งานที่เพิ่มเข้ามา (Add Work)', color: '#f59e0b' }];
+    counts.added = addedCount;
+    legendEl.innerHTML = legendRows.map(s => {
       const count = counts[s.p] || 0;
       const pct = total > 0 ? Math.round(count / total * 100) : 0;
       return `<div class="flex items-center gap-2 text-xs">
@@ -2557,6 +2724,48 @@ async function setTaskStatus(id, status, reason = '') {
   renderTable();
   updateKPIs();
   loadActivity();
+}
+
+function openEventNote(id) {
+  const task = allTasks.find(t => t.id === id);
+  if (!task) return;
+  document.getElementById('note-form-id').value = id;
+  document.getElementById('note-modal-tag').textContent = task.tag;
+  document.getElementById('note-modal-title').textContent = task.title;
+  document.getElementById('note-form-text').value = task.event_note || '';
+  toggleNoteModal(true);
+  document.getElementById('note-form-text').focus();
+}
+
+function toggleNoteModal(open) {
+  const m = document.getElementById('note-modal-backdrop');
+  m.classList.toggle('hidden', !open);
+  m.classList.toggle('flex', open);
+}
+
+async function submitEventNote(e) {
+  e.preventDefault();
+  const id = document.getElementById('note-form-id').value;
+  const note = document.getElementById('note-form-text').value.trim();
+  const task = allTasks.find(t => t.id === id);
+  const btn = document.getElementById('note-form-submit');
+  btn.disabled = true;
+  try {
+    const res = await fetch(`/api/tasks/${encodeURIComponent(id)}/event-note`, {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ note, updated_by: currentUser?.username || 'User', plant: currentPlant })
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`);
+    if (task) task.event_note = note;
+    toggleNoteModal(false);
+    showToast(note ? `บันทึก Note ${task?.tag} แล้ว` : `ลบ Note ${task?.tag} แล้ว`, note);
+    renderTable();
+    loadActivity();
+  } catch (err) {
+    showToast('บันทึก Note ไม่สำเร็จ', err.message, true);
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function cancelTask(id) {
@@ -2906,7 +3115,7 @@ function insertQuickTag(tagText) {
 }
 
 // ─── Filters ──────────────────────────────────────────────────────────────────
-const STAGE_PHASES = [0, 25, 50, 75, 100, 'cancelled'];
+const STAGE_PHASES = [0, 25, 50, 75, 100, 'cancelled', 'added'];
 
 function updateStageTileHighlight() {
   STAGE_PHASES.forEach(p => {

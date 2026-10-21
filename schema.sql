@@ -156,3 +156,20 @@ ALTER TABLE ai_project.shutdown_mnm_tasks
   ADD COLUMN IF NOT EXISTS start_date TEXT NOT NULL DEFAULT '';
 ALTER TABLE ai_project.shutdown_mnm_tasks
   ADD COLUMN IF NOT EXISTS end_date TEXT NOT NULL DEFAULT '';
+
+-- TRUE for jobs added by hand with "+ เพิ่มรายการงานหยุดซ่อม" rather than from the
+-- Excel plan; drives the "Add work" stage tile.
+ALTER TABLE ai_project.shutdown_mnm_tasks
+  ADD COLUMN IF NOT EXISTS added BOOLEAN NOT NULL DEFAULT FALSE;
+-- Backfill jobs added by hand before the column existed: the add-job API logs
+-- "สร้างรายการงานใหม่" for the tag within moments of the insert; Excel imports don't.
+UPDATE ai_project.shutdown_mnm_tasks t SET added = TRUE
+WHERE NOT t.added AND EXISTS (
+  SELECT 1 FROM ai_project.shutdown_mnm_activity a
+  WHERE a.plant = t.plant AND a.tag = t.tag AND a.action LIKE 'สร้างรายการงานใหม่%'
+    AND a.created_at BETWEEN t.created_at AND t.created_at + interval '1 minute');
+
+-- Free-text note about the job (delays, findings, ...), entered from the Gantt "Note"
+-- button and shown under the job's bar. Separate from `note`, which holds the Excel remark.
+ALTER TABLE ai_project.shutdown_mnm_tasks
+  ADD COLUMN IF NOT EXISTS event_note TEXT NOT NULL DEFAULT '';

@@ -62,7 +62,7 @@ function taskRow(r) {
     start_time: r.start_time, end_time: r.end_time,
     start_date: r.start_date || '', end_date: r.end_date || '',
     updated_at: r.updated_at, updated_by: r.updated_by, stage_at: r.stage_at || '',
-    cancel_reason: r.cancel_reason || '',
+    cancel_reason: r.cancel_reason || '', added: !!r.added, event_note: r.event_note || '',
     created_at: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
   };
 }
@@ -242,8 +242,8 @@ const db = {
       const id = `TASK-${String(seqRow.task_seq).padStart(3, '0')}`;
       const { rows: [row] } = await client.query(
         `INSERT INTO shutdown_mnm_tasks
-           (plant, id, tag, title, area, assignee, progress, status, note, duration, start_time, end_time, updated_at, updated_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,'active',$8,$9,$10,$11,$12,$13) RETURNING *`,
+           (plant, id, tag, title, area, assignee, progress, status, note, duration, start_time, end_time, updated_at, updated_by, added)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'active',$8,$9,$10,$11,$12,$13,TRUE) RETURNING *`,
         [p, id, String(tag).toUpperCase(), title, area, assignee, Number(progress) || 0,
          note, duration, start_time, end_time, nowTime(), updated_by]
       );
@@ -282,11 +282,22 @@ const db = {
     return rows.length ? taskRow(rows[0]) : null;
   },
 
-  async updateTaskTimes(id, { start_time, end_time, duration }, updated_by = 'User', plant) {
+  // start_date / end_date: undefined keeps the stored date, '' clears it.
+  async updateTaskTimes(id, { start_time, end_time, duration, start_date, end_date }, updated_by = 'User', plant) {
     const { rows } = await query(
-      `UPDATE shutdown_mnm_tasks SET start_time = $3, end_time = $4, duration = $5, updated_at = $6, updated_by = $7
+      `UPDATE shutdown_mnm_tasks SET start_time = $3, end_time = $4, duration = $5, updated_at = $6, updated_by = $7,
+         start_date = COALESCE($8, start_date), end_date = COALESCE($9, end_date)
        WHERE plant = $1 AND id = $2 RETURNING *`,
-      [plantKey(plant), id, start_time, end_time, duration, nowTime(), updated_by]
+      [plantKey(plant), id, start_time, end_time, duration, nowTime(), updated_by, start_date ?? null, end_date ?? null]
+    );
+    return rows.length ? taskRow(rows[0]) : null;
+  },
+
+  async updateTaskEventNote(id, note, updated_by = 'User', plant) {
+    const { rows } = await query(
+      `UPDATE shutdown_mnm_tasks SET event_note = $3, updated_at = $4, updated_by = $5
+       WHERE plant = $1 AND id = $2 RETURNING *`,
+      [plantKey(plant), id, note, nowTime(), updated_by]
     );
     return rows.length ? taskRow(rows[0]) : null;
   },

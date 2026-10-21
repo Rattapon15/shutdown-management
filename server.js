@@ -73,7 +73,7 @@ const requireAuth = ah(async (req, res, next) => {
 });
 
 // Two roles: 'admin' can edit everything; 'user' (the default, incl. new Microsoft sign-ins)
-// may only update a task's 5-stage progress, start/end times, and cancel/restore it.
+// may only add jobs, update a task's 5-stage progress, start/end times, and cancel/restore it.
 function requireWrite(req, res, next) {
   if (!req.user || req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Read-only account — ask an admin for edit access' });
@@ -246,7 +246,7 @@ app.get('/api/tasks', requireAuth, ah(async (req, res) => {
   res.json(await db.getTasks(getPlant(req)));
 }));
 
-app.post('/api/tasks', requireAuth, requireWrite, ah(async (req, res) => {
+app.post('/api/tasks', requireAuth, ah(async (req, res) => {
   const { tag, title, area, assignee, progress, note, start_time, end_time, updated_by } = req.body;
   const plant = getPlant(req);
   if (!tag || !title || !area || !assignee) return res.status(400).json({ error: 'Missing required fields' });
@@ -289,21 +289,41 @@ app.put('/api/tasks/:id/note', requireAuth, requireWrite, ah(async (req, res) =>
   res.json({ ok: true });
 }));
 
+// Event note from the Gantt "Note" button; open to every role, like cancel. Empty clears it.
+app.put('/api/tasks/:id/event-note', requireAuth, ah(async (req, res) => {
+  const note = String(req.body.note ?? '').trim().slice(0, 500);
+  const { updated_by } = req.body;
+  const plant = getPlant(req);
+  const task = await db.updateTaskEventNote(req.params.id, note, updated_by, plant);
+  if (!task) return res.status(404).json({ error: 'Task not found' });
+  await db.logActivity(task.tag, note ? `บันทึก Note: "${note.slice(0, 60)}"` : 'ลบ Note', updated_by || 'User', plant);
+  res.json({ ok: true, task });
+}));
+
 // HH:MM (24h, "24:00" allowed as end-of-day) or empty to clear.
 const isValidHM = v => v === '' || /^([01]\d|2[0-3]):[0-5]\d$|^24:00$/.test(v);
+// YYYY-MM-DD or empty (= day inferred from the shutdown grid).
+const isValidYMD = v => v === '' || (/^\d{4}-\d{2}-\d{2}$/.test(v) && !isNaN(Date.parse(v)));
 
 app.put('/api/tasks/:id/times', requireAuth, ah(async (req, res) => {
   const start_time = String(req.body.start_time ?? '').trim();
   const end_time   = String(req.body.end_time ?? '').trim();
   const duration   = String(req.body.duration ?? '').trim().slice(0, 40);
+  // Dates are optional so older clients that only send times leave them untouched.
+  const start_date = req.body.start_date === undefined ? undefined : String(req.body.start_date).trim();
+  const end_date   = req.body.end_date === undefined ? undefined : String(req.body.end_date).trim();
   const { updated_by } = req.body;
   if (!isValidHM(start_time) || !isValidHM(end_time)) {
     return res.status(400).json({ error: 'Time must be HH:MM (00:00–24:00)' });
   }
+  if ((start_date !== undefined && !isValidYMD(start_date)) || (end_date !== undefined && !isValidYMD(end_date))) {
+    return res.status(400).json({ error: 'Date must be YYYY-MM-DD' });
+  }
   const plant = getPlant(req);
-  const task = await db.updateTaskTimes(req.params.id, { start_time, end_time, duration }, updated_by, plant);
+  const task = await db.updateTaskTimes(req.params.id, { start_time, end_time, duration, start_date, end_date }, updated_by, plant);
   if (!task) return res.status(404).json({ error: 'Task not found' });
-  await db.logActivity(task.tag, `แก้ไขเวลา ${start_time || '—'} / ${end_time || '—'}`, updated_by || 'User', plant);
+  const fmt = (d, t) => [d, t].filter(Boolean).join(' ') || '—';
+  await db.logActivity(task.tag, `แก้ไขเวลา ${fmt(task.start_date, start_time)} / ${fmt(task.end_date, end_time)}`, updated_by || 'User', plant);
   res.json({ ok: true, task });
 }));
 
