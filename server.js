@@ -625,7 +625,8 @@ app.post('/api/upload', requireAuth, requireWrite, upload.single('file'), ah(asy
         const start = excelDateTime(raw[startIdx]);
         const end   = excelDateTime(raw[endIdx]);
         const duration  = raw[durationIdx] ? `${raw[durationIdx]} ชม.` : '';
-        const tag        = `${(lastSection||lastArea||'SD').replace(/\s+/g,'-').toUpperCase().slice(0,10)}-${String(itemNo).padStart(3,'0')}`;
+        // Section shows just the work center (e.g. 751EE11), not the sheet's item number.
+        const tag        = (lastSection||lastArea||'SD').replace(/\s+/g,'-').toUpperCase().slice(0,10);
 
         toInsert.push({
           tag, title,
