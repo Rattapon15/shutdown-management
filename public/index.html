@@ -185,19 +185,19 @@ tailwind.config = {
     body.nav-collapsed #topbar { left:0; }
   }
   /* Touch screens (phones and iPads): the grid swipes natively in both directions instead of
-     using the desktop proxy scrollbars. ผู้รับผิดชอบ and 5-STAGE are moved to the end of the
+     using the desktop proxy scrollbars. ชื่องาน and 5-STAGE are moved to the end of the
      930px label block, and a negative sticky offset leaves just those two pinned on the left. */
   @media (max-width: 767px), (pointer: coarse) {
     #gantt-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
     #tasks-scroll { -webkit-overflow-scrolling:touch; }
     #gantt-card .gantt-hbar { display:none !important; }
     #gantt-grid .gantt-left-col {
-      --frz-a:110px; --frz-s:240px;
+      --frz-a:210px; --frz-s:240px;
       /* total stays 930px (GANTT_LEFT_COL_PX) so bar positions are unaffected */
       grid-template-columns:90px 100px calc(560px - var(--frz-a) - var(--frz-s)) 44px 44px 92px var(--frz-a) var(--frz-s);
       left:calc(var(--frz-a) + var(--frz-s) - 930px) !important;
     }
-    #gantt-grid .gantt-left-col > :nth-child(4) { order:1; }
+    #gantt-grid .gantt-left-col > :nth-child(3) { order:1; }
     #gantt-grid .gantt-left-col > :nth-child(5) { order:2; }
   }
   @media (max-width: 767px) {
@@ -211,8 +211,8 @@ tailwind.config = {
     #main-tab-bar .main-tab-group { width:100%; }
     #main-tab-bar .main-tab-btn { flex:1; justify-content:center; }
     #gantt-scroll, #tasks-scroll { max-height:calc(100dvh - 140px); }
-    /* Narrower frozen columns on phones; the task name takes the freed width. */
-    #gantt-grid .gantt-left-col { --frz-a:76px; --frz-s:130px; }
+    /* Narrower frozen columns on phones; ผู้รับผิดชอบ takes the freed width. */
+    #gantt-grid .gantt-left-col { --frz-a:110px; --frz-s:120px; }
     #gantt-grid .gantt-left-col > .gantt-stage-cell { padding:0 6px; }
     /* Search bar: drop the hint chips and the reset label so the input gets the width */
     #main-search-bar { gap:.5rem; }
