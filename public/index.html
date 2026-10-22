@@ -194,6 +194,15 @@ tailwind.config = {
     .px-5 { padding-left:.75rem; padding-right:.75rem; }
     #main-tab-bar .main-tab-group { width:100%; }
     #main-tab-bar .main-tab-btn { flex:1; justify-content:center; }
+    /* Gantt: the 930px label block is wider than the phone, so don't pin it — let the
+       whole grid swipe natively in both directions and drop the desktop proxy scrollbars. */
+    #gantt-scroll { overflow-x:auto; max-height:calc(100dvh - 140px); -webkit-overflow-scrolling:touch; }
+    #gantt-grid .gantt-left-col { position:relative !important; left:auto !important; }
+    #gantt-card .gantt-hbar { display:none !important; }
+    #tasks-scroll { max-height:calc(100dvh - 140px); -webkit-overflow-scrolling:touch; }
+    /* Search bar: drop the hint chips and the reset label so the input gets the width */
+    #main-search-bar { gap:.5rem; }
+    #main-search-hints, #main-search-reset-label { display:none; }
   }
 </style>
 </head>
@@ -749,7 +758,7 @@ tailwind.config = {
             <span class="material-symbols-outlined" style="font-size:18px">close</span>
           </span>
         </div>
-        <div class="shrink-0 flex items-center gap-1.5 text-[10px] font-mono text-on-surface-variant/60 select-none">
+        <div id="main-search-hints" class="shrink-0 flex items-center gap-1.5 text-[10px] font-mono text-on-surface-variant/60 select-none">
           <span class="px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30">Section</span>
           <span class="px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30">ชื่องาน</span>
           <span class="px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30">ผู้รับผิดชอบ</span>
@@ -758,7 +767,7 @@ tailwind.config = {
         </div>
         <button onclick="resetFilters()" class="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded bg-surface-container hover:bg-surface-bright text-on-surface-variant hover:text-on-surface transition-colors whitespace-nowrap" title="ล้างตัวกรองทั้งหมด">
           <span class="material-symbols-outlined" style="font-size:18px">filter_alt_off</span>
-          <span class="text-xs font-semibold">ล้างตัวกรองทั้งหมด</span>
+          <span id="main-search-reset-label" class="text-xs font-semibold">ล้างตัวกรองทั้งหมด</span>
         </button>
       </div>
     </div>
