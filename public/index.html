@@ -174,6 +174,27 @@ tailwind.config = {
     background-image: repeating-linear-gradient(to right, rgba(0,0,0,.06) 0, rgba(0,0,0,.06) 1px, transparent 1px, transparent 36px);
     background-position: 930px 0; /* start gridlines after .gantt-left-col */
   }
+
+  /* ── Mobile: sidebar becomes a slide-in drawer, content uses the full width ── */
+  #nav-backdrop { display:none; }
+  #sidebar, .app-pl, #topbar { transition:transform .2s ease, padding-left .2s ease, left .2s ease; }
+  /* Desktop: sidebar can be collapsed to give the Gantt/table the full width */
+  @media (min-width: 768px) {
+    body.nav-collapsed #sidebar { transform:translateX(-100%); }
+    body.nav-collapsed .app-pl { padding-left:0; }
+    body.nav-collapsed #topbar { left:0; }
+  }
+  @media (max-width: 767px) {
+    #sidebar { transform:translateX(-100%); transition:transform .2s ease; box-shadow:none; }
+    body.nav-open #sidebar { transform:none; box-shadow:4px 0 24px rgba(0,0,0,.5); }
+    body.nav-open #nav-backdrop { display:block; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:45; }
+    .app-pl { padding-left:0 !important; }
+    #topbar { left:0 !important; padding-left:.75rem !important; padding-right:.75rem !important; gap:.5rem !important; }
+    #topbar h1 { font-size:.8rem; }
+    .px-5 { padding-left:.75rem; padding-right:.75rem; }
+    #main-tab-bar .main-tab-group { width:100%; }
+    #main-tab-bar .main-tab-btn { flex:1; justify-content:center; }
+  }
 </style>
 </head>
 <body class="bg-surface text-on-surface antialiased text-sm">
@@ -218,7 +239,8 @@ tailwind.config = {
 <div id="app-shell" class="hidden">
 
 <!-- ═══════════════════════════════════════ SIDEBAR ══════════════════════════ -->
-<aside class="fixed left-0 top-0 h-full w-64 z-50 flex flex-col select-none" style="background:#000f21; border-right:1px solid #1b2b3f;">
+<div id="nav-backdrop" onclick="toggleNav(false)"></div>
+<aside id="sidebar" class="fixed left-0 top-0 h-full w-64 z-50 flex flex-col select-none" style="background:#000f21; border-right:1px solid #1b2b3f;">
   <div class="flex flex-col shrink-0">
     <div class="h-16 px-4 flex items-center gap-2.5" style="border-bottom:1px solid #1b2b3f; background:#0b1c30;">
       <div class="relative w-9 h-9 rounded shrink-0 flex items-center justify-center" style="background:#102034; border:1px solid #26364a;">
@@ -272,20 +294,23 @@ tailwind.config = {
 </aside>
 
 <!-- ═══════════════════════════════════════ TOPBAR ═══════════════════════════ -->
-<div class="pl-64">
-<header class="fixed top-0 left-64 right-0 h-16 z-40 px-5 flex items-center justify-between gap-4 border-b" style="background:#0b1c30; border-color:#1b2b3f;">
+<div class="pl-64 app-pl">
+<header id="topbar" class="fixed top-0 left-64 right-0 h-16 z-40 px-5 flex items-center justify-between gap-4 border-b" style="background:#0b1c30; border-color:#1b2b3f;">
   <div class="flex items-center gap-2 min-w-0">
-    <span class="inline-flex items-center justify-center w-7 h-7 rounded shrink-0" style="background:rgba(123,208,255,0.15); color:#7bd0ff;">
+    <button type="button" onclick="toggleNav()" aria-label="เมนู" class="p-1 -ml-1 rounded shrink-0" style="color:#d3e4fe;">
+      <span class="material-symbols-outlined" style="font-size:24px">menu</span>
+    </button>
+    <span class="hidden md:inline-flex items-center justify-center w-7 h-7 rounded shrink-0" style="background:rgba(123,208,255,0.15); color:#7bd0ff;">
       <span class="material-symbols-outlined" style="font-size:18px">emergency_home</span>
     </span>
     <h1 class="text-base font-bold tracking-tight truncate" style="color:#d3e4fe;">Dashboard ติดตามสถานะงาน Monthly Shutdown</h1>
   </div>
-  <div class="flex items-center gap-4">
+  <div class="flex items-center gap-2 md:gap-4 shrink-0">
     <div class="hidden md:flex flex-col items-end leading-tight">
       <span class="font-mono text-base font-bold tracking-wider" id="live-clock" style="color:#d3e4fe;">--:--:-- UTC+7</span>
       <span class="font-mono text-xs" id="live-date" style="color:#909097;">--</span>
     </div>
-    <div class="h-8 w-px" style="background:rgba(69,70,77,0.6);"></div>
+    <div class="hidden md:block h-8 w-px" style="background:rgba(69,70,77,0.6);"></div>
     <button id="user-mgmt-btn" onclick="openUserModal()" title="จัดการผู้ใช้งาน" class="hidden p-1.5 rounded transition-colors" style="color:#909097;" onmouseover="this.style.color='#7bd0ff';this.style.background='rgba(27,43,63,1)'" onmouseout="this.style.color='#909097';this.style.background='transparent'">
       <span class="material-symbols-outlined" style="font-size:20px">manage_accounts</span>
     </button>
@@ -293,7 +318,7 @@ tailwind.config = {
       <span class="material-symbols-outlined" style="font-size:20px">logout</span>
     </button>
     <div class="flex items-center gap-2">
-      <div class="flex flex-col items-end leading-tight text-right">
+      <div class="hidden md:flex flex-col items-end leading-tight text-right">
         <span class="text-xs font-semibold" id="topbar-username" style="color:#d3e4fe;">—</span>
         <span class="text-[10px] uppercase tracking-wider font-semibold" id="topbar-role" style="color:#7bd0ff;">—</span>
         <span class="text-[9px] font-mono hidden" id="topbar-last-login" style="color:#909097;"></span>
@@ -520,8 +545,8 @@ tailwind.config = {
 
 <div id="view-overall" class="hidden">
   <div class="w-full px-5 py-5 flex flex-col gap-4">
-    <div class="bg-surface-container-low rounded-xl p-4 flex items-center justify-between gap-2 shadow-md">
-      <div class="flex items-center gap-2">
+    <div class="bg-surface-container-low rounded-xl p-4 flex flex-wrap items-center justify-between gap-2 shadow-md">
+      <div class="flex flex-wrap items-center gap-x-2">
         <span class="material-symbols-outlined text-secondary" style="font-size:20px">dashboard</span>
         <h2 class="text-sm font-bold text-on-surface">Overall Plant</h2>
         <span class="text-xs text-on-surface-variant">— บันทึกผล Actual งาน Monthly Shutdown ประจำปี</span>
@@ -1150,6 +1175,21 @@ function togglePlantGroup(name) {
   section.querySelector('.plant-section-chevron').textContent = open ? 'expand_more' : 'chevron_right';
 }
 renderPlantNav();
+
+// Mobile drawer: open from the topbar button, close after picking a plant/view.
+const NAV_MOBILE = window.matchMedia('(max-width: 767px)');
+if (localStorage.getItem('navCollapsed') === '1') document.body.classList.add('nav-collapsed');
+function toggleNav(open) {
+  if (NAV_MOBILE.matches) {
+    document.body.classList.toggle('nav-open', open === undefined ? !document.body.classList.contains('nav-open') : open);
+  } else if (open === undefined) {
+    const c = document.body.classList.toggle('nav-collapsed');
+    localStorage.setItem('navCollapsed', c ? '1' : '0');
+  }
+}
+document.getElementById('sidebar').addEventListener('click', e => {
+  if (e.target.closest('a.plant-tab, a.view-tab, #overall-tab')) toggleNav(false);
+});
 
 // ─── Column filter / sort state ───────────────────────────────────────────────
 const colFilters = {};   // { col: Set of allowed values } — empty Set = show all
