@@ -211,9 +211,8 @@ tailwind.config = {
     #main-tab-bar .main-tab-group { width:100%; }
     #main-tab-bar .main-tab-btn { flex:1; justify-content:center; }
     #gantt-scroll, #tasks-scroll { max-height:calc(100dvh - 140px); }
-    /* Narrower frozen columns on phones; ผู้รับผิดชอบ takes the freed width. */
-    #gantt-grid .gantt-left-col { --frz-a:110px; --frz-s:120px; }
-    #gantt-grid .gantt-left-col > .gantt-stage-cell { padding:0 6px; }
+    /* Phones: keep ชื่องาน and 5-STAGE at the right end of the label block, but don't pin them. */
+    #gantt-grid .gantt-left-col { position:relative !important; left:auto !important; }
     /* Search bar: drop the hint chips and the reset label so the input gets the width */
     #main-search-bar { gap:.5rem; }
     #main-search-hints, #main-search-reset-label { display:none; }
