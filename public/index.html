@@ -184,6 +184,22 @@ tailwind.config = {
     body.nav-collapsed .app-pl { padding-left:0; }
     body.nav-collapsed #topbar { left:0; }
   }
+  /* Touch screens (phones and iPads): the grid swipes natively in both directions instead of
+     using the desktop proxy scrollbars. ผู้รับผิดชอบ and 5-STAGE are moved to the end of the
+     930px label block, and a negative sticky offset leaves just those two pinned on the left. */
+  @media (max-width: 767px), (pointer: coarse) {
+    #gantt-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    #tasks-scroll { -webkit-overflow-scrolling:touch; }
+    #gantt-card .gantt-hbar { display:none !important; }
+    #gantt-grid .gantt-left-col {
+      --frz-a:110px; --frz-s:240px;
+      /* total stays 930px (GANTT_LEFT_COL_PX) so bar positions are unaffected */
+      grid-template-columns:90px 100px calc(560px - var(--frz-a) - var(--frz-s)) 44px 44px 92px var(--frz-a) var(--frz-s);
+      left:calc(var(--frz-a) + var(--frz-s) - 930px) !important;
+    }
+    #gantt-grid .gantt-left-col > :nth-child(4) { order:1; }
+    #gantt-grid .gantt-left-col > :nth-child(5) { order:2; }
+  }
   @media (max-width: 767px) {
     #sidebar { transform:translateX(-100%); transition:transform .2s ease; box-shadow:none; }
     body.nav-open #sidebar { transform:none; box-shadow:4px 0 24px rgba(0,0,0,.5); }
@@ -194,12 +210,10 @@ tailwind.config = {
     .px-5 { padding-left:.75rem; padding-right:.75rem; }
     #main-tab-bar .main-tab-group { width:100%; }
     #main-tab-bar .main-tab-btn { flex:1; justify-content:center; }
-    /* Gantt: the 930px label block is wider than the phone, so don't pin it — let the
-       whole grid swipe natively in both directions and drop the desktop proxy scrollbars. */
-    #gantt-scroll { overflow-x:auto; max-height:calc(100dvh - 140px); -webkit-overflow-scrolling:touch; }
-    #gantt-grid .gantt-left-col { position:relative !important; left:auto !important; }
-    #gantt-card .gantt-hbar { display:none !important; }
-    #tasks-scroll { max-height:calc(100dvh - 140px); -webkit-overflow-scrolling:touch; }
+    #gantt-scroll, #tasks-scroll { max-height:calc(100dvh - 140px); }
+    /* Narrower frozen columns on phones; the task name takes the freed width. */
+    #gantt-grid .gantt-left-col { --frz-a:76px; --frz-s:130px; }
+    #gantt-grid .gantt-left-col > .gantt-stage-cell { padding:0 6px; }
     /* Search bar: drop the hint chips and the reset label so the input gets the width */
     #main-search-bar { gap:.5rem; }
     #main-search-hints, #main-search-reset-label { display:none; }
