@@ -262,7 +262,7 @@ app.put('/api/tasks/:id/progress', requireAuth, ah(async (req, res) => {
   if (!(progress in labels)) return res.status(400).json({ error: 'Invalid progress' });
   const task = await db.updateTaskProgress(req.params.id, progress, updated_by, plant);
   if (!task) return res.status(404).json({ error: 'Task not found' });
-  await db.logActivity(task.tag, `อัปเดตเป็น ${progress}% (${labels[progress] || progress+'%'})`, updated_by || 'User', plant);
+  await db.logActivity(task.tag, `อัปเดต "${task.title}" เป็น ${progress}% (${labels[progress] || progress+'%'})`, updated_by || 'User', plant);
   res.json({ ok: true });
 }));
 

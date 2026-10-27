@@ -584,6 +584,8 @@ tailwind.config = {
       </div>
     </div>
 
+    <div id="overall-group-tabs" class="main-tab-group w-fit" role="tablist"></div>
+
     <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-x-auto">
       <table class="overall-table">
         <thead><tr id="overall-thead"></tr></thead>
@@ -1069,6 +1071,11 @@ tailwind.config = {
         <span class="material-symbols-outlined" style="font-size:20px">close</span>
       </button>
     </div>
+    <div class="relative">
+      <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" style="font-size:18px">search</span>
+      <input id="user-search" type="search" oninput="renderUserList()" placeholder="ค้นหา Email หรือชื่อผู้ใช้..." autocomplete="off"
+        class="w-full bg-surface-container-high rounded pl-9 pr-3 py-2 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+    </div>
     <div id="user-list" class="flex flex-col gap-1.5 max-h-56 overflow-y-auto"></div>
     <form id="new-user-form" onsubmit="createUser(event)" class="hidden flex flex-col gap-3 text-xs pt-3 border-t border-surface-container-high">
       <div class="grid grid-cols-2 gap-3">
@@ -1200,7 +1207,7 @@ function renderPlantNav() {
       </div>`;
     }).join('');
     return `<div class="plant-section flex flex-col" data-group="${group.name}">
-      <button type="button" class="plant-section-hd flex items-center gap-2 px-3 py-2 rounded text-xs font-bold tracking-wide transition-colors hover:bg-white/5"
+      <button type="button" class="plant-section-hd flex items-center gap-2 px-3 py-2 rounded text-[1.125rem] font-bold tracking-wide transition-colors hover:bg-white/5"
               style="color:#d3e4fe;" onclick="togglePlantGroup('${group.name}')">
         <span class="material-symbols-outlined plant-section-chevron" style="font-size:16px">${open ? 'expand_more' : 'chevron_right'}</span>
         <span>${group.name}</span>
@@ -1534,11 +1541,27 @@ let overallYear = new Date().getFullYear();
 
 function changeOverallYear(delta) { overallYear += delta; loadOverall(); }
 
+// Overall shows one plant group at a time (same groups as the sidebar).
+let overallGroup = PLANT_GROUPS[0].name;
+let overallData = null;
+
+function setOverallGroup(name) {
+  overallGroup = name;
+  if (overallData) renderOverall(overallData);
+}
+
+function renderOverallGroupTabs() {
+  document.getElementById('overall-group-tabs').innerHTML = PLANT_GROUPS.map(g => `
+    <button onclick="setOverallGroup('${g.name}')" role="tab" class="main-tab-btn${g.name === overallGroup ? ' active' : ''}">
+      <span class="material-symbols-outlined">factory</span>${g.name}</button>`).join('');
+}
+
 async function loadOverall() {
   document.getElementById('overall-year').textContent = overallYear;
   const res = await fetch(`/api/overall?year=${overallYear}`);
   if (!res.ok) return;
-  renderOverall(await res.json());
+  overallData = await res.json();
+  renderOverall(overallData);
 }
 
 // "16-18" over "Jan"; a shutdown that runs into the next month shows both months.
@@ -1573,9 +1596,11 @@ function overallCell(e) {
 }
 
 function renderOverall(data) {
+  renderOverallGroupTabs();
+  const groupKeys = new Set((PLANT_GROUPS.find(g => g.name === overallGroup)?.plants || []).map(p => p.key));
   document.getElementById('overall-thead').innerHTML =
     `<th>PLANT / เครื่องจักรหลัก</th>` + MONTHS_EN.map(m => `<th>${m.toUpperCase()}</th>`).join('');
-  document.getElementById('overall-tbody').innerHTML = data.plants.map(({ plant, entries }) => {
+  document.getElementById('overall-tbody').innerHTML = data.plants.filter(({ plant }) => groupKeys.has(plant)).map(({ plant, entries }) => {
     const meta = OVERALL_PLANTS[plant] || { cycle: '', dot: '#74767f' };
     const months = MONTHS_EN.map((_, i) => {
       const inMonth = entries.filter(e => Number(e.start_date.slice(5, 7)) === i + 1);
@@ -1630,16 +1655,21 @@ async function setPlantTab(el) {
   await Promise.all([loadTasks(), loadActivity(), loadSchedule(), loadLastExcelUpload()]);
 }
 
-// ─── Main content tab switching (TAB 1 = Gantt, TAB 2 = task table) ───────────
+// ─── Main content tab switching ────────────────────────────────────────────────
+// TAB 1 and TAB 2 both show the Gantt view (the task table is no longer used).
+// currentMainTab stays 'gantt' so every filter/render path that branches on it
+// keeps using the Gantt's own column filters; activeMainBtn only styles the tabs.
 let currentMainTab = 'gantt';
+let activeMainBtn = 'gantt';
 function setMainTab(tab) {
-  currentMainTab = tab;
+  activeMainBtn = tab;
+  document.getElementById('main-tab-content-gantt').classList.remove('hidden');
+  document.getElementById('main-tab-content-table').classList.add('hidden');
   for (const t of ['gantt', 'table']) {
-    document.getElementById(`main-tab-content-${t}`).classList.toggle('hidden', tab !== t);
     document.getElementById(`main-tab-btn-${t}`).classList.toggle('active', tab === t);
   }
-  document.getElementById(`search-slot-${tab}`).appendChild(document.getElementById('main-search-bar'));
-  if (tab === 'gantt') renderGanttTimeline();
+  document.getElementById('search-slot-gantt').appendChild(document.getElementById('main-search-bar'));
+  renderGanttTimeline();
   updateKPIs();
 }
 
@@ -1664,7 +1694,7 @@ function setViewTab(el, view) {
   document.getElementById('main-tab-bar').classList.toggle('hidden', view !== 'progress');
   document.getElementById('progress-summary').classList.toggle('hidden', view !== 'progress');
   if (view === 'progress') {
-    setMainTab(currentMainTab);
+    setMainTab(activeMainBtn);
   } else {
     document.getElementById('main-tab-content-table').classList.remove('hidden');
     document.getElementById('main-tab-content-gantt').classList.add('hidden');
@@ -1719,7 +1749,7 @@ async function checkServerStatus() {
 setInterval(checkServerStatus, 15000);
 checkServerStatus();
 
-// ─── Auto Refresh (every 15 min) ─────────────────────────────────────────────
+// ─── Auto Refresh (every 10 min) ─────────────────────────────────────────────
 function updateLastRefreshLabel() {
   const row = document.getElementById('last-refresh-row');
   const el  = document.getElementById('last-refresh-text');
@@ -1740,7 +1770,7 @@ async function doAutoRefresh() {
   updateLastRefreshLabel();
 }
 
-setInterval(doAutoRefresh, 15 * 60 * 1000);
+setInterval(doAutoRefresh, 10 * 60 * 1000);
 
 // ─── Fetch from API ───────────────────────────────────────────────────────────
 async function loadTasks() {
@@ -1763,12 +1793,18 @@ async function loadActivity() {
     el.style.borderLeft = `2px solid ${borderColor}`;
     const dt = new Date(row.created_at);
     const timeAgo = formatTimeAgo(dt);
+    const stamp = isNaN(dt) ? '' : dt.toLocaleString('th-TH', {
+      day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit'
+    }) + ' น.';
     el.innerHTML = `
       <div class="flex items-center justify-between">
         <span class="font-mono text-[10px] font-bold" style="color:${borderColor}">${escHtml(row.tag)}</span>
         <span class="font-mono text-[10px] text-on-surface-variant">${timeAgo}</span>
       </div>
       <p class="text-xs text-on-surface">${escHtml(row.actor)}: ${escHtml(row.action)}</p>
+      ${stamp ? `<div class="flex items-center gap-1 font-mono text-[10px] text-on-surface-variant/80">
+        <span class="material-symbols-outlined" style="font-size:12px">schedule</span>${stamp}
+      </div>` : ''}
     `;
     feed.appendChild(el);
   });
@@ -3702,15 +3738,32 @@ function toggleUserModal(open) {
 }
 
 async function openUserModal() {
+  document.getElementById('user-search').value = '';
   toggleUserModal(true);
   await loadUserList();
+  document.getElementById('user-search').focus();
 }
+
+let userListCache = [];
 
 async function loadUserList() {
   const res = await fetch('/api/users');
   if (!res.ok) return;
-  const users = await res.json();
+  userListCache = await res.json();
+  renderUserList();
+}
+
+// Filters the loaded users by the search box (username or email, case-insensitive).
+function renderUserList() {
+  const q = document.getElementById('user-search').value.trim().toLowerCase();
+  const users = q
+    ? userListCache.filter(u => `${u.username} ${u.email || ''}`.toLowerCase().includes(q))
+    : userListCache;
   const list = document.getElementById('user-list');
+  if (!users.length) {
+    list.innerHTML = `<div class="px-3 py-4 text-center text-xs text-on-surface-variant/70 italic">ไม่พบผู้ใช้ที่ตรงกับ "${escHtml(q)}"</div>`;
+    return;
+  }
   list.innerHTML = users.map(u => `
     <div class="flex items-center justify-between px-3 py-2 rounded bg-surface-container-high">
       <div class="flex flex-col">
