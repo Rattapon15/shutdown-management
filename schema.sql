@@ -72,13 +72,18 @@ CREATE INDEX IF NOT EXISTS shutdown_mnm_activity_plant_id_idx
   ON ai_project.shutdown_mnm_activity (plant, id DESC);
 
 -- One row per (plant, milestone); the six milestones are fixed in code.
+-- date/time hold the Monthly Plan; actual_date/actual_time hold when it really happened.
 CREATE TABLE IF NOT EXISTS ai_project.shutdown_mnm_schedule (
-  plant      TEXT NOT NULL REFERENCES ai_project.shutdown_mnm_plants(name) ON DELETE CASCADE,
-  milestone  TEXT NOT NULL,
-  date       TEXT NOT NULL DEFAULT '',
-  time       TEXT NOT NULL DEFAULT '',
+  plant        TEXT NOT NULL REFERENCES ai_project.shutdown_mnm_plants(name) ON DELETE CASCADE,
+  milestone    TEXT NOT NULL,
+  date         TEXT NOT NULL DEFAULT '',
+  time         TEXT NOT NULL DEFAULT '',
+  actual_date  TEXT NOT NULL DEFAULT '',
+  actual_time  TEXT NOT NULL DEFAULT '',
   PRIMARY KEY (plant, milestone)
 );
+ALTER TABLE ai_project.shutdown_mnm_schedule ADD COLUMN IF NOT EXISTS actual_date TEXT NOT NULL DEFAULT '';
+ALTER TABLE ai_project.shutdown_mnm_schedule ADD COLUMN IF NOT EXISTS actual_time TEXT NOT NULL DEFAULT '';
 
 -- id is unique per plant, but the API addresses items as /:category/:id and the
 -- legacy JSON data restarted numbering per category, so category is in the key.

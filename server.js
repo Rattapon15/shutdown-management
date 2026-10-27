@@ -247,10 +247,10 @@ app.get('/api/tasks', requireAuth, ah(async (req, res) => {
 }));
 
 app.post('/api/tasks', requireAuth, ah(async (req, res) => {
-  const { tag, title, area, assignee, progress, note, start_time, end_time, updated_by } = req.body;
+  const { tag, title, area, assignee, progress, note, event_note, start_time, end_time, updated_by } = req.body;
   const plant = getPlant(req);
   if (!tag || !title || !area || !assignee) return res.status(400).json({ error: 'Missing required fields' });
-  const task = await db.createTask({ tag, title, area, assignee, progress, note, start_time, end_time, updated_by, plant });
+  const task = await db.createTask({ tag, title, area, assignee, progress, note, event_note, start_time, end_time, updated_by, plant });
   await db.logActivity(task.tag, `สร้างรายการงานใหม่: "${title}"`, updated_by || 'User', plant);
   res.json({ id: task.id, tag: task.tag });
 }));

@@ -356,12 +356,58 @@ tailwind.config = {
 <main class="relative pt-16 bg-surface min-h-screen">
 
 <!-- ── Main content tabs ── -->
-<div id="main-tab-bar" class="px-5 pt-3">
+<div id="main-tab-bar" class="px-5 pt-3 flex flex-col xl:flex-row xl:items-center justify-between gap-2">
   <div class="main-tab-group" role="tablist">
     <button id="main-tab-btn-gantt" onclick="setMainTab('gantt')" role="tab" class="main-tab-btn active">
       <span class="material-symbols-outlined">view_timeline</span>TAB 1</button>
     <button id="main-tab-btn-table" onclick="setMainTab('table')" role="tab" class="main-tab-btn">
       <span class="material-symbols-outlined">table_rows</span>TAB 2</button>
+  </div>
+
+  <div class="flex flex-wrap items-center gap-2 xl:justify-end">
+    <!-- Upload Excel -->
+    <div class="flex flex-col gap-1">
+      <button onclick="document.getElementById('excel-file-input').click()"
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container transition-all shadow-md active:scale-95 text-xs font-bold tracking-tight">
+        <span class="material-symbols-outlined group-hover:scale-110 transition-transform" style="font-size:18px">upload_file</span>
+        <span>อัปโหลด Excel แผนงาน</span>
+        <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-surface-container-lowest text-secondary-fixed-dim border border-outline-variant/30">.XLSX</span>
+      </button>
+      <div id="excel-file-name" class="hidden flex-col gap-0.5 px-1 max-w-[260px]">
+        <div class="flex items-center gap-1 text-[10px] font-mono text-tertiary truncate">
+          <span class="material-symbols-outlined" style="font-size:12px">task_alt</span>
+          <span id="excel-file-name-text"></span>
+        </div>
+        <div class="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant/70 truncate pl-4">
+          <span id="excel-upload-time-text"></span>
+        </div>
+      </div>
+    </div>
+    <input type="file" id="excel-file-input" accept=".xlsx,.xls" onchange="handleExcelUpload(event)">
+
+    <button onclick="toggleModal(true)"
+      class="flex items-center gap-1.5 px-4 py-1.5 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container transition-all shadow-md active:scale-95 text-xs font-bold tracking-tight">
+      <span class="material-symbols-outlined" style="font-size:18px">add_task</span>
+      <span>+ เพิ่มรายการงานหยุดซ่อม</span>
+    </button>
+
+    <button onclick="closeShutdown()" title="ปิดงาน Shutdown ครั้งนี้: บันทึกผลทั้งหมดเป็น History แล้วล้างข้อมูลเพื่อเริ่ม Shutdown ครั้งถัดไป"
+      class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-tertiary-container hover:brightness-110 border border-tertiary/40 text-tertiary transition-all active:scale-95 text-xs font-bold">
+      <span class="material-symbols-outlined" style="font-size:18px">task_alt</span>
+      <span>ปิดงาน Shutdown</span>
+    </button>
+
+    <button onclick="clearAllTasks()" title="ล้างข้อมูลตารางงานทั้งหมด เพื่อเตรียม Upload Excel ครั้งต่อไป"
+      class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface-container-high hover:bg-error-container/30 border border-outline-variant/40 hover:border-error/50 text-on-surface-variant hover:text-error transition-all active:scale-95 text-xs font-semibold group">
+      <span class="material-symbols-outlined group-hover:scale-110 transition-transform" style="font-size:18px">delete_sweep</span>
+      <span>ล้างข้อมูลทั้งหมด</span>
+    </button>
+
+    <button onclick="exportReport()"
+      class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface-container-high hover:bg-surface-bright text-on-surface transition-all active:scale-95 text-xs font-semibold">
+      <span class="material-symbols-outlined text-secondary" style="font-size:18px">file_download</span>
+      <span>ส่งออก Report</span>
+    </button>
   </div>
 </div>
 
@@ -371,60 +417,14 @@ tailwind.config = {
     <!-- ── HEADER BANNER ── -->
     <div class="bg-surface-container-low rounded-xl p-3 flex flex-col gap-3 shadow-md">
       <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
-        <button onclick="openScheduleModal()"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container transition-all shadow-md active:scale-95 text-xs font-bold tracking-tight w-fit">
-          <span class="material-symbols-outlined group-hover:scale-110 transition-transform" style="font-size:18px">event_note</span>
-          <span>กรอกแผนงาน Shutdown (Milestone Schedule)</span>
-        </button>
-        <div class="flex flex-wrap items-center gap-2">
-          <!-- Upload Excel -->
-          <div class="flex flex-col gap-1">
-            <button onclick="document.getElementById('excel-file-input').click()"
-              class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container transition-all shadow-md active:scale-95 text-xs font-bold tracking-tight">
-              <span class="material-symbols-outlined group-hover:scale-110 transition-transform" style="font-size:18px">upload_file</span>
-              <span>อัปโหลด Excel แผนงาน</span>
-              <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-surface-container-lowest text-secondary-fixed-dim border border-outline-variant/30">.XLSX</span>
-            </button>
-            <div id="excel-file-name" class="hidden flex-col gap-0.5 px-1 max-w-[260px]">
-              <div class="flex items-center gap-1 text-[10px] font-mono text-tertiary truncate">
-                <span class="material-symbols-outlined" style="font-size:12px">task_alt</span>
-                <span id="excel-file-name-text"></span>
-              </div>
-              <div class="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant/70 truncate pl-4">
-                <span id="excel-upload-time-text"></span>
-              </div>
-            </div>
-          </div>
-          <input type="file" id="excel-file-input" accept=".xlsx,.xls" onchange="handleExcelUpload(event)">
-
-          <button onclick="toggleModal(true)"
-            class="flex items-center gap-1.5 px-4 py-1.5 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container transition-all shadow-md active:scale-95 text-xs font-bold tracking-tight">
-            <span class="material-symbols-outlined" style="font-size:18px">add_task</span>
-            <span>+ เพิ่มรายการงานหยุดซ่อม</span>
-          </button>
-
-          <button onclick="closeShutdown()" title="ปิดงาน Shutdown ครั้งนี้: บันทึกผลทั้งหมดเป็น History แล้วล้างข้อมูลเพื่อเริ่ม Shutdown ครั้งถัดไป"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-tertiary-container hover:brightness-110 border border-tertiary/40 text-tertiary transition-all active:scale-95 text-xs font-bold">
-            <span class="material-symbols-outlined" style="font-size:18px">task_alt</span>
-            <span>ปิดงาน Shutdown</span>
-          </button>
-
-          <button onclick="clearAllTasks()" title="ล้างข้อมูลตารางงานทั้งหมด เพื่อเตรียม Upload Excel ครั้งต่อไป"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface-container-high hover:bg-error-container/30 border border-outline-variant/40 hover:border-error/50 text-on-surface-variant hover:text-error transition-all active:scale-95 text-xs font-semibold group">
-            <span class="material-symbols-outlined group-hover:scale-110 transition-transform" style="font-size:18px">delete_sweep</span>
-            <span>ล้างข้อมูลทั้งหมด</span>
-          </button>
-
-          <button onclick="exportReport()"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface-container-high hover:bg-surface-bright text-on-surface transition-all active:scale-95 text-xs font-semibold">
-            <span class="material-symbols-outlined text-secondary" style="font-size:18px">file_download</span>
-            <span>ส่งออก Report</span>
-          </button>
+        <div class="flex items-center gap-1.5 px-3 py-1.5 text-on-surface-variant text-xs font-bold tracking-tight w-fit">
+          <span class="material-symbols-outlined" style="font-size:18px">event_note</span>
+          <span>Insert Plan &amp; Actual Shutdown Schedule</span>
         </div>
       </div>
 
-      <!-- Milestone schedule strip -->
-      <div id="schedule-strip" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2"></div>
+      <!-- Milestone schedule table -->
+      <div id="schedule-table" class="overflow-x-auto rounded-lg border border-outline-variant/20 bg-surface-container-lowest"></div>
     </div>
 
     <!-- ── KPI TILES ── -->
@@ -939,19 +939,12 @@ tailwind.config = {
     <form id="new-task-form" onsubmit="createTask(event)" class="flex flex-col gap-3 text-xs">
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">MACHINE TAG *</label>
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">SECTION *</label>
           <input id="f-tag" required placeholder="เช่น P-202B, TK-05" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
         </div>
         <div>
-          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">โซน / พื้นที่ *</label>
-          <select id="f-area" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
-            <option>Reaction Plant 1</option>
-            <option>Boiler Line 2</option>
-            <option>Utility Station</option>
-            <option>Raw Material Yard</option>
-            <option>Gas Metering Unit</option>
-            <option>Power Island</option>
-          </select>
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">LOCATION *</label>
+          <input id="f-area" required placeholder="เช่น Reaction Plant 1, Boiler Line 2" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
         </div>
       </div>
       <div>
@@ -1013,6 +1006,36 @@ tailwind.config = {
       <div class="flex items-center justify-end gap-2 pt-3 border-t border-surface-container-high">
         <button type="button" onclick="toggleScheduleModal(false)" class="px-4 py-2 rounded bg-surface-container hover:bg-surface-bright text-on-surface font-medium transition-colors">ยกเลิก</button>
         <button type="submit" class="px-5 py-2 rounded bg-primary-container hover:bg-primary text-on-primary-container font-bold transition-all shadow-md">บันทึกแผนงาน</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SCHEDULE CELL EDIT POPUP ═══════════════════ -->
+<div id="schedule-cell-modal-backdrop" class="fixed inset-0 bg-black/80 z-[60] items-center justify-center p-4 hidden">
+  <div class="bg-surface-container-lowest rounded-xl max-w-xs w-full p-5 shadow-2xl flex flex-col gap-3 relative border border-outline-variant/30">
+    <div class="flex items-center justify-between pb-2 border-b border-surface-container-high">
+      <h2 id="schedule-cell-modal-title" class="text-sm font-bold text-on-surface flex items-center gap-1.5">
+        <span class="material-symbols-outlined" style="font-size:18px">event_note</span>
+      </h2>
+      <button type="button" onclick="toggleScheduleCellModal(false)" class="p-1 rounded hover:bg-surface-container text-on-surface-variant">
+        <span class="material-symbols-outlined" style="font-size:18px">close</span>
+      </button>
+    </div>
+    <form id="schedule-cell-form" onsubmit="saveScheduleCell(event)" class="flex flex-col gap-3 text-xs">
+      <div class="grid grid-cols-2 gap-2">
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase">เวลา</label>
+          <input type="time" id="sc-time" class="w-full bg-surface-container-high rounded px-2 py-1.5 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase">วันที่</label>
+          <input type="date" id="sc-date" class="w-full bg-surface-container-high rounded px-2 py-1.5 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-surface-container-high">
+        <button type="button" onclick="toggleScheduleCellModal(false)" class="px-3 py-1.5 rounded bg-surface-container hover:bg-surface-bright text-on-surface font-medium transition-colors">ยกเลิก</button>
+        <button type="submit" class="px-4 py-1.5 rounded bg-primary-container hover:bg-primary text-on-primary-container font-bold transition-all shadow-md">บันทึก</button>
       </div>
     </form>
   </div>
@@ -2624,8 +2647,12 @@ function updateKPIs() {
   const doneCount = tasks.filter(t => t.status !== 'cancelled' && t.progress === 100).length;
   const avg = total > 0 ? (doneCount / total * 100).toFixed(1) : '0.0';
 
+  // Add Work jobs are ordinary tasks, so they are already inside total and doneCount.
+  const addedTotal = tasks.filter(t => t.added).length;
   document.getElementById('kpi-percent').textContent = avg + '%';
-  document.getElementById('kpi-total').textContent = total + ' งาน' + (filtered ? ' (ตามตัวกรอง)' : '');
+  document.getElementById('kpi-total').textContent = total + ' งาน'
+    + (addedTotal ? ` (แผน ${total - addedTotal} + Add Work ${addedTotal})` : '')
+    + (filtered ? ' (ตามตัวกรอง)' : '');
   document.getElementById('gauge-text').textContent = avg + '%';
   document.getElementById('gauge-total-text').textContent = total + ' งาน';
 
@@ -2639,7 +2666,7 @@ function updateKPIs() {
     if (el) el.textContent = counts[s.p];
   });
   // Add Work cuts across stages (hand-added jobs at any stage), so it isn't a pie slice.
-  const addedCount = tasks.filter(t => t.added).length;
+  const addedCount = addedTotal;
   document.getElementById('cnt-added').textContent = addedCount;
 
   // ── Draw pie chart ──────────────────────────────────────────────
@@ -3075,10 +3102,12 @@ async function createTask(e) {
   const body = {
     tag:        document.getElementById('f-tag').value.trim(),
     title:      document.getElementById('f-title').value.trim(),
-    area:       document.getElementById('f-area').value,
+    area:       document.getElementById('f-area').value.trim(),
     assignee:   document.getElementById('f-assignee').value.trim(),
     progress:   Number(document.getElementById('f-progress').value),
     note:       document.getElementById('f-note').value.trim() || 'เปิดงานใหม่ รอการเข้าพื้นที่',
+    // What's typed here also shows on the Gantt bar, same as the Note button.
+    event_note: document.getElementById('f-note').value.trim(),
     start_time: document.getElementById('f-start-time').value || '',
     end_time:   document.getElementById('f-end-time').value   || '',
     updated_by: currentUser?.username || 'User',
@@ -3256,24 +3285,117 @@ async function loadSchedule() {
 }
 
 function renderScheduleStrip() {
-  const strip = document.getElementById('schedule-strip');
-  if (!strip) return;
-  strip.innerHTML = SCHEDULE_FIELDS.map(f => {
-    const v = currentSchedule[f.key] || { date: '', time: '' };
+  const table = document.getElementById('schedule-table');
+  if (!table) return;
+
+  // row = 'plan' | 'actual'; reads/writes date+time via the matching pair of keys.
+  function cell(f, row, v) {
     const hasValue = v.date || v.time;
     return `
-      <div class="bg-surface-container-lowest rounded-lg px-3 py-1.5 flex flex-col gap-0.5 border border-outline-variant/20">
-        <div class="flex items-center gap-1.5 text-on-surface-variant">
-          <span class="material-symbols-outlined" style="font-size:14px">${f.icon}</span>
-          <span class="text-[10px] font-semibold uppercase tracking-wide truncate">${f.label}</span>
-        </div>
+      <td class="px-3 py-1.5 border-b border-outline-variant/10 whitespace-nowrap cursor-pointer hover:bg-primary-container/20 transition-colors"
+          onclick="openScheduleCellModal('${f.key}', '${row}')" title="คลิกเพื่อแก้ไขวันที่และเวลา">
         ${hasValue
-          ? `<div class="font-mono text-sm font-bold text-on-surface">${escHtml(v.time) || '--:--'} <span class="text-[10px] font-normal text-on-surface-variant">น.</span></div>
-             <div class="font-mono text-[10px] text-on-surface-variant">${escHtml(formatScheduleDate(v.date)) || '-'}</div>`
-          : `<div class="text-xs text-on-surface-variant/60 italic">ยังไม่กรอกข้อมูล</div>`}
-      </div>
+          ? `<span class="font-mono text-xs font-bold text-on-surface">${escHtml(v.time) || '--:--'} <span class="text-[10px] font-normal text-on-surface-variant">น.</span></span>
+             <span class="font-mono text-[10px] text-on-surface-variant ml-1">${escHtml(formatScheduleDate(v.date)) || '-'}</span>`
+          : `<span class="text-xs text-on-surface-variant/60 italic">ยังไม่กรอกข้อมูล</span>`}
+      </td>
     `;
+  }
+
+  const headCells = SCHEDULE_FIELDS.map(f => `
+    <th class="px-3 py-1.5 text-left font-semibold text-on-surface-variant bg-surface-container border-b border-outline-variant/20 whitespace-nowrap">
+      <span class="material-symbols-outlined align-middle mr-1" style="font-size:14px">${f.icon}</span>${f.label}
+    </th>
+  `).join('');
+
+  const planCells = SCHEDULE_FIELDS.map(f => {
+    const s = currentSchedule[f.key] || {};
+    return cell(f, 'plan', { date: s.date || '', time: s.time || '' });
   }).join('');
+  const actualCells = SCHEDULE_FIELDS.map(f => {
+    const s = currentSchedule[f.key] || {};
+    return cell(f, 'actual', { date: s.actual_date || '', time: s.actual_time || '' });
+  }).join('');
+
+  table.innerHTML = `
+    <table class="w-full border-collapse text-xs">
+      <thead>
+        <tr>
+          <th class="px-3 py-1.5 text-left font-semibold text-on-surface-variant bg-surface-container border-b border-outline-variant/20 whitespace-nowrap">&nbsp;</th>
+          ${headCells}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th class="px-3 py-1.5 text-left font-semibold text-primary bg-primary-container/40 border-b border-outline-variant/10 whitespace-nowrap">
+            <span class="material-symbols-outlined align-middle mr-1" style="font-size:14px">calendar_month</span>Monthly Plan
+          </th>
+          ${planCells}
+        </tr>
+        <tr>
+          <th class="px-3 py-1.5 text-left font-semibold text-secondary bg-secondary-container/30 whitespace-nowrap">
+            <span class="material-symbols-outlined align-middle mr-1" style="font-size:14px">fact_check</span>Actual
+          </th>
+          ${actualCells}
+        </tr>
+      </tbody>
+    </table>
+  `;
+}
+
+// ─── Schedule cell edit popup ───────────────────────────────────────────────
+let scheduleCellEdit = null; // { key, row }
+
+function openScheduleCellModal(key, row) {
+  if (!canWrite()) return;
+  const field = SCHEDULE_FIELDS.find(f => f.key === key);
+  if (!field) return;
+  scheduleCellEdit = { key, row };
+  const s = currentSchedule[key] || {};
+  const dateVal = row === 'actual' ? (s.actual_date || '') : (s.date || '');
+  const timeVal = row === 'actual' ? (s.actual_time || '') : (s.time || '');
+  document.getElementById('schedule-cell-modal-title').innerHTML =
+    `<span class="material-symbols-outlined" style="font-size:18px">${field.icon}</span>${field.label} &mdash; ${row === 'actual' ? 'Actual' : 'Monthly Plan'}`;
+  document.getElementById('sc-date').value = dateVal;
+  document.getElementById('sc-time').value = timeVal;
+  toggleScheduleCellModal(true);
+}
+
+function toggleScheduleCellModal(open) {
+  const m = document.getElementById('schedule-cell-modal-backdrop');
+  m.classList.toggle('hidden', !open);
+  m.classList.toggle('flex', open);
+  if (!open) scheduleCellEdit = null;
+}
+
+async function saveScheduleCell(e) {
+  e.preventDefault();
+  if (!scheduleCellEdit) return;
+  const { key, row } = scheduleCellEdit;
+  const date = document.getElementById('sc-date').value || '';
+  const time = document.getElementById('sc-time').value || '';
+  const schedule = {};
+  SCHEDULE_FIELDS.forEach(f => {
+    const s = currentSchedule[f.key] || {};
+    schedule[f.key] = { date: s.date || '', time: s.time || '', actual_date: s.actual_date || '', actual_time: s.actual_time || '' };
+  });
+  if (row === 'actual') { schedule[key].actual_date = date; schedule[key].actual_time = time; }
+  else { schedule[key].date = date; schedule[key].time = time; }
+
+  const res = await fetch(`/api/schedule?${plantQS()}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ schedule })
+  });
+  if (res.ok) {
+    currentSchedule = await res.json();
+    renderScheduleStrip();
+    if (!lastExcelUpload?.baseDate) renderTable();
+    toggleScheduleCellModal(false);
+    showToast('บันทึกแผนงาน Shutdown สำเร็จ', 'อัปเดตข้อมูล Milestone Schedule แล้ว');
+  } else {
+    showToast('บันทึกไม่สำเร็จ', 'กรุณาลองใหม่อีกครั้ง', true);
+  }
 }
 
 function openScheduleModal() {
@@ -3305,9 +3427,11 @@ async function saveSchedule(e) {
   e.preventDefault();
   const schedule = {};
   SCHEDULE_FIELDS.forEach(f => {
+    const s = currentSchedule[f.key] || {};
     schedule[f.key] = {
       time: document.getElementById(`sf-time-${f.key}`).value || '',
-      date: document.getElementById(`sf-date-${f.key}`).value || ''
+      date: document.getElementById(`sf-date-${f.key}`).value || '',
+      actual_date: s.actual_date || '', actual_time: s.actual_time || ''
     };
   });
   const res = await fetch(`/api/schedule?${plantQS()}`, {

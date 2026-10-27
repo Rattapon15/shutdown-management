@@ -50,7 +50,7 @@ function shiftDateTime(date, hm, deltaMin) {
 
 function emptySchedule() {
   const s = {};
-  for (const k of SCHEDULE_MILESTONES) s[k] = { date: '', time: '' };
+  for (const k of SCHEDULE_MILESTONES) s[k] = { date: '', time: '', actual_date: '', actual_time: '' };
   return s;
 }
 
@@ -126,11 +126,18 @@ const db = {
   // ── Schedule ────────────────────────────────────────────────────────────────
   async getSchedule(plant) {
     const { rows } = await query(
-      'SELECT milestone, date, time FROM shutdown_mnm_schedule WHERE plant = $1',
+      'SELECT milestone, date, time, actual_date, actual_time FROM shutdown_mnm_schedule WHERE plant = $1',
       [plantKey(plant)]
     );
     const out = emptySchedule();
-    for (const r of rows) if (out[r.milestone]) out[r.milestone] = { date: r.date, time: r.time };
+    for (const r of rows) {
+      if (out[r.milestone]) {
+        out[r.milestone] = {
+          date: r.date, time: r.time,
+          actual_date: r.actual_date, actual_time: r.actual_time
+        };
+      }
+    }
     return out;
   },
 
@@ -139,16 +146,21 @@ const db = {
     const next = emptySchedule();
     for (const k of SCHEDULE_MILESTONES) {
       if (schedule && schedule[k]) {
-        next[k] = { date: String(schedule[k].date || ''), time: String(schedule[k].time || '') };
+        next[k] = {
+          date: String(schedule[k].date || ''), time: String(schedule[k].time || ''),
+          actual_date: String(schedule[k].actual_date || ''), actual_time: String(schedule[k].actual_time || '')
+        };
       }
     }
     await withTx(async client => {
       for (const k of SCHEDULE_MILESTONES) {
         await client.query(
-          `INSERT INTO shutdown_mnm_schedule (plant, milestone, date, time)
-           VALUES ($1, $2, $3, $4)
-           ON CONFLICT (plant, milestone) DO UPDATE SET date = EXCLUDED.date, time = EXCLUDED.time`,
-          [p, k, next[k].date, next[k].time]
+          `INSERT INTO shutdown_mnm_schedule (plant, milestone, date, time, actual_date, actual_time)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           ON CONFLICT (plant, milestone) DO UPDATE SET
+             date = EXCLUDED.date, time = EXCLUDED.time,
+             actual_date = EXCLUDED.actual_date, actual_time = EXCLUDED.actual_time`,
+          [p, k, next[k].date, next[k].time, next[k].actual_date, next[k].actual_time]
         );
       }
     });
@@ -232,7 +244,7 @@ const db = {
     return rows.length ? taskRow(rows[0]) : null;
   },
 
-  async createTask({ tag, title, area, assignee, progress = 0, note = '', duration = '', start_time = '', end_time = '', updated_by = 'User', plant }) {
+  async createTask({ tag, title, area, assignee, progress = 0, note = '', event_note = '', duration = '', start_time = '', end_time = '', updated_by = 'User', plant }) {
     const p = plantKey(plant);
     return withTx(async client => {
       const { rows: [seqRow] } = await client.query(
@@ -242,10 +254,10 @@ const db = {
       const id = `TASK-${String(seqRow.task_seq).padStart(3, '0')}`;
       const { rows: [row] } = await client.query(
         `INSERT INTO shutdown_mnm_tasks
-           (plant, id, tag, title, area, assignee, progress, status, note, duration, start_time, end_time, updated_at, updated_by, added)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,'active',$8,$9,$10,$11,$12,$13,TRUE) RETURNING *`,
+           (plant, id, tag, title, area, assignee, progress, status, note, duration, start_time, end_time, updated_at, updated_by, added, event_note)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'active',$8,$9,$10,$11,$12,$13,TRUE,$14) RETURNING *`,
         [p, id, String(tag).toUpperCase(), title, area, assignee, Number(progress) || 0,
-         note, duration, start_time, end_time, nowTime(), updated_by]
+         note, duration, start_time, end_time, nowTime(), updated_by, String(event_note || '').trim()]
       );
       return taskRow(row);
     });
