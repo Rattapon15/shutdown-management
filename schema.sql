@@ -178,3 +178,14 @@ WHERE NOT t.added AND EXISTS (
 -- button and shown under the job's bar. Separate from `note`, which holds the Excel remark.
 ALTER TABLE ai_project.shutdown_mnm_tasks
   ADD COLUMN IF NOT EXISTS event_note TEXT NOT NULL DEFAULT '';
+
+-- History: Add Work job count, and the Excel upload time plus the Gantt shutdown window
+-- ({uploadedAt, rangeStart, rangeEnd}) as they stood when the shutdown was closed.
+ALTER TABLE ai_project.shutdown_mnm_history
+  ADD COLUMN IF NOT EXISTS added INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE ai_project.shutdown_mnm_history
+  ADD COLUMN IF NOT EXISTS upload JSONB NOT NULL DEFAULT '{}'::jsonb;
+UPDATE ai_project.shutdown_mnm_history h SET added = sub.n
+FROM (SELECT id, count(*) FILTER (WHERE (e->>'added')::boolean)::int AS n
+      FROM ai_project.shutdown_mnm_history, jsonb_array_elements(tasks) e GROUP BY id) sub
+WHERE h.id = sub.id AND h.added = 0 AND sub.n > 0;

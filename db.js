@@ -77,7 +77,7 @@ function safetyRow(r) {
 function historyRow(r) {
   return {
     id: Number(r.id), plant: r.plant, start_date: r.start_date, end_date: r.end_date,
-    total: r.total, done: r.done, cancelled: r.cancelled, touched: r.touched,
+    total: r.total, done: r.done, cancelled: r.cancelled, touched: r.touched, added: r.added ?? 0,
     closed_by: r.closed_by, closed_at: iso(r.closed_at),
   };
 }
@@ -586,19 +586,26 @@ const db = {
         `SELECT count(*)::int AS total,
                 count(*) FILTER (WHERE status <> 'cancelled' AND progress = 100)::int AS done,
                 count(*) FILTER (WHERE status = 'cancelled')::int AS cancelled,
-                count(*) FILTER (WHERE progress > 0 OR status = 'cancelled')::int AS touched
+                count(*) FILTER (WHERE progress > 0 OR status = 'cancelled')::int AS touched,
+                count(*) FILTER (WHERE added)::int AS added
          FROM shutdown_mnm_tasks WHERE plant = $1`, [p]);
     const { rows: [pl] } = await client.query('SELECT last_excel_upload FROM shutdown_mnm_plants WHERE name = $1', [p]);
-    const { rows: sched } = await client.query('SELECT milestone, date, time FROM shutdown_mnm_schedule WHERE plant = $1', [p]);
+    const { rows: sched } = await client.query(
+      'SELECT milestone, date, time, actual_date, actual_time FROM shutdown_mnm_schedule WHERE plant = $1', [p]);
     const upload = pl?.last_excel_upload || null;
     const schedule = emptySchedule();
-    for (const r of sched) if (schedule[r.milestone]) schedule[r.milestone] = { date: r.date, time: r.time };
+    for (const r of sched) {
+      if (schedule[r.milestone]) {
+        schedule[r.milestone] = { date: r.date, time: r.time, actual_date: r.actual_date, actual_time: r.actual_time };
+      }
+    }
     const isDate = v => /^\d{4}-\d{2}-\d{2}$/.test(v || '');
     const start = [upload?.rangeStart?.slice(0, 10), upload?.baseDate, schedule.shutdown.date].find(isDate);
     if (!start) return null;
     const end = [upload?.rangeEnd?.slice(0, 10), schedule.on_reel.date, schedule.startup.date].find(isDate) || start;
     return { plant: p, start_date: start, end_date: end < start ? start : end,
-      file_name: upload?.fileName || '', schedule, ...c };
+      file_name: upload?.fileName || '', schedule, ...c,
+      upload: { uploadedAt: upload?.uploadedAt || '', rangeStart: upload?.rangeStart || '', rangeEnd: upload?.rangeEnd || '' } };
   },
 
   // Copies the current shutdown (tasks, safety items, milestones) into history.
@@ -622,16 +629,19 @@ const db = {
       for (const r of safetyRows) if (safety[r.category]) safety[r.category].push(safetyRow(r));
       const { rows: [rec] } = await client.query(
         `INSERT INTO shutdown_mnm_history
-           (plant, start_date, end_date, total, done, cancelled, touched, file_name, schedule, tasks, safety, closed_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+           (plant, start_date, end_date, total, done, cancelled, touched, added, file_name, upload,
+            schedule, tasks, safety, closed_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
          ON CONFLICT (plant, start_date) DO UPDATE SET
            end_date = EXCLUDED.end_date, total = EXCLUDED.total, done = EXCLUDED.done,
-           cancelled = EXCLUDED.cancelled, touched = EXCLUDED.touched, file_name = EXCLUDED.file_name,
+           cancelled = EXCLUDED.cancelled, touched = EXCLUDED.touched, added = EXCLUDED.added,
+           file_name = EXCLUDED.file_name, upload = EXCLUDED.upload,
            schedule = EXCLUDED.schedule, tasks = EXCLUDED.tasks, safety = EXCLUDED.safety,
            closed_by = EXCLUDED.closed_by, closed_at = now()
-         RETURNING id, plant, start_date, end_date, total, done, cancelled, touched, closed_by, closed_at`,
-        [p, s.start_date, s.end_date, s.total, s.done, s.cancelled, s.touched, s.file_name,
-         JSON.stringify(s.schedule), JSON.stringify(tasks.map(taskRow)), JSON.stringify(safety), closedBy]
+         RETURNING id, plant, start_date, end_date, total, done, cancelled, touched, added, closed_by, closed_at`,
+        [p, s.start_date, s.end_date, s.total, s.done, s.cancelled, s.touched, s.added, s.file_name,
+         JSON.stringify(s.upload), JSON.stringify(s.schedule), JSON.stringify(tasks.map(taskRow)),
+         JSON.stringify(safety), closedBy]
       );
       if (reset) {
         await client.query('DELETE FROM shutdown_mnm_tasks WHERE plant = $1', [p]);
@@ -650,7 +660,7 @@ const db = {
     if (plant) { args.push(plantKey(plant)); where.push(`plant = $${args.length}`); }
     if (year)  { args.push(`${year}-%`);    where.push(`start_date LIKE $${args.length}`); }
     const { rows } = await query(
-      `SELECT id, plant, start_date, end_date, total, done, cancelled, touched, closed_by, closed_at
+      `SELECT id, plant, start_date, end_date, total, done, cancelled, touched, added, closed_by, closed_at
        FROM shutdown_mnm_history ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
        ORDER BY start_date DESC`, args
     );
@@ -659,7 +669,7 @@ const db = {
 
   async getHistory(id) {
     const { rows } = await query('SELECT * FROM shutdown_mnm_history WHERE id = $1', [id]);
-    return rows.length ? { ...historyRow(rows[0]), file_name: rows[0].file_name,
+    return rows.length ? { ...historyRow(rows[0]), file_name: rows[0].file_name, upload: rows[0].upload,
       schedule: rows[0].schedule, tasks: rows[0].tasks, safety: rows[0].safety } : null;
   },
 

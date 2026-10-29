@@ -120,20 +120,27 @@ tailwind.config = {
   .main-tab-btn:hover:not(.active) { color:#1a1b22; background:rgba(255,255,255,.45); }
   .main-tab-btn.active { background:#ffffff; color:#1a1b22; box-shadow:0 1px 3px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.04); }
   .main-tab-btn.active .material-symbols-outlined { color:#0077b6; }
-  /* TAB 2 dashboard: tighter spacing so the summary, tiles and Section table fit on one screen */
-  body.tab2-dash #main-tab-bar { padding-top:.5rem; }
-  body.tab2-dash #progress-summary { gap:.5rem; padding-top:.5rem; }
-  body.tab2-dash #progress-summary > div:first-child { padding:.5rem .75rem; gap:.375rem; }
-  body.tab2-dash #progress-summary > div:first-child > div:first-child > div { padding:0; }
-  body.tab2-dash #pie-chart-svg { width:112px; height:112px; }
-  body.tab2-dash #kpi-pie-card { padding:.625rem .875rem; gap:.25rem; }
-  body.tab2-dash #pie-legend { gap:.125rem; }
-  body.tab2-dash #pie-legend > div { line-height:1.1rem; }
-  body.tab2-dash [id^="stage-tile-"] { padding:.5rem .625rem; min-height:0; }
-  body.tab2-dash [id^="stage-tile-"] .text-2xl { font-size:1.5rem; line-height:1.9rem; }
-  body.tab2-dash [id^="stage-tile-"] .text-xs.mt-1 { margin-top:.125rem; font-size:.6875rem; line-height:.95rem; }
-  body.tab2-dash #phase-legend { padding:.375rem .75rem; }
-  body.tab2-dash #main-tab-content-gantt > div { padding-top:.5rem; gap:.5rem; }
+  #history-modal-body > * { flex-shrink:0; }
+  #excel-file-name { display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:60; width:max-content; max-width:340px;
+    flex-direction:column; gap:4px; padding:8px 10px; border-radius:8px; background:#ffffff;
+    border:1px solid rgba(196,198,208,.6); box-shadow:0 8px 24px rgba(0,0,0,.14); }
+  #excel-upload-wrap.has-file:hover #excel-file-name,
+  #excel-upload-wrap.has-file:focus-within #excel-file-name { display:flex; }
+  /* Compact dashboard spacing for the summary banner, KPI tiles and phase legend —
+     shared by TAB 1 and TAB 2 so the cards look identical on both. */
+  #main-tab-bar { padding-top:.5rem; }
+  #progress-summary { gap:.5rem; padding-top:.5rem; }
+  #progress-summary > div:first-child { padding:.5rem .75rem; gap:.375rem; }
+  #progress-summary > div:first-child > div:first-child > div { padding:0; }
+  #pie-chart-svg { width:136px; height:136px; }
+  #kpi-pie-card { padding:.625rem .875rem; gap:.25rem; }
+  #pie-legend { gap:.125rem; }
+  #pie-legend > div { line-height:1.1rem; }
+  [id^="stage-tile-"] { padding:.5rem .625rem; min-height:0; }
+  [id^="stage-tile-"] .text-2xl { font-size:1.5rem; line-height:1.9rem; }
+  [id^="stage-tile-"] .text-xs.mt-1 { margin-top:.125rem; font-size:.6875rem; line-height:.95rem; }
+  #phase-legend { padding:.375rem .75rem; }
+  #main-tab-content-gantt > div { padding-top:.5rem; gap:.5rem; }
 
   /* Task table card: rows scroll inside the card (scrollbar on its right), header stays put */
   #tasks-scroll { max-height:calc(100vh - 160px); min-height:320px; scrollbar-gutter:stable; }
@@ -189,6 +196,42 @@ tailwind.config = {
     background-position: 930px 0; /* start gridlines after .gantt-left-col */
   }
 
+  /* ── Print / "Save as PDF" report (ส่งออก Report) ── */
+  #print-header, #print-section-summary, #gantt-print { display:none; }
+  @page { size:A3 landscape; margin:8mm; }
+  @media print {
+    html, body { background:#ffffff !important; }
+    * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+    #sidebar, #topbar, #nav-backdrop, #main-tab-bar, #search-slot-gantt, #search-slot-table, #toast,
+    #section-summary-card, .gantt-hbar, .gantt-range-edit, #gantt-shift-pop,
+    [id$="-modal-backdrop"], #col-dropdown, #upload-overlay { display:none !important; }
+    .app-pl { padding-left:0 !important; }
+    main { padding-top:0 !important; min-height:0 !important; }
+    #progress-summary, #main-tab-content-gantt > div { padding-left:0 !important; padding-right:0 !important; }
+    #print-header { display:flex; }
+    #print-section-summary { display:flex; }
+    /* Desktop layout whatever width the browser lays the page out at for printing */
+    #kpi-row { flex-direction:row !important; }
+    #kpi-pie-card { width:33.333% !important; flex-shrink:0; }
+    #stage-tiles { grid-template-columns:repeat(7, minmax(0, 1fr)) !important; }
+    .shadow-sm, .shadow-md { box-shadow:none !important; }
+    #progress-summary > *, #print-section-summary, #print-section-summary tr { break-inside:avoid; }
+    #gantt-title-bar { break-before:page; }
+    /* The Gantt prints from #gantt-print (built by preparePrintReport): a real <table> whose
+       <thead> the browser repeats at the top of every page. */
+    #gantt-card { overflow:visible !important; }
+    #gantt-scroll { display:none !important; }
+    #gantt-print { display:table; border-collapse:collapse; }
+    #gantt-print td { padding:0; }
+    #gantt-print tr { break-inside:avoid; }
+    #gantt-print .sticky { position:relative !important; left:auto !important; top:auto !important; }
+    #gantt-print .col-sort-icon, #gantt-print .col-filter-dot { display:none !important; }
+    #gantt-print tbody .gantt-print-row {
+      background-image:repeating-linear-gradient(to right, rgba(0,0,0,.06) 0, rgba(0,0,0,.06) 1px, transparent 1px, transparent 36px);
+      background-position:930px 0;
+    }
+  }
+
   /* ── Mobile: sidebar becomes a slide-in drawer, content uses the full width ── */
   #nav-backdrop { display:none; }
   #sidebar, .app-pl, #topbar { transition:transform .2s ease, padding-left .2s ease, left .2s ease; }
@@ -201,7 +244,7 @@ tailwind.config = {
   /* Touch screens (phones and iPads): the grid swipes natively in both directions instead of
      using the desktop proxy scrollbars. ชื่องาน and 5-STAGE are moved to the end of the
      930px label block, and a negative sticky offset leaves just those two pinned on the left. */
-  @media (max-width: 767px), (pointer: coarse) {
+  @media screen and (max-width: 767px), screen and (pointer: coarse) {
     #gantt-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
     #tasks-scroll { -webkit-overflow-scrolling:touch; }
     #gantt-card .gantt-hbar { display:none !important; }
@@ -214,7 +257,7 @@ tailwind.config = {
     #gantt-grid .gantt-left-col > :nth-child(3) { order:1; }
     #gantt-grid .gantt-left-col > :nth-child(5) { order:2; }
   }
-  @media (max-width: 767px) {
+  @media screen and (max-width: 767px) {
     #sidebar { transform:translateX(-100%); transition:transform .2s ease; box-shadow:none; }
     body.nav-open #sidebar { transform:none; box-shadow:4px 0 24px rgba(0,0,0,.5); }
     body.nav-open #nav-backdrop { display:block; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:45; }
@@ -369,6 +412,19 @@ tailwind.config = {
 <!-- ═══════════════════════════════════════ MAIN ════════════════════════════ -->
 <main class="relative pt-16 bg-surface min-h-screen">
 
+<!-- Print-only report header; filled by preparePrintReport() -->
+<div id="print-header" class="items-end justify-between gap-4 pb-2 mb-1 border-b-2 border-secondary">
+  <div>
+    <div class="text-[11px] font-semibold uppercase tracking-widest text-on-surface-variant">Shutdown Progress Report</div>
+    <div class="text-xl font-bold text-on-surface"><span id="print-plant"></span> <span id="print-range" class="text-sm font-mono font-normal text-on-surface-variant"></span></div>
+    <div id="print-filter-note" class="text-[11px] text-error font-semibold"></div>
+  </div>
+  <div class="text-right text-[11px] font-mono text-on-surface-variant">
+    <div>พิมพ์เมื่อ: <span id="print-at"></span></div>
+    <div>พิมพ์โดย: <span id="print-by"></span></div>
+  </div>
+</div>
+
 <!-- ── Main content tabs ── -->
 <div id="main-tab-bar" class="px-5 pt-3 flex flex-col xl:flex-row xl:items-center justify-between gap-2">
   <div class="main-tab-group" role="tablist">
@@ -380,21 +436,21 @@ tailwind.config = {
 
   <div id="main-action-bar" class="flex flex-wrap items-center gap-2 xl:justify-end">
     <!-- Upload Excel -->
-    <div class="flex flex-col gap-1">
+    <div id="excel-upload-wrap" class="relative">
       <button onclick="document.getElementById('excel-file-input').click()"
         class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container transition-all shadow-md active:scale-95 text-xs font-bold tracking-tight">
-        <span class="material-symbols-outlined group-hover:scale-110 transition-transform" style="font-size:18px">upload_file</span>
+        <span class="material-symbols-outlined" style="font-size:18px">upload_file</span>
         <span>อัปโหลด Excel แผนงาน</span>
         <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-surface-container-lowest text-secondary-fixed-dim border border-outline-variant/30">.XLSX</span>
+        <span id="excel-status-badge" class="hidden material-symbols-outlined text-tertiary" style="font-size:16px">task_alt</span>
       </button>
-      <div id="excel-file-name" class="hidden flex-col gap-0.5 px-1 max-w-[260px]">
-        <div class="flex items-center gap-1 text-[10px] font-mono text-tertiary truncate">
-          <span class="material-symbols-outlined" style="font-size:12px">task_alt</span>
-          <span id="excel-file-name-text"></span>
+      <div id="excel-file-name" role="tooltip">
+        <div class="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">ไฟล์ที่อัปโหลดล่าสุด</div>
+        <div class="excel-status-color flex items-start gap-1.5 text-xs font-mono text-tertiary">
+          <span class="material-symbols-outlined shrink-0" style="font-size:14px">task_alt</span>
+          <span id="excel-file-name-text" class="break-all"></span>
         </div>
-        <div class="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant/70 truncate pl-4">
-          <span id="excel-upload-time-text"></span>
-        </div>
+        <div id="excel-upload-time-text" class="text-[11px] font-mono text-on-surface-variant pl-5"></div>
       </div>
     </div>
     <input type="file" id="excel-file-input" accept=".xlsx,.xls" onchange="handleExcelUpload(event)">
@@ -417,10 +473,10 @@ tailwind.config = {
       <span>ล้างข้อมูลทั้งหมด</span>
     </button>
 
-    <button onclick="exportReport()"
+    <button onclick="exportReport()" title="ส่งออก Report เป็น PDF — เลือก &quot;Save as PDF&quot; ในหน้าต่างพิมพ์"
       class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface-container-high hover:bg-surface-bright text-on-surface transition-all active:scale-95 text-xs font-semibold">
-      <span class="material-symbols-outlined text-secondary" style="font-size:18px">file_download</span>
-      <span>ส่งออก Report</span>
+      <span class="material-symbols-outlined text-secondary" style="font-size:18px">picture_as_pdf</span>
+      <span>ส่งออก Report (PDF)</span>
     </button>
   </div>
 </div>
@@ -442,7 +498,7 @@ tailwind.config = {
     </div>
 
     <!-- ── KPI TILES ── -->
-    <div class="flex flex-col xl:flex-row gap-3 w-full">
+    <div id="kpi-row" class="flex flex-col xl:flex-row gap-3 w-full">
       <!-- Pie Chart -->
       <div id="kpi-pie-card" class="xl:w-1/3 bg-surface-container-lowest rounded-xl px-4 py-3 flex flex-col gap-2 shadow-sm">
         <div class="flex items-center justify-between">
@@ -467,7 +523,7 @@ tailwind.config = {
         </div>
       </div>
       <!-- Stage Tiles -->
-      <div class="flex-1 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2">
+      <div id="stage-tiles" class="flex-1 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2">
         <div id="stage-tile-0" class="bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer rounded-xl p-3 flex flex-col justify-between shadow-sm relative overflow-hidden group" onclick="filterByPhase(0)">
           <div class="h-1 w-full bg-outline-variant/50 absolute top-0 left-0"></div>
           <div class="flex items-center justify-between">
@@ -726,6 +782,7 @@ tailwind.config = {
             <th class="px-4 py-3">Completion Rate</th>
             <th class="px-4 py-3">งานเสร็จ / ทั้งหมด</th>
             <th class="px-4 py-3">ยกเลิก</th>
+            <th class="px-4 py-3">งานเพิ่ม (Add Work)</th>
             <th class="px-4 py-3">ปิดงานโดย</th>
             <th class="px-4 py-3"></th>
           </tr>
@@ -754,7 +811,14 @@ tailwind.config = {
       <div id="section-summary-scroll" class="overflow-auto max-h-[420px]"></div>
     </div>
 
-    <div class="bg-surface-container-low rounded-xl px-4 py-2.5 flex items-center justify-between gap-2 shadow-md">
+    <!-- Print-only copy of the Section Progress table (any tab); filled by preparePrintReport() -->
+    <div id="print-section-summary" class="bg-surface-container-lowest rounded-xl border border-surface-container-high flex-col overflow-hidden">
+      <div class="bg-surface-container-low px-4 py-2 text-sm font-bold text-on-surface">Section Progress Dashboard
+        <span class="text-xs font-normal text-on-surface-variant">— ความคืบหน้า 5-Stage แยกตาม Section</span></div>
+      <div id="print-section-summary-body"></div>
+    </div>
+
+    <div id="gantt-title-bar" class="bg-surface-container-low rounded-xl px-4 py-2.5 flex items-center justify-between gap-2 shadow-md">
       <div class="flex items-center gap-2">
         <span class="material-symbols-outlined text-secondary" style="font-size:20px">view_timeline</span>
         <h2 class="text-sm font-bold text-on-surface">Shutdown Timeline (Gantt View)</h2>
@@ -1072,15 +1136,22 @@ tailwind.config = {
 
 <!-- ═══════════════════════════════════════ HISTORY DETAIL MODAL ══════════════ -->
 <div id="history-modal-backdrop" class="fixed inset-0 bg-black/80 z-50 items-center justify-center p-4 hidden">
-  <div class="bg-surface-container-lowest rounded-xl max-w-6xl w-full max-h-[90vh] p-6 shadow-2xl flex flex-col gap-4 relative border border-outline-variant/30">
+  <div class="bg-surface-container-lowest rounded-xl max-w-7xl w-full max-h-[90vh] p-6 shadow-2xl flex flex-col gap-4 relative border border-outline-variant/30">
     <div class="flex items-center justify-between pb-2 border-b border-surface-container-high">
       <div class="flex items-center gap-2">
         <span class="material-symbols-outlined text-secondary" style="font-size:22px">history</span>
         <h2 id="history-modal-title" class="text-base font-bold text-on-surface">Shutdown History</h2>
       </div>
-      <button onclick="toggleHistoryModal(false)" class="p-1 rounded hover:bg-surface-container text-on-surface-variant">
-        <span class="material-symbols-outlined" style="font-size:20px">close</span>
-      </button>
+      <div class="flex items-center gap-2 shrink-0 whitespace-nowrap">
+        <button id="history-export-btn" onclick="exportHistoryExcel()" title="ส่งออกข้อมูล Shutdown ครั้งนี้เป็นไฟล์ Excel"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-tertiary-container hover:bg-tertiary hover:text-on-tertiary text-tertiary transition-all shadow-sm active:scale-95 text-xs font-bold disabled:opacity-50 disabled:cursor-wait">
+          <span class="material-symbols-outlined" style="font-size:18px">download</span>
+          <span>Export Excel</span>
+        </button>
+        <button onclick="toggleHistoryModal(false)" class="p-1 rounded hover:bg-surface-container text-on-surface-variant">
+          <span class="material-symbols-outlined" style="font-size:20px">close</span>
+        </button>
+      </div>
     </div>
     <div id="history-modal-body" class="flex flex-col gap-4 overflow-y-auto"></div>
   </div>
@@ -1695,7 +1766,6 @@ function setMainTab(tab) {
   document.getElementById('section-summary-card').classList.toggle('hidden', tab !== 'table');
   // TAB 2 is a tracking dashboard: no action buttons, compact cards.
   document.getElementById('main-action-bar').classList.toggle('hidden', tab === 'table');
-  document.body.classList.toggle('tab2-dash', tab === 'table');
   for (const t of ['gantt', 'table']) {
     document.getElementById(`main-tab-btn-${t}`).classList.toggle('active', tab === t);
   }
@@ -2453,6 +2523,14 @@ async function saveGanttDate(input) {
 function renderSectionSummary(tasks) {
   const box = document.getElementById('section-summary-scroll');
   if (!box || activeMainBtn !== 'table') return;
+  const activeSection = ganttColFilters.tag && ganttColFilters.tag.size === 1 ? [...ganttColFilters.tag][0] : null;
+  const s = sectionSummaryTable(tasks, { interactive: true, activeSection });
+  document.getElementById('section-summary-count').textContent = `${s.sections} Section · ${s.total} งาน`;
+  box.innerHTML = s.html;
+}
+
+// 5-stage counts per Section (keyed by tag) plus the grand total row.
+function sectionCounts(tasks) {
   const stages = PIE_STAGES.filter(s => s.p !== 'cancelled');
   const blank = () => ({ total: 0, cancelled: 0, added: 0, ...Object.fromEntries(stages.map(s => [s.p, 0])) });
   const bySection = new Map();
@@ -2467,13 +2545,18 @@ function renderSectionSummary(tasks) {
       if (t.added) row.added++;
     }
   }
-  document.getElementById('section-summary-count').textContent = `${bySection.size} Section · ${sum.total} งาน`;
+  return { stages, bySection, sum };
+}
+
+// 5-stage counts per Section as a table. interactive: rows filter the Gantt (TAB 2);
+// otherwise read-only (Shutdown History).
+function sectionSummaryTable(tasks, { interactive = false, activeSection = null } = {}) {
+  const { stages, bySection, sum } = sectionCounts(tasks);
   if (!bySection.size) {
-    box.innerHTML = '<div class="px-4 py-6 text-center text-sm text-on-surface-variant/70 italic">ไม่มีรายการงาน</div>';
-    return;
+    return { sections: 0, total: 0,
+      html: '<div class="px-4 py-6 text-center text-sm text-on-surface-variant/70 italic">ไม่มีรายการงาน</div>' };
   }
 
-  const activeSection = ganttColFilters.tag && ganttColFilters.tag.size === 1 ? [...ganttColFilters.tag][0] : null;
   const cols = [
     ...stages.map((s, i) => ({ key: s.p, title: `STAGE ${i + 1}`, sub: `${s.p}%`, color: s.color })),
     { key: 'cancelled', title: 'CANCEL', sub: 'Job', color: '#ba1a1a' },
@@ -2486,44 +2569,54 @@ function renderSectionSummary(tasks) {
     const pct = r.total ? r[100] / r.total * 100 : 0;
     return `<td class="px-3 py-2">
       <div class="flex items-center gap-2">
-        <div class="flex-1 h-2 rounded-full bg-surface-container-high overflow-hidden min-w-[70px]">
+        <div class="flex-1 h-2 rounded-full bg-surface-container-high overflow-hidden min-w-[60px]">
           <div class="h-full rounded-full" style="width:${pct}%; background:#10b981"></div>
         </div>
-        <span class="font-mono text-sm font-bold text-on-surface w-14 text-right">${pct >= 100 ? '100' : pct.toFixed(1)}%</span>
+        <span class="font-mono text-sm font-bold text-on-surface w-12 text-right">${pct >= 100 ? '100' : pct.toFixed(1)}%</span>
       </div>
     </td>`;
   };
   // Clicking a section row filters the Gantt below (and, through it, the KPI tiles and
   // completion rate above) by that Section — reuses the Gantt's own "tag" column filter,
   // so clicking the same section again clears it.
+  // Section / รวม / % เสร็จ sit in one leading block sized to match the pie-chart
+  // KPI card above; the 7 STAGE..ADD columns that follow then line up 1:1 with the
+  // 7 stage tiles beside it (see <colgroup> below).
   const row = (label, r, opts = {}) => `<tr class="${opts.cls || ''}"${opts.onclick ? ` onclick="${opts.onclick}"` : ''}>
     <td class="px-3 py-2 font-mono font-bold text-secondary text-sm whitespace-nowrap">${escHtml(label || '(ไม่ระบุ)')}</td>
-    ${cols.map(c => `<td class="px-2 py-2 text-center">${num(r[c.key], c.color)}</td>`).join('')}
-    <td class="px-2 py-2 text-center font-mono font-bold text-base text-on-surface">${r.total}</td>
+    <td class="px-2 py-2 text-center font-mono font-bold text-base text-on-surface border-r border-outline-variant/20">${r.total}</td>
     ${pctCell(r)}
+    ${cols.map(c => `<td class="px-2 py-2 text-center">${num(r[c.key], c.color)}</td>`).join('')}
   </tr>`;
 
   const sections = [...bySection.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  box.innerHTML = `<table class="w-full text-sm border-collapse">
+  const html = `<table class="w-full text-sm border-collapse table-fixed">
+    <colgroup>
+      <col style="width:14%">
+      <col style="width:8%">
+      <col style="width:12%">
+      ${cols.map(() => '<col style="width:9.43%">').join('')}
+    </colgroup>
     <thead class="sticky top-0 z-10 bg-surface-container-low">
       <tr class="text-xs font-semibold uppercase text-on-surface-variant">
         <th class="px-3 py-2 text-left">Section</th>
+        <th class="px-2 py-2 text-center border-r border-outline-variant/20">รวม</th>
+        <th class="px-3 py-2 text-left">% เสร็จ (Stage 5)</th>
         ${cols.map(c => `<th class="px-2 py-2 text-center whitespace-nowrap" style="border-top:3px solid ${c.color}">
           ${c.title}<div class="font-mono normal-case font-normal text-[10px]">${c.sub}</div></th>`).join('')}
-        <th class="px-2 py-2 text-center">รวม</th>
-        <th class="px-3 py-2 text-left min-w-[160px]">% เสร็จ (Stage 5)</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-surface-container-high text-on-surface">
-      ${sections.map(([label, r]) => row(label, r, {
+      ${sections.map(([label, r]) => row(label, r, interactive ? {
         cls: `cursor-pointer transition-colors ${label === activeSection ? 'bg-secondary-container/40 hover:bg-secondary-container/50' : 'hover:bg-surface-container/40'}`,
         onclick: `filterGanttBySection('${label.replace(/'/g, "\\'")}')`,
-      })).join('')}
+      } : {})).join('')}
     </tbody>
     <tfoot class="sticky bottom-0 bg-surface-container border-t-2 border-outline-variant/50">
-      ${row('รวมทั้งหมด', sum, { cls: activeSection ? 'cursor-pointer hover:bg-surface-container-high' : '', onclick: activeSection ? 'clearGanttSectionFilter()' : '' })}
+      ${row('รวมทั้งหมด', sum, interactive && activeSection ? { cls: 'cursor-pointer hover:bg-surface-container-high', onclick: 'clearGanttSectionFilter()' } : {})}
     </tfoot>
   </table>`;
+  return { sections: bySection.size, total: sum.total, html };
 }
 
 // Clicking a Section Progress Dashboard row toggles the Gantt's own Section ("tag")
@@ -3158,7 +3251,7 @@ async function loadHistoryList() {
   const res = await fetch(`/api/history?${plantQS()}`);
   const rows = res.ok ? await res.json() : [];
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-10 text-center text-on-surface-variant">
+    tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-10 text-center text-on-surface-variant">
       ยังไม่มี History — กดปุ่ม "ปิดงาน Shutdown" ในหน้า Shutdown Progress Update เมื่อ Update progress ครบแล้ว</td></tr>`;
     return;
   }
@@ -3174,6 +3267,7 @@ async function loadHistoryList() {
       </td>
       <td class="px-4 py-3 font-mono">${r.done} / ${r.total}</td>
       <td class="px-4 py-3 font-mono">${r.cancelled}</td>
+      <td class="px-4 py-3 font-mono">${r.added ?? 0}</td>
       <td class="px-4 py-3 text-on-surface-variant">${escHtml(r.closed_by)}<div class="font-mono text-[10px]">${escHtml(formatClosedAt(r.closed_at))}</div></td>
       <td class="px-4 py-3 text-right whitespace-nowrap">
         <span class="material-symbols-outlined text-secondary align-middle" style="font-size:18px" title="ดูรายละเอียด">visibility</span>
@@ -3209,28 +3303,81 @@ async function openHistoryDetail(id) {
 
 const SAFETY_TITLES = { power_outage: 'แผนการดับไฟ', site_prep: 'การเตรียมพื้นที่หน้างาน', high_risk: 'งานเสี่ยง' };
 
+let currentHistory = null;
+
 function renderHistoryDetail(h) {
+  currentHistory = h;
   const pct = historyPct(h);
   document.getElementById('history-modal-title').textContent = `${h.plant} — Shutdown ${historyRange(h)}`;
+  const allTasksH = h.tasks || [];
+  const addedCount = h.added ?? allTasksH.filter(t => t.added).length;
   const kpi = (label, value) => `<div class="bg-surface-container-low rounded-lg px-3 py-2">
       <div class="text-[10px] uppercase tracking-wide text-on-surface-variant">${label}</div>
       <div class="font-mono text-lg font-bold text-on-surface">${value}</div></div>`;
-  const milestones = SCHEDULE_FIELDS.map(f => {
-    const v = h.schedule?.[f.key] || {};
-    return `<div class="bg-surface-container-low rounded-lg px-3 py-2">
-      <div class="text-[10px] uppercase tracking-wide text-on-surface-variant truncate">${f.label}</div>
-      <div class="font-mono text-xs font-bold text-on-surface">${escHtml(v.time) || '--:--'} <span class="font-normal text-on-surface-variant">${escHtml(formatScheduleDate(v.date)) || ''}</span></div></div>`;
-  }).join('');
-  const tasks = (h.tasks || []).map(t => {
+
+  // Stage breakdown, same buckets as the stage tiles on Shutdown Progress Update.
+  const stageTiles = [
+    ...PIE_STAGES.map((s, i) => ({
+      title: s.p === 'cancelled' ? 'CANCEL JOB' : `STAGE ${i + 1} // ${s.p}%`, label: s.label, color: s.color,
+      n: allTasksH.filter(t => s.p === 'cancelled' ? t.status === 'cancelled' : t.status !== 'cancelled' && t.progress === s.p).length,
+    })),
+    { title: 'ADD WORK', label: 'งานที่เพิ่มเข้ามา', color: '#f59e0b', n: addedCount },
+  ].map(s => `<div class="bg-surface-container-low rounded-lg px-3 py-2 relative overflow-hidden">
+      <div class="h-1 w-full absolute top-0 left-0" style="background:${s.color}"></div>
+      <div class="text-[10px] font-semibold uppercase text-on-surface-variant">${s.title}</div>
+      <div class="font-mono text-xl font-bold" style="color:${s.color}">${s.n} <span class="text-[10px] font-normal text-on-surface-variant">งาน</span></div>
+      <div class="text-[10px] text-on-surface-variant truncate">${s.label}</div></div>`).join('');
+
+  // Milestones: Monthly Plan vs Actual, like the schedule table on the progress page.
+  const msCell = (date, time) => date || time
+    ? `<span class="font-mono font-bold text-on-surface">${escHtml(time) || '--:--'}</span> <span class="font-mono text-[10px] text-on-surface-variant">${escHtml(formatScheduleDate(date))}</span>`
+    : '<span class="text-on-surface-variant/50">—</span>';
+  const milestones = `<table class="w-full border-collapse text-xs">
+      <thead><tr class="bg-surface-container-low text-on-surface-variant">
+        <th class="px-3 py-1.5 text-left">&nbsp;</th>
+        ${SCHEDULE_FIELDS.map(f => `<th class="px-3 py-1.5 text-left font-semibold whitespace-nowrap">${f.label}</th>`).join('')}
+      </tr></thead>
+      <tbody>
+        <tr class="border-t border-surface-container-high"><th class="px-3 py-1.5 text-left font-semibold text-primary whitespace-nowrap">Monthly Plan</th>
+          ${SCHEDULE_FIELDS.map(f => { const v = h.schedule?.[f.key] || {}; return `<td class="px-3 py-1.5 whitespace-nowrap">${msCell(v.date, v.time)}</td>`; }).join('')}</tr>
+        <tr class="border-t border-surface-container-high"><th class="px-3 py-1.5 text-left font-semibold text-secondary whitespace-nowrap">Actual</th>
+          ${SCHEDULE_FIELDS.map(f => { const v = h.schedule?.[f.key] || {}; return `<td class="px-3 py-1.5 whitespace-nowrap">${msCell(v.actual_date, v.actual_time)}</td>`; }).join('')}</tr>
+      </tbody></table>`;
+
+  const fmtLocal = v => v ? `${formatScheduleDate(v.slice(0, 10))} ${v.slice(11, 16)}` : '';
+  const up = h.upload || {};
+  const meta = [
+    h.file_name && `ไฟล์แผนงาน: <span class="font-mono">${escHtml(h.file_name)}</span>`,
+    up.uploadedAt && `อัปโหลดเมื่อ: <span class="font-mono">${escHtml(formatUploadTime(up.uploadedAt))}</span>`,
+    up.rangeStart && up.rangeEnd && `ช่วงเวลา Shutdown: <span class="font-mono">${escHtml(fmtLocal(up.rangeStart))} – ${escHtml(fmtLocal(up.rangeEnd))}</span>`,
+  ].filter(Boolean).join('<span class="mx-2 text-outline-variant">|</span>');
+
+  const fmtStamp = iso => {
+    const d = iso ? new Date(iso) : null;
+    return d && !isNaN(d) ? d.toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+  };
+  const timeCell = (date, time) => time ? `${escHtml(time)}${date ? ` <span class="text-on-surface-variant">${escHtml(formatScheduleDate(date))}</span>` : ''}` : '—';
+  const tasks = allTasksH.map(t => {
     const st = getStageStyle(t.progress, t.status);
+    const label = t.status === 'cancelled' ? 'ยกเลิกงาน' : STAGE_STAMP_LABELS[t.progress];
+    const stamp = label && fmtStamp(t.stage_at);
+    const notes = [
+      t.cancel_reason && t.status === 'cancelled' && `<div class="text-error font-semibold">สาเหตุ: ${escHtml(t.cancel_reason)}</div>`,
+      t.event_note && `<div class="text-on-surface">Note: ${escHtml(t.event_note)}</div>`,
+      t.note && t.note !== t.event_note && `<div class="text-on-surface-variant">${escHtml(t.note)}</div>`,
+    ].filter(Boolean).join('');
     return `<tr class="border-t border-surface-container-high align-top">
-      <td class="px-3 py-2 font-mono font-bold text-secondary whitespace-nowrap">${escHtml(t.tag)}</td>
-      <td class="px-3 py-2 text-on-surface">${escHtml(t.title)}</td>
       <td class="px-3 py-2">${escHtml(t.area)}</td>
+      <td class="px-3 py-2 font-mono font-bold text-secondary whitespace-nowrap">${escHtml(t.tag)}
+        ${t.added ? '<div class="mt-0.5"><span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 text-[9px] font-bold font-sans">ADD WORK</span></div>' : ''}</td>
+      <td class="px-3 py-2 text-on-surface">${escHtml(t.title)}</td>
       <td class="px-3 py-2">${escHtml(t.assignee)}</td>
-      <td class="px-3 py-2 font-mono whitespace-nowrap">${escHtml(t.start_time) || '—'} – ${escHtml(t.end_time) || '—'}</td>
-      <td class="px-3 py-2"><span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap ${st.badgeCls}">${escHtml(st.stageText)}</span></td>
-      <td class="px-3 py-2 text-on-surface-variant">${escHtml(t.note)}</td>
+      <td class="px-3 py-2 font-mono whitespace-nowrap">${timeCell(t.start_date, t.start_time)}<br>${timeCell(t.end_date, t.end_time)}</td>
+      <td class="px-3 py-2">
+        <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap ${st.badgeCls}">${escHtml(st.stageText)}</span>
+        ${stamp ? `<div class="text-[10px] font-mono text-on-surface-variant mt-1 whitespace-nowrap" title="${escHtml(t.updated_by ? 'โดย ' + t.updated_by : '')}">${escHtml(label)} ${escHtml(stamp)}</div>` : ''}
+      </td>
+      <td class="px-3 py-2 text-[11px] min-w-[180px]">${notes || '<span class="text-on-surface-variant/50">—</span>'}</td>
     </tr>`;
   }).join('');
   const safety = Object.keys(SAFETY_TITLES).map(c => {
@@ -3243,25 +3390,140 @@ function renderHistoryDetail(h) {
     </div>`;
   }).join('');
   document.getElementById('history-modal-body').innerHTML = `
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2">
       ${kpi('Completion Rate', pct.toFixed(1) + '%')}
-      ${kpi('งานเสร็จ', `${h.done} / ${h.total}`)}
+      ${kpi('งานเสร็จ', `${h.done} / ${h.total}${addedCount ? ` <span class="text-[10px] font-normal text-on-surface-variant">(แผน ${h.total - addedCount} + Add Work ${addedCount})</span>` : ''}`)}
       ${kpi('ยกเลิก', h.cancelled)}
-      ${kpi('ปิดงานโดย', escHtml(h.closed_by))}
+      ${kpi('งานเพิ่มเข้ามา (Add Work)', addedCount)}
+      ${kpi('ปิดงานโดย', `<span class="text-sm">${escHtml(h.closed_by)}</span>`)}
       ${kpi('ปิดงานเมื่อ', `<span class="text-xs">${escHtml(formatClosedAt(h.closed_at))}</span>`)}
     </div>
-    ${h.file_name ? `<div class="text-xs text-on-surface-variant">ไฟล์แผนงาน: <span class="font-mono">${escHtml(h.file_name)}</span></div>` : ''}
-    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2">${milestones}</div>
-    <div class="rounded-lg border border-surface-container-high overflow-x-auto">
+    ${meta ? `<div class="text-xs text-on-surface-variant">${meta}</div>` : ''}
+    <div class="rounded-lg border border-surface-container-high overflow-x-auto">${milestones}</div>
+    <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2">${stageTiles}</div>
+    <div class="rounded-lg border border-surface-container-high overflow-auto max-h-[320px]">
+      <div class="px-3 py-1.5 bg-surface-container-low text-xs font-bold text-on-surface">Section Progress</div>
+      ${sectionSummaryTable(allTasksH).html}
+    </div>
+    <div class="rounded-lg border border-surface-container-high overflow-auto max-h-[420px]">
       <table class="w-full text-left text-xs">
-        <thead><tr class="bg-surface-container-low text-on-surface-variant font-mono text-[10px] uppercase">
-          <th class="px-3 py-2">Tag</th><th class="px-3 py-2">รายการงาน</th><th class="px-3 py-2">พื้นที่</th>
-          <th class="px-3 py-2">ผู้รับผิดชอบ</th><th class="px-3 py-2">เวลา</th><th class="px-3 py-2">สถานะ</th><th class="px-3 py-2">โน้ต</th>
+        <thead class="sticky top-0 z-10"><tr class="bg-surface-container-low text-on-surface-variant font-mono text-[10px] uppercase">
+          <th class="px-3 py-2">Location</th><th class="px-3 py-2">Section</th><th class="px-3 py-2">ชื่องาน</th>
+          <th class="px-3 py-2">ผู้รับผิดชอบ</th><th class="px-3 py-2">เริ่ม / จบ</th><th class="px-3 py-2">สถานะ (5-Stage)</th><th class="px-3 py-2">Note / สาเหตุยกเลิก</th>
         </tr></thead>
         <tbody>${tasks || '<tr><td colspan="7" class="px-3 py-6 text-center text-on-surface-variant">ไม่มีรายการงาน</td></tr>'}</tbody>
       </table>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-2">${safety}</div>`;
+}
+
+function loadSheetJS() {
+  if (window.XLSX) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = '/vendor/xlsx.full.min.js';
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('โหลดตัวสร้างไฟล์ Excel ไม่สำเร็จ'));
+    document.head.appendChild(s);
+  });
+}
+
+// Excel report of the history record shown in the detail modal.
+async function exportHistoryExcel() {
+  const h = currentHistory;
+  if (!h) return;
+  const btn = document.getElementById('history-export-btn');
+  btn.disabled = true;
+  try {
+    await loadSheetJS();
+    const tasks = h.tasks || [];
+    const added = h.added ?? tasks.filter(t => t.added).length;
+    const dt = iso => {
+      const d = iso ? new Date(iso) : null;
+      return d && !isNaN(d) ? d.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+    };
+    const localDt = v => v ? `${formatScheduleDate(v.slice(0, 10))} ${v.slice(11, 16)}` : '';
+    const up = h.upload || {};
+
+    const stageRows = [
+      ...PIE_STAGES.map((s, i) => [s.p === 'cancelled' ? 'Cancel Job' : `Stage ${i + 1} (${s.p}%)`, s.label,
+        tasks.filter(t => s.p === 'cancelled' ? t.status === 'cancelled' : t.status !== 'cancelled' && t.progress === s.p).length]),
+      ['Add Work', 'งานที่เพิ่มเข้ามา', added],
+    ];
+    const summary = [
+      ['Shutdown Report', `${h.plant} — Shutdown ${historyRange(h)}`],
+      [],
+      ['Plant', h.plant],
+      ['ช่วง Shutdown', historyRange(h)],
+      ['Completion Rate (%)', Number(historyPct(h).toFixed(1))],
+      ['งานเสร็จ', h.done],
+      ['งานทั้งหมด', h.total],
+      ['งานตามแผน', h.total - added],
+      ['ยกเลิก', h.cancelled],
+      ['งานเพิ่มเข้ามา (Add Work)', added],
+      ['ปิดงานโดย', h.closed_by],
+      ['ปิดงานเมื่อ', dt(h.closed_at)],
+      ['ไฟล์แผนงาน', h.file_name || ''],
+      ['อัปโหลดเมื่อ', dt(up.uploadedAt)],
+      ['ช่วงเวลา Shutdown (Gantt)', up.rangeStart && up.rangeEnd ? `${localDt(up.rangeStart)} – ${localDt(up.rangeEnd)}` : ''],
+      [],
+      ['สถานะ 5-Stage', 'คำอธิบาย', 'จำนวนงาน'],
+      ...stageRows,
+      [],
+      ['Milestone', 'Monthly Plan วันที่', 'Monthly Plan เวลา', 'Actual วันที่', 'Actual เวลา'],
+      ...SCHEDULE_FIELDS.map(f => {
+        const v = h.schedule?.[f.key] || {};
+        return [f.label, formatScheduleDate(v.date), v.time || '', formatScheduleDate(v.actual_date), v.actual_time || ''];
+      }),
+    ];
+
+    const { bySection, sum } = sectionCounts(tasks);
+    const secRow = (label, r) => [label || '(ไม่ระบุ)', r.total, r.total ? Number((r[100] / r.total * 100).toFixed(1)) : 0,
+      r[0], r[25], r[50], r[75], r[100], r.cancelled, r.added];
+    const sections = [
+      ['Section', 'รวม', '% เสร็จ (Stage 5)', 'Stage 1 (0%)', 'Stage 2 (25%)', 'Stage 3 (50%)', 'Stage 4 (75%)', 'Stage 5 (100%)', 'Cancel', 'Add Work'],
+      ...[...bySection.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([k, r]) => secRow(k, r)),
+      secRow('รวมทั้งหมด', sum),
+    ];
+
+    const taskSheet = [
+      ['Location', 'Section', 'ชื่องาน', 'ผู้รับผิดชอบ', 'วันที่เริ่ม', 'เวลาเริ่ม', 'วันที่จบ', 'เวลาจบ', 'เวลารวม',
+        'Progress (%)', 'สถานะ', 'เวลาเปลี่ยนสถานะล่าสุด', 'อัปเดตโดย', 'สาเหตุยกเลิก', 'Note', 'หมายเหตุ (Excel)', 'Add Work'],
+      ...tasks.map(t => [t.area, t.tag, t.title, t.assignee,
+        formatScheduleDate(t.start_date), t.start_time, formatScheduleDate(t.end_date), t.end_time, t.duration || '',
+        t.status === 'cancelled' ? '' : t.progress, getStageStyle(t.progress, t.status).stageText, dt(t.stage_at), t.updated_by || '',
+        t.status === 'cancelled' ? t.cancel_reason || '' : '', t.event_note || '', t.note !== t.event_note ? t.note || '' : '',
+        t.added ? 'Yes' : '']),
+    ];
+
+    const SAFETY_STATUS = { pending: 'รอดำเนินการ', in_progress: 'กำลังดำเนินการ', done: 'เสร็จสิ้น' };
+    const safetySheet = [['หมวด', 'รายละเอียด', 'ผู้รับผิดชอบ', 'วันที่/เวลา', 'สถานะ']];
+    for (const [c, title] of Object.entries(SAFETY_TITLES)) {
+      for (const i of h.safety?.[c] || []) {
+        safetySheet.push([title, i.text, i.responsible, i.datetime ? localDt(i.datetime) : '', SAFETY_STATUS[i.status] || i.status || '']);
+      }
+    }
+
+    const sheet = rows => {
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      const widths = [];
+      for (const r of rows) r.forEach((v, i) => { widths[i] = Math.min(Math.max(widths[i] || 8, String(v ?? '').length + 2), 60); });
+      ws['!cols'] = widths.map(wch => ({ wch }));
+      return ws;
+    };
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, sheet(summary), 'Summary');
+    XLSX.utils.book_append_sheet(wb, sheet(sections), 'Section Progress');
+    XLSX.utils.book_append_sheet(wb, sheet(taskSheet), 'Tasks');
+    XLSX.utils.book_append_sheet(wb, sheet(safetySheet), 'Safety');
+    const name = `Shutdown Report_${h.plant}_${historyRange(h)}`.replace(/[\\/:*?"<>|]+/g, '-');
+    XLSX.writeFile(wb, `${name}.xlsx`);
+    showToast('ส่งออก Excel สำเร็จ', `${name}.xlsx`);
+  } catch (err) {
+    showToast('ส่งออก Excel ไม่สำเร็จ', err.message, true);
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 async function createTask(e) {
@@ -3300,18 +3562,22 @@ function formatUploadTime(iso) {
 }
 
 function setExcelFileName(name, isError = false, uploadedAt = null) {
-  const wrap = document.getElementById('excel-file-name');
+  const wrap = document.getElementById('excel-upload-wrap');
+  const badge = document.getElementById('excel-status-badge');
+  const status = document.querySelector('#excel-file-name .excel-status-color');
   const text = document.getElementById('excel-file-name-text');
   const timeText = document.getElementById('excel-upload-time-text');
-  const icon = wrap.querySelector('.material-symbols-outlined');
-  if (!name) { wrap.classList.add('hidden'); wrap.classList.remove('flex'); timeText.textContent = ''; return; }
+  const icon = status.querySelector('.material-symbols-outlined');
+  wrap.classList.toggle('has-file', !!name);
+  badge.classList.toggle('hidden', !name);
+  if (!name) { timeText.textContent = ''; return; }
   text.textContent = name;
   timeText.textContent = uploadedAt ? `อัปโหลดล่าสุด: ${formatUploadTime(uploadedAt)}` : '';
-  icon.textContent = isError ? 'error' : 'task_alt';
-  wrap.classList.toggle('text-tertiary', !isError);
-  wrap.classList.toggle('text-error', isError);
-  wrap.classList.remove('hidden');
-  wrap.classList.add('flex');
+  icon.textContent = badge.textContent = isError ? 'error' : 'task_alt';
+  for (const el of [status, badge]) {
+    el.classList.toggle('text-tertiary', !isError);
+    el.classList.toggle('text-error', isError);
+  }
 }
 
 async function loadLastExcelUpload() {
@@ -3718,16 +3984,65 @@ async function deleteSafetyItem(category, id) {
 }
 
 // ─── Export Report ────────────────────────────────────────────────────────────
+// "ส่งออก Report": the progress page itself, printed (or saved as PDF) through the print stylesheet.
 function exportReport() {
-  const rows = [['ID','Tag','Title','Area','Start Time','End Time','Duration','Assignee','Progress','Note','Updated At','Updated By']];
-  allTasks.forEach(t => rows.push([t.id,t.tag,t.title,t.area,t.start_time,t.end_time,t.duration,t.assignee,cdGetValue(t,'progress'),t.note,t.updated_at,t.updated_by]));
-  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = `shutdown-report-${Date.now()}.csv`; a.click();
-  URL.revokeObjectURL(url);
-  showToast('ส่งออก Report สำเร็จ', 'ไฟล์ CSV พร้อมดาวน์โหลด');
+  window.print();
 }
+
+// A3 landscape minus the 8mm @page margins, in CSS px.
+const PRINT_PAGE_WIDTH_PX = Math.floor((420 - 16) / 25.4 * 96);
+
+function preparePrintReport() {
+  if (currentView !== 'progress') return;
+  document.getElementById('print-plant').textContent = currentPlant;
+  document.getElementById('print-range').textContent = document.getElementById('gantt-range-label').textContent;
+  document.getElementById('print-at').textContent = new Date().toLocaleString('th-TH',
+    { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+  document.getElementById('print-by').textContent = currentUser?.username || '';
+  const filtered = activePhase !== null || document.getElementById('main-search-input').value.trim()
+    || Object.keys(ganttColFilters).length > 0;
+  document.getElementById('print-filter-note').textContent = filtered ? '* แสดงเฉพาะงานตามตัวกรอง / คำค้นหาที่เลือกไว้' : '';
+  document.getElementById('print-section-summary-body').innerHTML = sectionSummaryTable(kpiTasks().tasks).html;
+
+  buildGanttPrintTable();
+
+  // The Gantt can't scroll on paper: shrink it to the page width (the PDF stays vector, so it zooms back in).
+  const card = document.getElementById('gantt-card');
+  const gridWidth = document.getElementById('gantt-grid').scrollWidth;
+  const fit = PRINT_PAGE_WIDTH_PX - 12; // the last hour label overhangs the grid by a few px
+  card.style.zoom = gridWidth > fit ? String(fit / gridWidth) : '';
+}
+
+// Browsers repeat a header on every printed page only for a real <table>'s <thead>, so the
+// Gantt prints from a static copy: the header row in <thead>, one <tr> per job.
+function buildGanttPrintTable() {
+  document.getElementById('gantt-print')?.remove();
+  const grid = document.getElementById('gantt-grid');
+  const table = document.createElement('table');
+  table.id = 'gantt-print';
+  const addRow = (section, node, cls = '') => {
+    const copy = node.cloneNode(true);
+    copy.removeAttribute('id');
+    copy.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+    if (cls) copy.classList.add(cls);
+    section.insertRow().insertCell().appendChild(copy);
+  };
+  addRow(table.createTHead(), grid.querySelector(':scope > .flex'));
+  const body = table.createTBody();
+  grid.querySelectorAll('#gantt-rows > .flex').forEach(row => addRow(body, row, 'gantt-print-row'));
+  const noTime = document.getElementById('gantt-notime-section');
+  if (!noTime.classList.contains('hidden')) {
+    addRow(body, noTime.firstElementChild);
+    noTime.querySelectorAll('#gantt-notime-rows > .flex').forEach(row => addRow(body, row));
+  }
+  document.getElementById('gantt-card').appendChild(table);
+}
+
+window.addEventListener('beforeprint', preparePrintReport);
+window.addEventListener('afterprint', () => {
+  document.getElementById('gantt-card').style.zoom = '';
+  document.getElementById('gantt-print')?.remove();
+});
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 function showToast(title, msg, isError = false) {

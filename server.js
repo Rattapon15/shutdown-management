@@ -19,6 +19,8 @@ const HOST = process.env.HOST || '0.0.0.0';
 app.set('trust proxy', true); // Cloud Run terminates TLS upstream
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+// SheetJS browser build for the History "Export Excel" button, served from our own dependency.
+app.get('/vendor/xlsx.full.min.js', (req, res) => res.sendFile(require.resolve('xlsx/dist/xlsx.full.min.js')));
 
 // Entra redirects back here; the SPA's MSAL code finishes the sign-in on this page.
 app.get('/oauth2/callback', (req, res) => {
