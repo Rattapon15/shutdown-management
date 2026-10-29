@@ -120,6 +120,20 @@ tailwind.config = {
   .main-tab-btn:hover:not(.active) { color:#1a1b22; background:rgba(255,255,255,.45); }
   .main-tab-btn.active { background:#ffffff; color:#1a1b22; box-shadow:0 1px 3px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.04); }
   .main-tab-btn.active .material-symbols-outlined { color:#0077b6; }
+  /* TAB 2 dashboard: tighter spacing so the summary, tiles and Section table fit on one screen */
+  body.tab2-dash #main-tab-bar { padding-top:.5rem; }
+  body.tab2-dash #progress-summary { gap:.5rem; padding-top:.5rem; }
+  body.tab2-dash #progress-summary > div:first-child { padding:.5rem .75rem; gap:.375rem; }
+  body.tab2-dash #progress-summary > div:first-child > div:first-child > div { padding:0; }
+  body.tab2-dash #pie-chart-svg { width:112px; height:112px; }
+  body.tab2-dash #kpi-pie-card { padding:.625rem .875rem; gap:.25rem; }
+  body.tab2-dash #pie-legend { gap:.125rem; }
+  body.tab2-dash #pie-legend > div { line-height:1.1rem; }
+  body.tab2-dash [id^="stage-tile-"] { padding:.5rem .625rem; min-height:0; }
+  body.tab2-dash [id^="stage-tile-"] .text-2xl { font-size:1.5rem; line-height:1.9rem; }
+  body.tab2-dash [id^="stage-tile-"] .text-xs.mt-1 { margin-top:.125rem; font-size:.6875rem; line-height:.95rem; }
+  body.tab2-dash #phase-legend { padding:.375rem .75rem; }
+  body.tab2-dash #main-tab-content-gantt > div { padding-top:.5rem; gap:.5rem; }
 
   /* Task table card: rows scroll inside the card (scrollbar on its right), header stays put */
   #tasks-scroll { max-height:calc(100vh - 160px); min-height:320px; scrollbar-gutter:stable; }
@@ -364,7 +378,7 @@ tailwind.config = {
       <span class="material-symbols-outlined">table_rows</span>TAB 2</button>
   </div>
 
-  <div class="flex flex-wrap items-center gap-2 xl:justify-end">
+  <div id="main-action-bar" class="flex flex-wrap items-center gap-2 xl:justify-end">
     <!-- Upload Excel -->
     <div class="flex flex-col gap-1">
       <button onclick="document.getElementById('excel-file-input').click()"
@@ -388,7 +402,7 @@ tailwind.config = {
     <button onclick="toggleModal(true)"
       class="flex items-center gap-1.5 px-4 py-1.5 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container transition-all shadow-md active:scale-95 text-xs font-bold tracking-tight">
       <span class="material-symbols-outlined" style="font-size:18px">add_task</span>
-      <span>+ เพิ่มรายการงานหยุดซ่อม</span>
+      <span>+ งานเพิ่ม (Add Work)</span>
     </button>
 
     <button onclick="closeShutdown()" title="ปิดงาน Shutdown ครั้งนี้: บันทึกผลทั้งหมดเป็น History แล้วล้างข้อมูลเพื่อเริ่ม Shutdown ครั้งถัดไป"
@@ -430,7 +444,7 @@ tailwind.config = {
     <!-- ── KPI TILES ── -->
     <div class="flex flex-col xl:flex-row gap-3 w-full">
       <!-- Pie Chart -->
-      <div class="xl:w-1/3 bg-surface-container-lowest rounded-xl px-4 py-3 flex flex-col gap-2 shadow-sm">
+      <div id="kpi-pie-card" class="xl:w-1/3 bg-surface-container-lowest rounded-xl px-4 py-3 flex flex-col gap-2 shadow-sm">
         <div class="flex items-center justify-between">
           <span class="text-[10px] font-semibold text-on-surface-variant tracking-widest uppercase">OVERALL SHUTDOWN COMPLETION RATE</span>
           <span class="font-mono text-2xl font-bold text-on-surface" id="kpi-percent">0.0%</span>
@@ -535,7 +549,7 @@ tailwind.config = {
     </div>
 
     <!-- Phase legend -->
-    <div class="bg-surface-container-low rounded-xl px-3 py-2 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+    <div id="phase-legend" class="bg-surface-container-low rounded-xl px-3 py-2 flex flex-wrap items-center justify-between gap-3 shadow-sm">
       <div class="flex items-center gap-2">
         <span class="material-symbols-outlined text-secondary" style="font-size:20px">tune</span>
         <span class="text-[10px] font-bold uppercase text-on-surface tracking-wider">5-PHASE STATUS PROGRESSION STANDARD</span>
@@ -726,6 +740,19 @@ tailwind.config = {
 
 <div id="main-tab-content-gantt">
   <div class="w-full px-5 pt-3 pb-5 flex flex-col gap-3">
+
+    <!-- TAB 2 only: 5-stage counts per SECTION; filled by renderSectionSummary() -->
+    <div id="section-summary-card" class="hidden bg-surface-container-lowest rounded-xl shadow-md flex flex-col overflow-hidden">
+      <div class="bg-surface-container-low px-4 py-2.5 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary" style="font-size:20px">table_chart</span>
+          <h2 class="text-sm font-bold text-on-surface">Section Progress Dashboard</h2>
+          <span class="text-xs text-on-surface-variant">— ความคืบหน้า 5-Stage แยกตาม Section</span>
+        </div>
+        <span id="section-summary-count" class="text-[10px] font-mono text-on-surface-variant"></span>
+      </div>
+      <div id="section-summary-scroll" class="overflow-auto max-h-[420px]"></div>
+    </div>
 
     <div class="bg-surface-container-low rounded-xl px-4 py-2.5 flex items-center justify-between gap-2 shadow-md">
       <div class="flex items-center gap-2">
@@ -932,7 +959,7 @@ tailwind.config = {
     <div class="flex items-center justify-between pb-2 border-b border-surface-container-high">
       <div class="flex items-center gap-2">
         <span class="material-symbols-outlined text-secondary" style="font-size:22px">add_circle</span>
-        <h2 class="text-base font-bold text-on-surface">ลงทะเบียนงานหยุดซ่อมบำรุงใหม่</h2>
+        <h2 class="text-base font-bold text-on-surface">กรอกรายละเอียดงานเพิ่มระหว่าง Shutdown (Add Work)</h2>
       </div>
       <button onclick="toggleModal(false)" class="p-1 rounded hover:bg-surface-container text-on-surface-variant">
         <span class="material-symbols-outlined" style="font-size:20px">close</span>
@@ -941,17 +968,17 @@ tailwind.config = {
     <form id="new-task-form" onsubmit="createTask(event)" class="flex flex-col gap-3 text-xs">
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">SECTION *</label>
-          <input id="f-tag" required placeholder="เช่น P-202B, TK-05" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">LOCATION *</label>
+          <input id="f-area" required placeholder="กรอกพื้นที่ทำงาน เช่น Waste Plant, Stock, Wire Part, Press Part ..." class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
         </div>
         <div>
-          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">LOCATION *</label>
-          <input id="f-area" required placeholder="เช่น Reaction Plant 1, Boiler Line 2" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">SECTION / MWC *</label>
+          <input id="f-tag" required placeholder="751EE11, 751MM11, PRD, FSM, Project ..." class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
         </div>
       </div>
       <div>
         <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">ชื่องานซ่อมบำรุง *</label>
-        <input id="f-title" required placeholder="เช่น ตรวจเช็กระบบวาล์วบายพาสแรงดัน..." class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+        <input id="f-title" required placeholder="กรอกรายละเอียดงาน" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div>
@@ -966,7 +993,7 @@ tailwind.config = {
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">ผู้รับผิดชอบ *</label>
-          <input id="f-assignee" required placeholder="เช่น ช่างวิเชียร / บ.ไทยคอนโทรล" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+          <input id="f-assignee" required placeholder="ระบุชื่อผู้รับผิดชอบงาน" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
         </div>
         <div>
           <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">สถานะเริ่มต้น</label>
@@ -981,7 +1008,7 @@ tailwind.config = {
       </div>
       <div>
         <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">บันทึกหน้างานเบื้องต้น</label>
-        <textarea id="f-note" rows="2" placeholder="ระบุเลขที่ Work Permit หรือความพร้อมของชิ้นส่วนอะไหล่..." class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary"></textarea>
+        <textarea id="f-note" rows="2" placeholder="ระบุสาเหตุของงานเพิ่มหรือ Note รายละเอียดหน้างาน" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary"></textarea>
       </div>
       <div class="flex items-center justify-end gap-2 pt-3 border-t border-surface-container-high">
         <button type="button" onclick="toggleModal(false)" class="px-4 py-2 rounded bg-surface-container hover:bg-surface-bright text-on-surface font-medium transition-colors">ยกเลิก</button>
@@ -1665,6 +1692,10 @@ function setMainTab(tab) {
   activeMainBtn = tab;
   document.getElementById('main-tab-content-gantt').classList.remove('hidden');
   document.getElementById('main-tab-content-table').classList.add('hidden');
+  document.getElementById('section-summary-card').classList.toggle('hidden', tab !== 'table');
+  // TAB 2 is a tracking dashboard: no action buttons, compact cards.
+  document.getElementById('main-action-bar').classList.toggle('hidden', tab === 'table');
+  document.body.classList.toggle('tab2-dash', tab === 'table');
   for (const t of ['gantt', 'table']) {
     document.getElementById(`main-tab-btn-${t}`).classList.toggle('active', tab === t);
   }
@@ -2416,6 +2447,105 @@ async function saveGanttDate(input) {
   loadActivity();
 }
 
+// TAB 2 dashboard: one row per SECTION (task.tag), columns = 5 stages + Cancel + Add Work.
+// Counts the same way as the KPI tiles: cancelled jobs only count as Cancel, and Add Work
+// cuts across stages (an added job also sits in its stage column).
+function renderSectionSummary(tasks) {
+  const box = document.getElementById('section-summary-scroll');
+  if (!box || activeMainBtn !== 'table') return;
+  const stages = PIE_STAGES.filter(s => s.p !== 'cancelled');
+  const blank = () => ({ total: 0, cancelled: 0, added: 0, ...Object.fromEntries(stages.map(s => [s.p, 0])) });
+  const bySection = new Map();
+  const sum = blank();
+  for (const t of tasks) {
+    const key = t.tag || ''; // matches cdGetValue(t,'tag') so the row maps onto the Gantt's own tag filter
+    if (!bySection.has(key)) bySection.set(key, blank());
+    for (const row of [bySection.get(key), sum]) {
+      row.total++;
+      if (t.status === 'cancelled') row.cancelled++;
+      else if (t.progress in row) row[t.progress]++;
+      if (t.added) row.added++;
+    }
+  }
+  document.getElementById('section-summary-count').textContent = `${bySection.size} Section · ${sum.total} งาน`;
+  if (!bySection.size) {
+    box.innerHTML = '<div class="px-4 py-6 text-center text-sm text-on-surface-variant/70 italic">ไม่มีรายการงาน</div>';
+    return;
+  }
+
+  const activeSection = ganttColFilters.tag && ganttColFilters.tag.size === 1 ? [...ganttColFilters.tag][0] : null;
+  const cols = [
+    ...stages.map((s, i) => ({ key: s.p, title: `STAGE ${i + 1}`, sub: `${s.p}%`, color: s.color })),
+    { key: 'cancelled', title: 'CANCEL', sub: 'Job', color: '#ba1a1a' },
+    { key: 'added', title: 'ADD', sub: 'Work', color: '#f59e0b' },
+  ];
+  const num = (n, color) => n
+    ? `<span class="font-mono font-bold text-base" style="color:${color}">${n}</span>`
+    : '<span class="text-on-surface-variant/40">–</span>';
+  const pctCell = r => {
+    const pct = r.total ? r[100] / r.total * 100 : 0;
+    return `<td class="px-3 py-2">
+      <div class="flex items-center gap-2">
+        <div class="flex-1 h-2 rounded-full bg-surface-container-high overflow-hidden min-w-[70px]">
+          <div class="h-full rounded-full" style="width:${pct}%; background:#10b981"></div>
+        </div>
+        <span class="font-mono text-sm font-bold text-on-surface w-14 text-right">${pct >= 100 ? '100' : pct.toFixed(1)}%</span>
+      </div>
+    </td>`;
+  };
+  // Clicking a section row filters the Gantt below (and, through it, the KPI tiles and
+  // completion rate above) by that Section — reuses the Gantt's own "tag" column filter,
+  // so clicking the same section again clears it.
+  const row = (label, r, opts = {}) => `<tr class="${opts.cls || ''}"${opts.onclick ? ` onclick="${opts.onclick}"` : ''}>
+    <td class="px-3 py-2 font-mono font-bold text-secondary text-sm whitespace-nowrap">${escHtml(label || '(ไม่ระบุ)')}</td>
+    ${cols.map(c => `<td class="px-2 py-2 text-center">${num(r[c.key], c.color)}</td>`).join('')}
+    <td class="px-2 py-2 text-center font-mono font-bold text-base text-on-surface">${r.total}</td>
+    ${pctCell(r)}
+  </tr>`;
+
+  const sections = [...bySection.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  box.innerHTML = `<table class="w-full text-sm border-collapse">
+    <thead class="sticky top-0 z-10 bg-surface-container-low">
+      <tr class="text-xs font-semibold uppercase text-on-surface-variant">
+        <th class="px-3 py-2 text-left">Section</th>
+        ${cols.map(c => `<th class="px-2 py-2 text-center whitespace-nowrap" style="border-top:3px solid ${c.color}">
+          ${c.title}<div class="font-mono normal-case font-normal text-[10px]">${c.sub}</div></th>`).join('')}
+        <th class="px-2 py-2 text-center">รวม</th>
+        <th class="px-3 py-2 text-left min-w-[160px]">% เสร็จ (Stage 5)</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-surface-container-high text-on-surface">
+      ${sections.map(([label, r]) => row(label, r, {
+        cls: `cursor-pointer transition-colors ${label === activeSection ? 'bg-secondary-container/40 hover:bg-secondary-container/50' : 'hover:bg-surface-container/40'}`,
+        onclick: `filterGanttBySection('${label.replace(/'/g, "\\'")}')`,
+      })).join('')}
+    </tbody>
+    <tfoot class="sticky bottom-0 bg-surface-container border-t-2 border-outline-variant/50">
+      ${row('รวมทั้งหมด', sum, { cls: activeSection ? 'cursor-pointer hover:bg-surface-container-high' : '', onclick: activeSection ? 'clearGanttSectionFilter()' : '' })}
+    </tfoot>
+  </table>`;
+}
+
+// Clicking a Section Progress Dashboard row toggles the Gantt's own Section ("tag")
+// column filter, which the KPI tiles and completion rate already follow via kpiTasks().
+function filterGanttBySection(tag) {
+  if (ganttColFilters.tag && ganttColFilters.tag.size === 1 && ganttColFilters.tag.has(tag)) {
+    delete ganttColFilters.tag;
+  } else {
+    ganttColFilters.tag = new Set([tag]);
+  }
+  updateColHeaders();
+  renderGanttTimeline();
+  updateKPIs();
+}
+
+function clearGanttSectionFilter() {
+  delete ganttColFilters.tag;
+  updateColHeaders();
+  renderGanttTimeline();
+  updateKPIs();
+}
+
 function renderGanttTimeline() {
   const emptyEl = document.getElementById('gantt-empty');
   const cardEl = document.getElementById('gantt-card');
@@ -2426,6 +2556,7 @@ function renderGanttTimeline() {
   if (!rowsEl) return;
 
   const visible = applyColFiltersAndSort(summaryFilteredTasks(), ganttColFilters, ganttColSort);
+  renderSectionSummary(visible);
   const frame = shutdownFrame();
   const withStart = visible.filter(t => parseHM(t.start_time) !== null);
   const noStart = visible.filter(t => parseHM(t.start_time) === null);
