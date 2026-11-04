@@ -244,7 +244,7 @@ const db = {
     return rows.length ? taskRow(rows[0]) : null;
   },
 
-  async createTask({ tag, title, area, assignee, progress = 0, note = '', event_note = '', duration = '', start_time = '', end_time = '', updated_by = 'User', plant }) {
+  async createTask({ tag, title, area, assignee, progress = 0, note = '', event_note = '', duration = '', start_time = '', end_time = '', start_date = '', end_date = '', updated_by = 'User', plant }) {
     const p = plantKey(plant);
     return withTx(async client => {
       const { rows: [seqRow] } = await client.query(
@@ -254,10 +254,11 @@ const db = {
       const id = `TASK-${String(seqRow.task_seq).padStart(3, '0')}`;
       const { rows: [row] } = await client.query(
         `INSERT INTO shutdown_mnm_tasks
-           (plant, id, tag, title, area, assignee, progress, status, note, duration, start_time, end_time, updated_at, updated_by, added, event_note)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,'active',$8,$9,$10,$11,$12,$13,TRUE,$14) RETURNING *`,
+           (plant, id, tag, title, area, assignee, progress, status, note, duration, start_time, end_time, updated_at, updated_by, added, event_note, start_date, end_date)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'active',$8,$9,$10,$11,$12,$13,TRUE,$14,$15,$16) RETURNING *`,
         [p, id, String(tag).toUpperCase(), title, area, assignee, Number(progress) || 0,
-         note, duration, start_time, end_time, nowTime(), updated_by, String(event_note || '').trim()]
+         note, duration, start_time, end_time, nowTime(), updated_by, String(event_note || '').trim(),
+         start_date, end_date]
       );
       return taskRow(row);
     });

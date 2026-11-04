@@ -75,6 +75,18 @@ tailwind.config = {
   .cd-val-item:hover { background:rgba(0,119,182,.06); }
   .cd-val-item input[type=checkbox] { accent-color:#0077b6; width:13px; height:13px; cursor:pointer; flex-shrink:0; }
   .cd-val-item label { cursor:pointer; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; }
+  .cd-dsel { padding:2px 10px 6px; }
+  .cd-dsel-btn { display:flex; align-items:center; gap:6px; width:100%; padding:5px 8px 5px 10px; background:#f5f7ff;
+    border:1px solid #c4c6d0; border-radius:6px; font-size:11px; color:#1a1b22; cursor:pointer; text-align:left; }
+  .cd-dsel-btn:hover, .cd-dsel.open .cd-dsel-btn { border-color:#0077b6; }
+  .cd-dsel-btn .txt { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cd-dsel-btn.filtered .txt { color:#0077b6; font-weight:600; }
+  .cd-dsel-btn .arr { font-size:16px; color:#74767f; transition:transform .15s; }
+  .cd-dsel.open .arr { transform:rotate(180deg); }
+  .cd-dsel-list { display:none; margin-top:3px; max-height:150px; overflow-y:auto; border:1px solid #c4c6d0; border-radius:6px; padding:2px 0; }
+  .cd-dsel.open .cd-dsel-list { display:block; }
+  .cd-dsel-list .cd-val-item { padding:3px 10px; }
+  .cd-dsel-empty { font-size:10px; color:#909097; font-style:italic; padding:2px; }
   .cd-footer { padding:6px 10px 2px; display:flex; gap:6px; }
   .cd-apply { flex:1; padding:5px; background:#0077b6; color:#fff; border:none; border-radius:5px; font-weight:700; font-size:11px; cursor:pointer; }
   .cd-clear { padding:5px 10px; background:transparent; color:#74767f; border:1px solid #c4c6d0; border-radius:5px; font-size:11px; cursor:pointer; }
@@ -1044,14 +1056,20 @@ tailwind.config = {
         <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">ชื่องานซ่อมบำรุง *</label>
         <input id="f-title" required placeholder="กรอกรายละเอียดงาน" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
       </div>
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">เวลาเริ่มงาน (START TIME)</label>
-          <input id="f-start-time" type="time" placeholder="09:00" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">วันที่ / เวลาเริ่มงาน (START)</label>
+          <div class="flex gap-2">
+            <input id="f-start-date" type="date" aria-label="วันที่เริ่มงาน" class="flex-1 min-w-0 bg-surface-container-high rounded px-2 py-2 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
+            <input id="f-start-time" type="time" aria-label="เวลาเริ่มงาน" class="w-[6.5rem] shrink-0 bg-surface-container-high rounded px-2 py-2 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
+          </div>
         </div>
         <div>
-          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">เวลาสิ้นสุด (END TIME)</label>
-          <input id="f-end-time" type="time" placeholder="17:00" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">วันที่ / เวลาสิ้นสุด (END)</label>
+          <div class="flex gap-2">
+            <input id="f-end-date" type="date" aria-label="วันที่สิ้นสุด" class="flex-1 min-w-0 bg-surface-container-high rounded px-2 py-2 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
+            <input id="f-end-time" type="time" aria-label="เวลาสิ้นสุด" class="w-[6.5rem] shrink-0 bg-surface-container-high rounded px-2 py-2 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
+          </div>
         </div>
       </div>
       <div class="grid grid-cols-2 gap-3">
@@ -1204,6 +1222,13 @@ tailwind.config = {
   <div class="cd-btn" id="cd-sort-asc"><span style="font-size:14px">↑</span> เรียงน้อย → มาก (A→Z)</div>
   <div class="cd-btn" id="cd-sort-desc"><span style="font-size:14px">↓</span> เรียงมาก → น้อย (Z→A)</div>
   <div class="cd-sep"></div>
+  <div id="cd-date-filters" class="hidden">
+    <div class="cd-section">วันที่เริ่มงาน</div>
+    <div class="cd-dsel" id="cd-dsel-__start_date"></div>
+    <div class="cd-section">วันที่จบงาน</div>
+    <div class="cd-dsel" id="cd-dsel-__end_date"></div>
+    <div class="cd-sep"></div>
+  </div>
   <div style="padding:4px 10px 2px"><input class="cd-search" id="cd-val-search" placeholder="ค้นหาค่า..." oninput="cdFilterValues()"></div>
   <div class="cd-values" id="cd-values-list"></div>
   <div class="cd-sep"></div>
@@ -1353,10 +1378,77 @@ const ganttColSort = { col: null, dir: 1 };
 let cdScope = 'table';
 const cdFiltersFor = scope => scope === 'gantt' ? ganttColFilters : colFilters;
 const cdSortFor    = scope => scope === 'gantt' ? ganttColSort : colSort;
+// The เริ่ม/จบ column also filters by start date and end date. They're stored like any
+// other column filter (a Set of 'YYYY-MM-DD') under these pseudo-columns; see cdGetValue.
+const CD_DATE_COLS = { __start_date: 'start', __end_date: 'end' };
+// Checked dates per pseudo-column, Excel style: everything checked (or nothing) = no filter.
+let cdPendingDates = {};  // { __start_date: Set, __end_date: Set }
+let cdDateOptions = {};   // { __start_date: [[ymd, count], ...], ... }
+let cdDateOpenKey = null; // which date dropdown is expanded
+
+function cdInitDateFilters(filters) {
+  const frame = shutdownFrame();
+  cdDateOpenKey = null;
+  for (const [key, which] of Object.entries(CD_DATE_COLS)) {
+    const counts = new Map();
+    for (const t of allTasks) {
+      const d = taskEffectiveDate(t, which, frame);
+      if (d) counts.set(d, (counts.get(d) || 0) + 1);
+    }
+    cdDateOptions[key] = [...counts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    cdPendingDates[key] = new Set(filters[key]?.size ? filters[key] : cdDateOptions[key].map(([d]) => d));
+  }
+  cdRenderDateFilters();
+}
+
+function cdRenderDateFilters() {
+  for (const key in CD_DATE_COLS) {
+    const opts = cdDateOptions[key], sel = cdPendingDates[key];
+    const checked = opts.filter(([d]) => sel.has(d));
+    const filtered = checked.length > 0 && checked.length < opts.length;
+    const summary = !opts.length ? 'ไม่มีงานที่ระบุวันที่'
+      : !filtered ? 'ทุกวัน'
+      : checked.map(([d]) => thaiShortDate(d)).join(', ');
+    const items = opts.map(([d, n]) => `<div class="cd-val-item">
+        <input type="checkbox" id="cdd${key}${d}" ${sel.has(d) ? 'checked' : ''} onchange="cdToggleDate('${key}','${d}',this.checked)">
+        <label for="cdd${key}${d}" style="font-family:'JetBrains Mono',monospace">${thaiShortDate(d)}</label>
+        <span style="font-size:10px;color:#909097;margin-left:auto">${n}</span>
+      </div>`).join('');
+    const el = document.getElementById(`cd-dsel-${key}`);
+    el.classList.toggle('open', cdDateOpenKey === key);
+    el.innerHTML = `
+      <button type="button" class="cd-dsel-btn${filtered ? ' filtered' : ''}" onclick="cdToggleDateList('${key}')" ${opts.length ? '' : 'disabled'}>
+        <span class="txt">${summary}</span><span class="material-symbols-outlined arr">expand_more</span>
+      </button>
+      <div class="cd-dsel-list">
+        <div class="cd-val-item">
+          <input type="checkbox" id="cdd${key}all" ${checked.length === opts.length ? 'checked' : ''} onchange="cdToggleAllDates('${key}',this.checked)">
+          <label for="cdd${key}all" style="font-weight:700;color:#7bd0ff">(เลือกทั้งหมด)</label>
+        </div>${items}
+      </div>`;
+  }
+}
+
+function cdToggleDateList(key) {
+  cdDateOpenKey = cdDateOpenKey === key ? null : key;
+  cdRenderDateFilters();
+  if (cdAnchor) cdPosition(cdAnchor);
+}
+
+function cdToggleDate(key, d, on) {
+  if (on) cdPendingDates[key].add(d); else cdPendingDates[key].delete(d);
+  cdRenderDateFilters();
+}
+
+function cdToggleAllDates(key, on) {
+  cdPendingDates[key] = new Set(on ? cdDateOptions[key].map(([d]) => d) : []);
+  cdRenderDateFilters();
+}
 
 function cdGetValue(task, col) {
   if (col === 'progress') return task.status === 'cancelled' ? 'ยกเลิกงาน (Cancel Job)' : String(task.progress) + '%';
   if (col === 'start_time') return task.start_time || task.end_time ? `${task.start_time||'—'} / ${task.end_time||'—'}` : '';
+  if (CD_DATE_COLS[col]) return taskEffectiveDate(task, CD_DATE_COLS[col]);
   return String(task[col] || '');
 }
 
@@ -1390,6 +1482,8 @@ function cdOpen(col, headerEl, scope = 'table') {
 
   document.getElementById('cd-col-label').textContent = headerEl.dataset.col.toUpperCase() + ' — FILTER';
   document.getElementById('cd-val-search').value = '';
+  document.getElementById('cd-date-filters').classList.toggle('hidden', col !== 'start_time');
+  if (col === 'start_time') cdInitDateFilters(filters);
 
   // Highlight sort buttons
   document.getElementById('cd-sort-asc').className = 'cd-btn' + (sort.col===col && sort.dir===1 ? ' active' : '');
@@ -1498,6 +1592,13 @@ function cdApply() {
     } else {
       filters[cdCurrentCol] = new Set(cdPendingValues);
     }
+    if (cdCurrentCol === 'start_time') {
+      for (const key in CD_DATE_COLS) {
+        const n = cdPendingDates[key]?.size || 0;
+        if (n > 0 && n < cdDateOptions[key].length) filters[key] = new Set(cdPendingDates[key]);
+        else delete filters[key];
+      }
+    }
     updateColHeaders();
   }
   cdClose();
@@ -1507,6 +1608,7 @@ function cdApply() {
 function cdClear() {
   cdPendingValues.clear();
   if (cdCurrentCol) delete cdFiltersFor(cdScope)[cdCurrentCol];
+  if (cdCurrentCol === 'start_time') for (const key in CD_DATE_COLS) delete cdFiltersFor(cdScope)[key];
   updateColHeaders();
   cdClose();
   cdRerender();
@@ -1526,7 +1628,7 @@ function updateColHeaders() {
     const sort = cdSortFor(scope);
     const dot = hd.querySelector('.col-filter-dot');
     const icon = hd.querySelector('.col-sort-icon');
-    const hasFilter = filters[col] && filters[col].size > 0;
+    const hasFilter = (filters[col] && filters[col].size > 0) || (col === 'start_time' && Object.keys(CD_DATE_COLS).some(k => filters[k]?.size));
     const isSort = sort.col === col;
     hd.classList.toggle('active', hasFilter || isSort);
     if (dot) dot.classList.toggle('hidden', !hasFilter);
@@ -3539,9 +3641,17 @@ async function createTask(e) {
     event_note: document.getElementById('f-note').value.trim(),
     start_time: document.getElementById('f-start-time').value || '',
     end_time:   document.getElementById('f-end-time').value   || '',
+    start_date: document.getElementById('f-start-date').value || '',
+    end_date:   document.getElementById('f-end-date').value   || '',
     updated_by: currentUser?.username || 'User',
     plant:      currentPlant
   };
+  const sameDay = body.start_date === body.end_date;
+  if (body.start_date && body.end_date && (body.end_date < body.start_date ||
+      (sameDay && body.start_time && body.end_time && body.end_time < body.start_time))) {
+    showToast('วันที่/เวลาไม่ถูกต้อง', 'วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่มงาน', true);
+    return;
+  }
   const res = await fetch('/api/tasks', {
     method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
   });
@@ -3690,6 +3800,14 @@ function toggleModal(open) {
   const m = document.getElementById('modal-backdrop');
   m.classList.toggle('hidden', !open);
   m.classList.toggle('flex', open);
+  if (open) {
+    // Default both dates to today; the user can change them for multi-day jobs.
+    const d = new Date(), today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    for (const id of ['f-start-date', 'f-end-date']) {
+      const el = document.getElementById(id);
+      if (!el.value) el.value = today;
+    }
+  }
 }
 
 // ─── Shutdown Milestone Schedule ────────────────────────────────────────────────
