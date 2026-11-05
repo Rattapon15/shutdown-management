@@ -5,14 +5,17 @@ const { query, withTx } = require('./pool');
 
 const DEFAULT_PLANT = 'SKIC BM16';
 const PLANTS = ['SKIC BM1', 'SKIC BM3', 'SKIC BM17', 'SKIC BM16',
-  'SKIC WS BM4', 'SKIC WS BM5', 'SKIC WS BM6', 'SKIC WS BM7', 'SKIC WS BM8', 'SKIC WS BM9'];
+  'SKIC WS BM4', 'SKIC WS BM5', 'SKIC WS BM6', 'SKIC WS BM7', 'SKIC WS BM8', 'SKIC WS BM9',
+  'TCP TM BM10'];
 
 const SCHEDULE_MILESTONES = ['shutdown', 'repair_done', 'warm_stream', 'function_test', 'startup', 'on_reel'];
 const SAFETY_CATEGORIES = ['power_outage', 'site_prep', 'high_risk'];
 
 const USER_ROLES = ['admin', 'user'];
 
-const ACTIVITY_KEEP = 200; // rows retained per plant
+const ACTIVITY_RETENTION = '1 year';  // activity rows older than this are pruned
+const ACTIVITY_EXPORT_MAX = 100000;   // row cap for one activity export
+let lastActivityPrune = 0;
 
 function hashPassword(password, salt) {
   return crypto.scryptSync(password, salt, 64).toString('hex');
@@ -302,6 +305,23 @@ const db = {
          start_date = COALESCE($8, start_date), end_date = COALESCE($9, end_date)
        WHERE plant = $1 AND id = $2 RETURNING *`,
       [plantKey(plant), id, start_time, end_time, duration, nowTime(), updated_by, start_date ?? null, end_date ?? null]
+    );
+    return rows.length ? taskRow(rows[0]) : null;
+  },
+
+  // Edit Work form: every editable field at once. start_date / end_date: undefined keeps
+  // the stored date. stage_at moves only when the stage changes, as in updateTaskProgress.
+  async updateTaskDetails(id, f, updated_by = 'User', plant) {
+    const { rows } = await query(
+      `UPDATE shutdown_mnm_tasks SET tag = $3, title = $4, area = $5, assignee = $6,
+         stage_at = CASE WHEN progress = $7 AND stage_at <> '' THEN stage_at ELSE $8 END, progress = $7,
+         event_note = $9, start_time = $10, end_time = $11, duration = $12,
+         start_date = COALESCE($13, start_date), end_date = COALESCE($14, end_date),
+         updated_at = $15, updated_by = $16
+       WHERE plant = $1 AND id = $2 RETURNING *`,
+      [plantKey(plant), id, String(f.tag).toUpperCase(), f.title, f.area, f.assignee,
+       Number(f.progress) || 0, new Date().toISOString(), f.event_note, f.start_time, f.end_time, f.duration,
+       f.start_date ?? null, f.end_date ?? null, nowTime(), updated_by]
     );
     return rows.length ? taskRow(rows[0]) : null;
   },
@@ -696,13 +716,35 @@ const db = {
       'INSERT INTO shutdown_mnm_activity (plant, tag, action, actor) VALUES ($1, $2, $3, $4)',
       [p, tag, action, actor]
     );
-    // Same 200-row cap the JSON store enforced, applied per plant.
-    await query(
-      `DELETE FROM shutdown_mnm_activity WHERE plant = $1 AND id NOT IN (
-         SELECT id FROM shutdown_mnm_activity WHERE plant = $1 ORDER BY id DESC LIMIT $2
-       )`,
-      [p, ACTIVITY_KEEP]
+    // Keep a year of history (for the activity export); prune at most once an hour.
+    if (Date.now() - lastActivityPrune > 3600 * 1000) {
+      lastActivityPrune = Date.now();
+      await query(`DELETE FROM shutdown_mnm_activity WHERE created_at < now() - $1::interval`, [ACTIVITY_RETENTION]);
+    }
+  },
+
+  // Activity export: rows between two instants, optionally for one plant and/or actor.
+  async getActivityRange({ plant, from, to, actor }) {
+    const args = [from, to];
+    const where = ['created_at >= $1', 'created_at < $2'];
+    if (plant) { args.push(plant); where.push(`plant = $${args.length}`); }
+    if (actor) { args.push(actor); where.push(`actor = $${args.length}`); }
+    args.push(ACTIVITY_EXPORT_MAX);
+    const { rows } = await query(
+      `SELECT id, plant, tag, action, actor, created_at FROM shutdown_mnm_activity
+       WHERE ${where.join(' AND ')} ORDER BY created_at, id LIMIT $${args.length}`, args
     );
+    return rows.map(r => ({ id: Number(r.id), plant: r.plant, tag: r.tag, action: r.action, actor: r.actor, created_at: iso(r.created_at) }));
+  },
+
+  // Everyone who appears in the retained history, for the export dialog's user filter.
+  async getActivityActors(plant) {
+    const { rows } = await query(
+      `SELECT actor, COUNT(*)::int AS n FROM shutdown_mnm_activity
+       ${plant ? 'WHERE plant = $1' : ''} GROUP BY actor ORDER BY actor`,
+      plant ? [plant] : []
+    );
+    return rows;
   },
 };
 

@@ -163,11 +163,11 @@ tailwind.config = {
   #tasks-scroll::-webkit-scrollbar-thumb:hover { background:#74767f; }
 
   /* Gantt timeline (Tab 1) */
-  .gantt-left-col { width:930px; min-width:930px; flex-shrink:0; display:grid; grid-template-columns:90px 100px 210px 110px 240px 44px 44px 92px; align-items:center; }
-  .gantt-left-col > * { padding:0 8px; min-width:0; }
-  .gantt-left-col > .gantt-time-cell, .gantt-left-col > .gantt-cancel-cell, .gantt-left-col > .gantt-note-cell { padding:0 4px; }
-  .gantt-cancel-cell { text-align:center; }
-  .gantt-left-col > .gantt-stage-cell { padding:0 16px; overflow:hidden; } /* same 240px / px-4 as the task table's 5-stage column */
+  .gantt-left-col { width:876px; min-width:876px; flex-shrink:0; display:grid; grid-template-columns:84px 76px 230px 92px 216px 38px 56px 84px; align-items:center; }
+  .gantt-left-col > * { padding:0 6px; min-width:0; }
+  .gantt-left-col > .gantt-time-cell, .gantt-left-col > .gantt-cancel-cell, .gantt-left-col > .gantt-edit-cell { padding:0 4px; }
+  .gantt-cancel-cell, .gantt-edit-cell { text-align:center; }
+  .gantt-left-col > .gantt-stage-cell { padding:0 8px; overflow:hidden; } /* 200px of content; the stage label truncates if needed */
   /* task name wraps to two lines, then ellipsis — fits the fixed 56px row (as does the 5-stage cell) */
   .gantt-title { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; line-height:1.3; word-break:break-word; }
   .gantt-time-input { width:44px; padding:0 2px; border:1px solid transparent; border-radius:4px; background:transparent;
@@ -186,7 +186,6 @@ tailwind.config = {
   .gantt-dt-date:hover { border-color:#c4c6d0; color:#0077b6; }
   .gantt-dt-date input[type=date] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
   .gantt-dt-date input[type=date]::-webkit-calendar-picker-indicator { position:absolute; inset:0; width:auto; height:auto; cursor:pointer; }
-  .gantt-note-cell { text-align:center; }
   .gantt-note-text { color:#8a5a00; font-weight:600; }
   body.readonly #gantt-range-btn { pointer-events:none; }
   body.readonly .gantt-range-edit { display:none; }
@@ -194,7 +193,7 @@ tailwind.config = {
      which sits under the time area only (the left columns never move sideways anyway). */
   #gantt-scroll { max-height:calc(100vh - 160px); min-height:320px; overflow-x:hidden; overflow-y:auto; scrollbar-gutter:stable; }
   /* margin-right matches #gantt-scroll's 10px vertical scrollbar gutter so both scroll ranges line up */
-  .gantt-hbar { margin-left:930px; margin-right:10px; overflow-x:auto; overflow-y:hidden; background:#f3f3fd; }
+  .gantt-hbar { margin-left:876px; margin-right:10px; overflow-x:auto; overflow-y:hidden; background:#f3f3fd; }
   #gantt-hscroll { border-top:1px solid rgba(196,198,208,.6); }
   #gantt-hscroll-top { border-bottom:1px solid rgba(196,198,208,.6); }
   .gantt-hbar.hidden { display:none; }
@@ -205,7 +204,7 @@ tailwind.config = {
   #gantt-scroll::-webkit-scrollbar-thumb:hover, .gantt-hbar::-webkit-scrollbar-thumb:hover { background:#74767f; }
   #gantt-rows, #gantt-notime-rows {
     background-image: repeating-linear-gradient(to right, rgba(0,0,0,.06) 0, rgba(0,0,0,.06) 1px, transparent 1px, transparent 36px);
-    background-position: 930px 0; /* start gridlines after .gantt-left-col */
+    background-position: 876px 0; /* start gridlines after .gantt-left-col */
   }
 
   /* ── Print / "Save as PDF" report (ส่งออก Report) ── */
@@ -240,7 +239,7 @@ tailwind.config = {
     #gantt-print .col-sort-icon, #gantt-print .col-filter-dot { display:none !important; }
     #gantt-print tbody .gantt-print-row {
       background-image:repeating-linear-gradient(to right, rgba(0,0,0,.06) 0, rgba(0,0,0,.06) 1px, transparent 1px, transparent 36px);
-      background-position:930px 0;
+      background-position:876px 0;
     }
   }
 
@@ -255,16 +254,16 @@ tailwind.config = {
   }
   /* Touch screens (phones and iPads): the grid swipes natively in both directions instead of
      using the desktop proxy scrollbars. ชื่องาน and 5-STAGE are moved to the end of the
-     930px label block, and a negative sticky offset leaves just those two pinned on the left. */
+     876px label block, and a negative sticky offset leaves just those two pinned on the left. */
   @media screen and (max-width: 767px), screen and (pointer: coarse) {
     #gantt-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
     #tasks-scroll { -webkit-overflow-scrolling:touch; }
     #gantt-card .gantt-hbar { display:none !important; }
     #gantt-grid .gantt-left-col {
-      --frz-a:210px; --frz-s:240px;
-      /* total stays 930px (GANTT_LEFT_COL_PX) so bar positions are unaffected */
-      grid-template-columns:90px 100px calc(560px - var(--frz-a) - var(--frz-s)) 44px 44px 92px var(--frz-a) var(--frz-s);
-      left:calc(var(--frz-a) + var(--frz-s) - 930px) !important;
+      --frz-a:230px; --frz-s:216px;
+      /* total stays 876px (GANTT_LEFT_COL_PX) so bar positions are unaffected */
+      grid-template-columns:84px 76px calc(538px - var(--frz-a) - var(--frz-s)) 38px 56px 84px var(--frz-a) var(--frz-s);
+      left:calc(var(--frz-a) + var(--frz-s) - 876px) !important;
     }
     #gantt-grid .gantt-left-col > :nth-child(3) { order:1; }
     #gantt-grid .gantt-left-col > :nth-child(5) { order:2; }
@@ -361,7 +360,13 @@ tailwind.config = {
         <span class="material-symbols-outlined" style="font-size:18px; color:#7bd0ff;">rss_feed</span>
         <span class="text-xs font-bold" style="color:#d3e4fe;">Live Event Update</span>
       </div>
-      <span class="w-2 h-2 rounded-full animate-ping" style="background:#4edea3;"></span>
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="toggleActivityExport(true)" title="Export ประวัติกิจกรรม (Excel)" aria-label="Export ประวัติกิจกรรม"
+          class="flex items-center p-1 rounded hover:bg-white/10 transition-colors" style="color:#7bd0ff;">
+          <span class="material-symbols-outlined" style="font-size:18px">download</span>
+        </button>
+        <span class="w-2 h-2 rounded-full animate-ping" style="background:#4edea3;"></span>
+      </div>
     </div>
     <div class="flex-1 min-h-0 flex flex-col gap-2 overflow-y-auto pr-1" id="activity-feed"></div>
   </div>
@@ -910,7 +915,7 @@ tailwind.config = {
               <div><div class="col-filter-hd" data-scope="gantt" data-col="assignee">ผู้รับผิดชอบ <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></div>
               <div class="gantt-stage-cell"><div class="col-filter-hd" data-scope="gantt" data-col="progress">ขั้นตอนความคืบหน้า (5-STAGE) <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></div>
               <div class="gantt-cancel-cell normal-case">ยกเลิก</div>
-              <div class="gantt-note-cell normal-case">Note</div>
+              <div class="gantt-edit-cell normal-case">แก้ไข/Note</div>
               <div class="gantt-time-cell"><div class="col-filter-hd" data-scope="gantt" data-col="start_time">เริ่ม/จบ <span class="col-sort-icon">⇅</span><span class="col-filter-dot hidden"></span></div></div>
             </div>
             <div id="gantt-hour-header" class="relative flex-1" style="height:40px"></div>
@@ -935,6 +940,53 @@ tailwind.config = {
 
 </main>
 <!-- Cancel job modal -->
+<!-- Activity log export -->
+<div id="activity-export-backdrop" class="fixed inset-0 bg-black/80 z-50 items-center justify-center p-4 hidden">
+  <div class="bg-surface-container-lowest rounded-xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 relative border border-outline-variant/30">
+    <div class="flex items-center justify-between pb-2 border-b border-surface-container-high">
+      <h2 class="text-base font-bold text-on-surface flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary" style="font-size:22px">download</span>
+        Export ประวัติกิจกรรม (Activity Log)
+      </h2>
+      <button onclick="toggleActivityExport(false)" class="p-1 rounded hover:bg-surface-container text-on-surface-variant">
+        <span class="material-symbols-outlined" style="font-size:20px">close</span>
+      </button>
+    </div>
+    <form onsubmit="exportActivityExcel(event)" class="flex flex-col gap-3 text-xs">
+      <div>
+        <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">ช่วงวันที่</label>
+        <div class="flex items-center gap-2">
+          <input id="ae-from" type="date" required aria-label="ตั้งแต่วันที่" class="flex-1 min-w-0 bg-surface-container-high rounded px-2 py-2 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
+          <span class="text-on-surface-variant">ถึง</span>
+          <input id="ae-to" type="date" required aria-label="ถึงวันที่" class="flex-1 min-w-0 bg-surface-container-high rounded px-2 py-2 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
+        </div>
+        <div class="flex flex-wrap gap-1.5 mt-2">
+          <button type="button" onclick="setActivityExportRange(7)" class="px-2 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant text-[11px]">7 วัน</button>
+          <button type="button" onclick="setActivityExportRange(30)" class="px-2 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant text-[11px]">30 วัน</button>
+          <button type="button" onclick="setActivityExportRange(90)" class="px-2 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant text-[11px]">90 วัน</button>
+          <button type="button" onclick="setActivityExportRange(365)" class="px-2 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant text-[11px]">1 ปี</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label for="ae-plant" class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">Plant</label>
+          <select id="ae-plant" onchange="loadActivityExportActors()" class="w-full bg-surface-container-high rounded px-2 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary"></select>
+        </div>
+        <div>
+          <label for="ae-actor" class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">ผู้ใช้</label>
+          <select id="ae-actor" class="w-full bg-surface-container-high rounded px-2 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary"></select>
+        </div>
+      </div>
+      <p class="text-[10px] text-on-surface-variant/80">ระบบเก็บประวัติกิจกรรมย้อนหลัง 1 ปี</p>
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-surface-container-high">
+        <button type="button" onclick="toggleActivityExport(false)" class="px-4 py-2 rounded bg-surface-container hover:bg-surface-bright text-on-surface font-medium transition-colors">ยกเลิก</button>
+        <button type="submit" id="ae-submit" class="px-5 py-2 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container font-bold transition-all shadow-md flex items-center gap-1.5">
+          <span class="material-symbols-outlined" style="font-size:16px">table_view</span>Export Excel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
 <div id="cancel-modal-backdrop" class="fixed inset-0 bg-black/80 z-50 items-center justify-center p-4 hidden">
   <div class="bg-surface-container-lowest rounded-xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 relative border border-outline-variant/30">
     <div class="flex items-center justify-between pb-2 border-b border-surface-container-high">
@@ -957,34 +1009,6 @@ tailwind.config = {
       <div class="flex justify-end gap-2 mt-1">
         <button type="button" onclick="toggleCancelModal(false)" class="px-4 py-2 rounded text-on-surface-variant hover:bg-surface-container-high font-semibold transition-colors">ปิด</button>
         <button type="submit" id="cancel-form-submit" class="px-4 py-2 rounded bg-error hover:bg-error/90 text-on-error font-bold transition-all shadow-md">ยืนยันยกเลิกงาน</button>
-      </div>
-    </form>
-  </div>
-</div>
-<!-- Job note modal -->
-<div id="note-modal-backdrop" class="fixed inset-0 bg-black/80 z-50 items-center justify-center p-4 hidden">
-  <div class="bg-surface-container-lowest rounded-xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 relative border border-outline-variant/30">
-    <div class="flex items-center justify-between pb-2 border-b border-surface-container-high">
-      <h2 class="text-base font-bold text-on-surface flex items-center gap-2">
-        <span class="material-symbols-outlined text-amber-600" style="font-size:20px">edit_note</span>
-        Note <span id="note-modal-tag" class="font-mono text-secondary"></span>
-      </h2>
-      <button onclick="toggleNoteModal(false)" class="text-on-surface-variant hover:text-on-surface">
-        <span class="material-symbols-outlined">close</span>
-      </button>
-    </div>
-    <form onsubmit="submitEventNote(event)" class="flex flex-col gap-3">
-      <input type="hidden" id="note-form-id">
-      <p id="note-modal-title" class="text-xs text-on-surface-variant break-words"></p>
-      <div>
-        <label for="note-form-text" class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">บันทึกเหตุการณ์เพิ่มเติม</label>
-        <textarea id="note-form-text" maxlength="500" rows="3" placeholder="เช่น รออะไหล่, พบความเสียหายเพิ่ม, เลื่อนเวลาเริ่มงาน ..."
-          class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary"></textarea>
-        <p class="text-[10px] text-on-surface-variant/70 mt-1">เว้นว่างแล้วกดบันทึก เพื่อลบ Note</p>
-      </div>
-      <div class="flex justify-end gap-2 mt-1">
-        <button type="button" onclick="toggleNoteModal(false)" class="px-4 py-2 rounded text-on-surface-variant hover:bg-surface-container-high font-semibold transition-colors">ปิด</button>
-        <button type="submit" id="note-form-submit" class="px-4 py-2 rounded bg-amber-500 hover:bg-amber-600 text-white font-bold transition-all shadow-md">บันทึก Note</button>
       </div>
     </form>
   </div>
@@ -1034,14 +1058,14 @@ tailwind.config = {
   <div class="bg-surface-container-lowest rounded-xl max-w-xl w-full p-6 shadow-2xl flex flex-col gap-4 relative border border-outline-variant/30">
     <div class="flex items-center justify-between pb-2 border-b border-surface-container-high">
       <div class="flex items-center gap-2">
-        <span class="material-symbols-outlined text-secondary" style="font-size:22px">add_circle</span>
-        <h2 class="text-base font-bold text-on-surface">กรอกรายละเอียดงานเพิ่มระหว่าง Shutdown (Add Work)</h2>
+        <span id="task-modal-icon" class="material-symbols-outlined text-secondary" style="font-size:22px">add_circle</span>
+        <h2 id="task-modal-title" class="text-base font-bold text-on-surface">กรอกรายละเอียดงานเพิ่มระหว่าง Shutdown (Add Work)</h2>
       </div>
       <button onclick="toggleModal(false)" class="p-1 rounded hover:bg-surface-container text-on-surface-variant">
         <span class="material-symbols-outlined" style="font-size:20px">close</span>
       </button>
     </div>
-    <form id="new-task-form" onsubmit="createTask(event)" class="flex flex-col gap-3 text-xs">
+    <form id="new-task-form" onsubmit="submitTaskForm(event)" class="flex flex-col gap-3 text-xs">
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">LOCATION *</label>
@@ -1078,7 +1102,7 @@ tailwind.config = {
           <input id="f-assignee" required placeholder="ระบุชื่อผู้รับผิดชอบงาน" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
         </div>
         <div>
-          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">สถานะเริ่มต้น</label>
+          <label id="f-progress-label" class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">สถานะเริ่มต้น</label>
           <select id="f-progress" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface font-mono focus:outline-none focus:ring-1 focus:ring-secondary">
             <option value="0">0% รอเปิด Work Permit</option>
             <option value="25" selected>25% เปิด Work Permit แล้ว</option>
@@ -1089,12 +1113,12 @@ tailwind.config = {
         </div>
       </div>
       <div>
-        <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">บันทึกหน้างานเบื้องต้น</label>
+        <label id="f-note-label" class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">บันทึกหน้างานเบื้องต้น</label>
         <textarea id="f-note" rows="2" placeholder="ระบุสาเหตุของงานเพิ่มหรือ Note รายละเอียดหน้างาน" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary"></textarea>
       </div>
       <div class="flex items-center justify-end gap-2 pt-3 border-t border-surface-container-high">
         <button type="button" onclick="toggleModal(false)" class="px-4 py-2 rounded bg-surface-container hover:bg-surface-bright text-on-surface font-medium transition-colors">ยกเลิก</button>
-        <button type="submit" class="px-5 py-2 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container font-bold transition-all shadow-md">บันทึกรายการงาน</button>
+        <button type="submit" id="task-modal-submit" class="px-5 py-2 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container font-bold transition-all shadow-md">บันทึกรายการงาน</button>
       </div>
     </form>
   </div>
@@ -1282,7 +1306,7 @@ let currentSafety = { power_outage: [], site_prep: [], high_risk: [] };
 let lastGanttBounds = null;
 const GANTT_PX_PER_HOUR = 36; // must match the 36px gridline spacing in CSS
 const GANTT_MIN_BAR_PX = 18;
-const GANTT_LEFT_COL_PX = 930; // must match .gantt-left-col width in CSS
+const GANTT_LEFT_COL_PX = 876; // must match .gantt-left-col width in CSS
 
 function plantQS() { return `plant=${encodeURIComponent(currentPlant)}`; }
 
@@ -1298,6 +1322,7 @@ const PLANT_GROUPS = [
     { key: 'SKIC BM16', label: 'BM16' },
   ] },
   { name: 'SKIC_WS', plants: ['BM4', 'BM5', 'BM6', 'BM7', 'BM8', 'BM9'].map(bm => ({ key: `SKIC WS ${bm}`, label: bm })) },
+  { name: 'TCP_TM', plants: [{ key: 'TCP TM BM10', label: 'BM10' }] },
 ];
 const LIVE_BADGE_HTML = '<span class="ml-auto font-mono text-xs px-1.5 py-0.5 rounded" style="background:#001c10; color:#4edea3; border:1px solid rgba(78,222,163,0.4);">LIVE</span>';
 const VIEW_TABS = [
@@ -1735,6 +1760,7 @@ const OVERALL_PLANTS = {
   'SKIC WS BM7': { cycle: '', dot: '#8e6bbf' },
   'SKIC WS BM8': { cycle: '', dot: '#b388d6' },
   'SKIC WS BM9': { cycle: '', dot: '#d1b3ea' },
+  'TCP TM BM10': { cycle: '', dot: '#c2410c' },
 };
 const MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 let overallYear = new Date().getFullYear();
@@ -2019,6 +2045,107 @@ function formatTimeAgo(dt) {
   if (diff < 3600) return `${Math.floor(diff/60)} นาทีที่แล้ว`;
   if (diff < 86400) return `${Math.floor(diff/3600)} ชม. ที่แล้ว`;
   return dt.toLocaleDateString('th-TH');
+}
+
+// ─── Activity log export ──────────────────────────────────────────────────────
+const localYMD = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+// "SKIC WS BM4" → "SKIC_WS BM4", the way the sidebar groups it.
+const plantDisplayName = key => {
+  for (const g of PLANT_GROUPS) {
+    const p = g.plants.find(p => p.key === key);
+    if (p) return `${g.name} ${p.label}`;
+  }
+  return key;
+};
+
+// Event type for the export, from how server.js words each activity line.
+function activityType(row) {
+  const a = row.action || '';
+  if (row.tag === 'SYSTEM') return 'ระบบ';
+  if (a.startsWith('สร้างรายการงานใหม่')) return 'เพิ่มงาน (Add Work)';
+  if (a.startsWith('แก้ไขงาน')) return 'แก้ไขงาน (Edit Work)';
+  if (a.startsWith('อัปเดต')) return 'อัปเดตความคืบหน้า';
+  if (a.startsWith('แก้ไขเวลา') || a.startsWith('แก้ไขวันที่')) return 'แก้ไขวันเวลา';
+  if (a.startsWith('ยกเลิกงาน') || a.startsWith('เปิดงานกลับ')) return 'ยกเลิก / เปิดงานกลับ';
+  if (a.includes('Note') || a.includes('โน้ต')) return 'Note';
+  return 'อื่น ๆ';
+}
+
+function setActivityExportRange(days) {
+  const to = new Date(), from = new Date();
+  from.setDate(from.getDate() - (days - 1));
+  document.getElementById('ae-from').value = localYMD(from);
+  document.getElementById('ae-to').value = localYMD(to);
+}
+
+function toggleActivityExport(open) {
+  const m = document.getElementById('activity-export-backdrop');
+  m.classList.toggle('hidden', !open);
+  m.classList.toggle('flex', open);
+  if (!open) return;
+  setActivityExportRange(7);
+  document.getElementById('ae-plant').innerHTML = `<option value="all">ทุก Plant</option>` +
+    PLANT_GROUPS.map(g => `<optgroup label="${escHtml(g.name)}">${g.plants.map(p =>
+      `<option value="${escHtml(p.key)}">${escHtml(g.name)} ${escHtml(p.label)}</option>`).join('')}</optgroup>`).join('');
+  document.getElementById('ae-plant').value = currentPlant;
+  loadActivityExportActors();
+}
+
+async function loadActivityExportActors() {
+  const sel = document.getElementById('ae-actor');
+  const keep = sel.value;
+  sel.innerHTML = '<option value="">ทุกคน</option>';
+  try {
+    const res = await fetch(`/api/activity/actors?plant=${encodeURIComponent(document.getElementById('ae-plant').value)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const actors = await res.json();
+    sel.innerHTML += actors.map(a => `<option value="${escHtml(a.actor)}">${escHtml(a.actor)} (${a.n})</option>`).join('');
+    if (actors.some(a => a.actor === keep)) sel.value = keep;
+  } catch { /* the user filter just stays at "ทุกคน" */ }
+}
+
+async function exportActivityExcel(e) {
+  e.preventDefault();
+  const fromYMD = document.getElementById('ae-from').value, toYMD = document.getElementById('ae-to').value;
+  const plant = document.getElementById('ae-plant').value, actor = document.getElementById('ae-actor').value;
+  if (!fromYMD || !toYMD || toYMD < fromYMD) {
+    showToast('ช่วงวันที่ไม่ถูกต้อง', 'วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่ม', true);
+    return;
+  }
+  // Local whole days: from 00:00 of the first day up to 00:00 after the last day.
+  const from = new Date(`${fromYMD}T00:00:00`), to = new Date(`${toYMD}T00:00:00`);
+  to.setDate(to.getDate() + 1);
+  const btn = document.getElementById('ae-submit');
+  btn.disabled = true;
+  try {
+    const qs = new URLSearchParams({ from: from.toISOString(), to: to.toISOString(), plant, actor });
+    const [res] = await Promise.all([fetch(`/api/activity/export?${qs}`), loadSheetJS()]);
+    const rows = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(rows.error || `HTTP ${res.status}`);
+    if (!rows.length) { showToast('ไม่พบประวัติกิจกรรม', 'ไม่มีข้อมูลตามเงื่อนไขที่เลือก', true); return; }
+
+    const header = ['วันที่', 'เวลา', 'Plant', 'Section', 'ผู้ใช้', 'ประเภท', 'รายละเอียด'];
+    const data = rows.map(r => {
+      const d = new Date(r.created_at);
+      // ISO date and 24h time so the sheet sorts and filters chronologically.
+      return [localYMD(d), d.toLocaleTimeString('en-GB', { hour12: false }),
+        plantDisplayName(r.plant), r.tag, r.actor, activityType(r), r.action];
+    });
+    const ws = XLSX.utils.aoa_to_sheet([header, ...data]);
+    ws['!cols'] = [12, 10, 16, 12, 28, 22, 90].map(wch => ({ wch }));
+    ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: data.length, c: header.length - 1 } }) };
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Activity Log');
+    const who = actor ? `_${actor.split('@')[0]}` : '';
+    const name = `Activity Log_${plant === 'all' ? 'All Plants' : plant}_${fromYMD}_${toYMD}${who}`.replace(/[\\/:*?"<>|]+/g, '-');
+    XLSX.writeFile(wb, `${name}.xlsx`);
+    toggleActivityExport(false);
+    showToast('ส่งออก Excel สำเร็จ', `${name}.xlsx (${rows.length} รายการ)`);
+  } catch (err) {
+    showToast('ส่งออก Excel ไม่สำเร็จ', err.message, true);
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function escHtml(s) {
@@ -2473,10 +2600,10 @@ function ganttMetaBlock(task) {
           <span class="material-symbols-outlined" style="font-size:18px">cancel</span>
         </button>`}
       </div>
-      <div class="gantt-note-cell">
-        <button onclick="openEventNote('${task.id}')" title="${task.event_note ? 'Note: ' + escHtml(task.event_note) : 'เพิ่ม Note'}"
-          class="p-1 rounded hover:bg-amber-100 transition-colors ${task.event_note ? 'text-amber-600' : 'text-outline hover:text-amber-600'}">
-          <span class="material-symbols-outlined" style="font-size:18px">${task.event_note ? 'sticky_note_2' : 'edit_note'}</span>
+      <div class="gantt-edit-cell">
+        <button onclick="openEditTask('${task.id}')" title="แก้ไขรายละเอียดงาน / Note${task.event_note ? '\nNote: ' + escHtml(task.event_note) : ''}"
+          class="p-1 rounded hover:bg-secondary/10 transition-colors ${task.event_note ? 'text-amber-600' : 'text-outline hover:text-secondary'}">
+          <span class="material-symbols-outlined" style="font-size:18px">edit</span>
         </button>
       </div>
       <div class="gantt-time-cell text-on-surface-variant whitespace-nowrap">
@@ -2543,7 +2670,11 @@ function durationLabelFor(start, end) {
   if (s === null || e0 === null) return '';
   let mins = e0 - s;
   if (mins <= 0) mins += 24 * 60;
-  const h = Math.floor(mins / 60), m = mins % 60;
+  return minutesLabel(mins);
+}
+
+function minutesLabel(mins) {
+  const h = Math.floor(mins / 60), m = Math.round(mins % 60);
   return m ? `${h} ชม. ${m} นาที` : `${h} ชม.`;
 }
 
@@ -3177,48 +3308,6 @@ async function setTaskStatus(id, status, reason = '') {
   loadActivity();
 }
 
-function openEventNote(id) {
-  const task = allTasks.find(t => t.id === id);
-  if (!task) return;
-  document.getElementById('note-form-id').value = id;
-  document.getElementById('note-modal-tag').textContent = task.tag;
-  document.getElementById('note-modal-title').textContent = task.title;
-  document.getElementById('note-form-text').value = task.event_note || '';
-  toggleNoteModal(true);
-  document.getElementById('note-form-text').focus();
-}
-
-function toggleNoteModal(open) {
-  const m = document.getElementById('note-modal-backdrop');
-  m.classList.toggle('hidden', !open);
-  m.classList.toggle('flex', open);
-}
-
-async function submitEventNote(e) {
-  e.preventDefault();
-  const id = document.getElementById('note-form-id').value;
-  const note = document.getElementById('note-form-text').value.trim();
-  const task = allTasks.find(t => t.id === id);
-  const btn = document.getElementById('note-form-submit');
-  btn.disabled = true;
-  try {
-    const res = await fetch(`/api/tasks/${encodeURIComponent(id)}/event-note`, {
-      method: 'PUT', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ note, updated_by: currentUser?.username || 'User', plant: currentPlant })
-    });
-    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`);
-    if (task) task.event_note = note;
-    toggleNoteModal(false);
-    showToast(note ? `บันทึก Note ${task?.tag} แล้ว` : `ลบ Note ${task?.tag} แล้ว`, note);
-    renderTable();
-    loadActivity();
-  } catch (err) {
-    showToast('บันทึก Note ไม่สำเร็จ', err.message, true);
-  } finally {
-    btn.disabled = false;
-  }
-}
-
 function cancelTask(id) {
   const task = allTasks.find(t => t.id === id);
   if (!task) return;
@@ -3663,6 +3752,53 @@ async function createTask(e) {
   showToast(`เพิ่มงาน ${result.tag} สำเร็จ`, 'บันทึกเข้าสู่ตารางงานหยุดซ่อมเรียบร้อย');
 }
 
+function submitTaskForm(e) {
+  return editingTask ? saveEditTask(e) : createTask(e);
+}
+
+async function saveEditTask(e) {
+  e.preventDefault();
+  const task = editingTask;
+  const val = id => document.getElementById(id).value.trim();
+  const body = {
+    tag: val('f-tag'), title: val('f-title'), area: val('f-area'), assignee: val('f-assignee'),
+    progress: Number(val('f-progress')), event_note: val('f-note'),
+    start_time: val('f-start-time'), end_time: val('f-end-time'),
+    updated_by: currentUser?.username || 'User', plant: currentPlant
+  };
+  const start_date = val('f-start-date'), end_date = val('f-end-date');
+  // Changing either date pins both, as in the Gantt's date cells; untouched dates stay as stored.
+  const datesChanged = start_date !== editOrigDates.start || end_date !== editOrigDates.end;
+  if (datesChanged) Object.assign(body, { start_date, end_date });
+
+  const frame = shutdownFrame();
+  const next = { ...task, ...body, start_date: datesChanged ? start_date : task.start_date, end_date: datesChanged ? end_date : task.end_date };
+  const span = taskSpan(next, frame);
+  const timesChanged = datesChanged || body.start_time !== (task.start_time || '') || body.end_time !== (task.end_time || '');
+  if (timesChanged && body.start_time && body.end_time && span.end === null) {
+    showToast('วันที่/เวลาไม่ถูกต้อง', 'วันเวลาจบต้องอยู่หลังวันเวลาเริ่ม', true);
+    return;
+  }
+  body.duration = !timesChanged ? (task.duration || '')
+    : span.start !== null && span.end !== null ? minutesLabel(span.end - span.start)
+    : durationLabelFor(body.start_time, body.end_time) || task.duration || '';
+
+  try {
+    const res = await fetch(`/api/tasks/${encodeURIComponent(task.id)}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(result.error || `HTTP ${res.status}`);
+    toggleModal(false);
+    if (!result.changed) { showToast('ไม่มีการเปลี่ยนแปลง', `${task.tag} ข้อมูลเหมือนเดิม`); return; }
+    await loadTasks();
+    await loadActivity();
+    showToast(`แก้ไขงาน ${body.tag} สำเร็จ`, `แก้ไข ${result.changed} รายการ`);
+  } catch (err) {
+    showToast('บันทึกการแก้ไขไม่สำเร็จ', err.message, true);
+  }
+}
+
 // ─── Excel Upload ─────────────────────────────────────────────────────────────
 function formatUploadTime(iso) {
   if (!iso) return '';
@@ -3796,18 +3932,50 @@ function resetFilters() {
 }
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
-function toggleModal(open) {
+// One form for Add Work and Edit Work. editingTask is the task being edited (null = adding);
+// editOrigDates holds the dates the edit form opened with, so untouched dates aren't pinned.
+let editingTask = null;
+let editOrigDates = null;
+
+function toggleModal(open, task = null) {
   const m = document.getElementById('modal-backdrop');
+  const form = document.getElementById('new-task-form');
+  // Leaving edit mode: clear the edited job's values so the next Add Work starts blank.
+  if (editingTask && (!open || !task)) form.reset();
+  editingTask = open ? task : null;
   m.classList.toggle('hidden', !open);
   m.classList.toggle('flex', open);
-  if (open) {
-    // Default both dates to today; the user can change them for multi-day jobs.
-    const d = new Date(), today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    for (const id of ['f-start-date', 'f-end-date']) {
-      const el = document.getElementById(id);
-      if (!el.value) el.value = today;
-    }
+  if (!open) return;
+
+  const edit = !!task;
+  document.getElementById('task-modal-icon').textContent = edit ? 'edit' : 'add_circle';
+  document.getElementById('task-modal-title').textContent = edit
+    ? `แก้ไขรายละเอียดงาน (Edit Work) · ${task.tag || task.id}` : 'กรอกรายละเอียดงานเพิ่มระหว่าง Shutdown (Add Work)';
+  document.getElementById('task-modal-submit').textContent = edit ? 'บันทึกการแก้ไข' : 'บันทึกรายการงาน';
+  document.getElementById('f-progress-label').textContent = edit ? 'สถานะ' : 'สถานะเริ่มต้น';
+  document.getElementById('f-note-label').textContent = edit ? 'Note (แสดงใต้แท่ง Gantt)' : 'บันทึกหน้างานเบื้องต้น';
+
+  if (edit) {
+    const frame = shutdownFrame();
+    editOrigDates = { start: taskEffectiveDate(task, 'start', frame), end: taskEffectiveDate(task, 'end', frame) };
+    const set = (id, v) => { document.getElementById(id).value = v ?? ''; };
+    set('f-area', task.area); set('f-tag', task.tag); set('f-title', task.title); set('f-assignee', task.assignee);
+    set('f-progress', String(task.progress ?? 0)); set('f-note', task.event_note);
+    set('f-start-time', task.start_time); set('f-end-time', task.end_time);
+    set('f-start-date', editOrigDates.start); set('f-end-date', editOrigDates.end);
+    return;
   }
+  // Default both dates to today; the user can change them for multi-day jobs.
+  const d = new Date(), today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  for (const id of ['f-start-date', 'f-end-date']) {
+    const el = document.getElementById(id);
+    if (!el.value) el.value = today;
+  }
+}
+
+function openEditTask(id) {
+  const task = allTasks.find(t => String(t.id) === String(id));
+  if (task) toggleModal(true, task);
 }
 
 // ─── Shutdown Milestone Schedule ────────────────────────────────────────────────

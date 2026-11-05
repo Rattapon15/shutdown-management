@@ -13,7 +13,8 @@ const { pool, query, withTx, SCHEMA } = require('./pool');
 
 const DATA_FILE = path.join(__dirname, 'data.json');
 const PLANTS = ['SKIC BM1', 'SKIC BM3', 'SKIC BM17', 'SKIC BM16',
-  'SKIC WS BM4', 'SKIC WS BM5', 'SKIC WS BM6', 'SKIC WS BM7', 'SKIC WS BM8', 'SKIC WS BM9'];
+  'SKIC WS BM4', 'SKIC WS BM5', 'SKIC WS BM6', 'SKIC WS BM7', 'SKIC WS BM8', 'SKIC WS BM9',
+  'TCP TM BM10'];
 const SCHEDULE_MILESTONES = ['shutdown', 'repair_done', 'warm_stream', 'function_test', 'startup', 'on_reel'];
 const SAFETY_CATEGORIES = ['power_outage', 'site_prep', 'high_risk'];
 

@@ -70,6 +70,9 @@ CREATE TABLE IF NOT EXISTS ai_project.shutdown_mnm_activity (
 );
 CREATE INDEX IF NOT EXISTS shutdown_mnm_activity_plant_id_idx
   ON ai_project.shutdown_mnm_activity (plant, id DESC);
+-- Activity export (date range, all plants) and the one-year retention prune.
+CREATE INDEX IF NOT EXISTS shutdown_mnm_activity_created_idx
+  ON ai_project.shutdown_mnm_activity (created_at);
 
 -- One row per (plant, milestone); the six milestones are fixed in code.
 -- date/time hold the Monthly Plan; actual_date/actual_time hold when it really happened.

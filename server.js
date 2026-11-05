@@ -310,6 +310,50 @@ const isValidHM = v => v === '' || /^([01]\d|2[0-3]):[0-5]\d$|^24:00$/.test(v);
 // YYYY-MM-DD or empty (= day inferred from the shutdown grid).
 const isValidYMD = v => v === '' || (/^\d{4}-\d{2}-\d{2}$/.test(v) && !isNaN(Date.parse(v)));
 
+// Edit Work form (pencil button). Open to every role, like Add Work. Logs one activity
+// line listing each changed field as "old → new".
+app.put('/api/tasks/:id', requireAuth, ah(async (req, res) => {
+  const plant = getPlant(req);
+  const old = await db.getTask(req.params.id, plant);
+  if (!old) return res.status(404).json({ error: 'Task not found' });
+  const str = (v, max) => String(v ?? '').trim().slice(0, max);
+  const f = {
+    tag: str(req.body.tag, 60).toUpperCase(), title: str(req.body.title, 300),
+    area: str(req.body.area, 120), assignee: str(req.body.assignee, 120),
+    progress: Number(req.body.progress), event_note: str(req.body.event_note, 500),
+    start_time: str(req.body.start_time, 5), end_time: str(req.body.end_time, 5),
+    duration: str(req.body.duration, 40),
+    // Dates are sent only when the user changed them; undefined keeps the stored ones.
+    start_date: req.body.start_date === undefined ? undefined : str(req.body.start_date, 10),
+    end_date:   req.body.end_date === undefined ? undefined : str(req.body.end_date, 10),
+  };
+  if (!f.tag || !f.title || !f.area || !f.assignee) return res.status(400).json({ error: 'Missing required fields' });
+  if (![0, 25, 50, 75, 100].includes(f.progress)) return res.status(400).json({ error: 'Invalid progress' });
+  if (!isValidHM(f.start_time) || !isValidHM(f.end_time)) return res.status(400).json({ error: 'Time must be HH:MM (00:00–24:00)' });
+  if ((f.start_date !== undefined && !isValidYMD(f.start_date)) || (f.end_date !== undefined && !isValidYMD(f.end_date))) {
+    return res.status(400).json({ error: 'Date must be YYYY-MM-DD' });
+  }
+
+  const when = (d, t) => [d, t].filter(Boolean).join(' ') || '—';
+  const short = v => { const s = String(v || '').trim(); return !s ? '—' : s.length > 60 ? s.slice(0, 60) + '…' : s; };
+  const fields = [
+    ['Location', old.area, f.area], ['Section', old.tag, f.tag], ['ชื่องาน', old.title, f.title],
+    ['ผู้รับผิดชอบ', old.assignee, f.assignee], ['สถานะ', `${old.progress}%`, `${f.progress}%`],
+    ['เริ่ม', when(old.start_date, old.start_time), when(f.start_date ?? old.start_date, f.start_time)],
+    ['จบ', when(old.end_date, old.end_time), when(f.end_date ?? old.end_date, f.end_time)],
+    ['Note', old.event_note, f.event_note],
+  ];
+  const changes = fields.filter(([, a, b]) => String(a || '') !== String(b || ''))
+    .map(([label, a, b]) => `${label}: ${short(a)} → ${short(b)}`);
+  if (!changes.length) return res.json({ ok: true, task: old, changed: 0 });
+
+  const { updated_by } = req.body;
+  const task = await db.updateTaskDetails(req.params.id, f, updated_by, plant);
+  if (!task) return res.status(404).json({ error: 'Task not found' });
+  await db.logActivity(task.tag, `แก้ไขงาน "${short(task.title)}" — ${changes.join(', ')}`, updated_by || 'User', plant);
+  res.json({ ok: true, task, changed: changes.length });
+}));
+
 app.put('/api/tasks/:id/times', requireAuth, ah(async (req, res) => {
   const start_time = String(req.body.start_time ?? '').trim();
   const end_time   = String(req.body.end_time ?? '').trim();
@@ -444,6 +488,21 @@ app.get('/api/overall', requireAuth, ah(async (req, res) => {
 // ─── Activity ─────────────────────────────────────────────────────────────────
 app.get('/api/activity', requireAuth, ah(async (req, res) => {
   res.json(await db.getActivity(30, getPlant(req)));
+}));
+
+// ?plant= one plant key, or "all" / missing for every plant.
+const exportPlant = q => (db.PLANTS.includes(q) ? q : undefined);
+
+// Activity export: from/to are ISO instants (the client turns its local dates into them).
+app.get('/api/activity/export', requireAuth, ah(async (req, res) => {
+  const from = new Date(String(req.query.from || '')), to = new Date(String(req.query.to || ''));
+  if (isNaN(from) || isNaN(to) || to <= from) return res.status(400).json({ error: 'Invalid date range' });
+  const actor = String(req.query.actor || '').trim() || undefined;
+  res.json(await db.getActivityRange({ plant: exportPlant(req.query.plant), from: from.toISOString(), to: to.toISOString(), actor }));
+}));
+
+app.get('/api/activity/actors', requireAuth, ah(async (req, res) => {
+  res.json(await db.getActivityActors(exportPlant(req.query.plant)));
 }));
 
 // ─── Shutdown schedule (milestone times) ──────────────────────────────────────
