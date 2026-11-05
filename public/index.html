@@ -1323,6 +1323,8 @@ const PLANT_GROUPS = [
   ] },
   { name: 'SKIC_WS', plants: ['BM4', 'BM5', 'BM6', 'BM7', 'BM8', 'BM9'].map(bm => ({ key: `SKIC WS ${bm}`, label: bm })) },
   { name: 'TCP_TM', plants: [{ key: 'TCP TM BM10', label: 'BM10' }] },
+  { name: 'TPC Pulp_BP', plants: ['CP', 'SCP', 'RB', 'Chipping', 'ECO'].map(u => ({ key: `TPC Pulp BP ${u}`, label: u })) },
+  { name: 'TPC Pulp_WS', plants: ['CP', 'UBP', 'RB', 'Chipping'].map(u => ({ key: `TPC Pulp WS ${u}`, label: u })) },
 ];
 const LIVE_BADGE_HTML = '<span class="ml-auto font-mono text-xs px-1.5 py-0.5 rounded" style="background:#001c10; color:#4edea3; border:1px solid rgba(78,222,163,0.4);">LIVE</span>';
 const VIEW_TABS = [
@@ -1761,6 +1763,15 @@ const OVERALL_PLANTS = {
   'SKIC WS BM8': { cycle: '', dot: '#b388d6' },
   'SKIC WS BM9': { cycle: '', dot: '#d1b3ea' },
   'TCP TM BM10': { cycle: '', dot: '#c2410c' },
+  'TPC Pulp BP CP':       { cycle: '', dot: '#0f766e' },
+  'TPC Pulp BP SCP':      { cycle: '', dot: '#14b8a6' },
+  'TPC Pulp BP RB':       { cycle: '', dot: '#5eead4' },
+  'TPC Pulp BP Chipping': { cycle: '', dot: '#a16207' },
+  'TPC Pulp BP ECO':      { cycle: '', dot: '#65a30d' },
+  'TPC Pulp WS CP':       { cycle: '', dot: '#be123c' },
+  'TPC Pulp WS UBP':      { cycle: '', dot: '#f43f5e' },
+  'TPC Pulp WS RB':       { cycle: '', dot: '#fda4af' },
+  'TPC Pulp WS Chipping': { cycle: '', dot: '#9333ea' },
 };
 const MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 let overallYear = new Date().getFullYear();
