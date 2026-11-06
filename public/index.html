@@ -1413,17 +1413,18 @@ let cdPendingDates = {};  // { __start_date: Set, __end_date: Set }
 let cdDateOptions = {};   // { __start_date: [[ymd, count], ...], ... }
 let cdDateOpenKey = null; // which date dropdown is expanded
 
-function cdInitDateFilters(filters) {
+// tasks: the jobs the เริ่ม/จบ dropdown lists values for (see cdOpen).
+function cdInitDateFilters(filters, tasks) {
   const frame = shutdownFrame();
   cdDateOpenKey = null;
   for (const [key, which] of Object.entries(CD_DATE_COLS)) {
     const counts = new Map();
-    for (const t of allTasks) {
+    for (const t of tasks) {
       const d = taskEffectiveDate(t, which, frame);
       if (d) counts.set(d, (counts.get(d) || 0) + 1);
     }
     cdDateOptions[key] = [...counts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-    cdPendingDates[key] = new Set(filters[key]?.size ? filters[key] : cdDateOptions[key].map(([d]) => d));
+    cdPendingDates[key] = new Set(cdDateOptions[key].map(([d]) => d).filter(d => !filters[key]?.size || filters[key].has(d)));
   }
   cdRenderDateFilters();
 }
@@ -1485,9 +1486,14 @@ function cdOpen(col, headerEl, scope = 'table') {
   const filters = cdFiltersFor(scope);
   const sort = cdSortFor(scope);
 
-  // Build unique values from all tasks (not filtered)
+  // Excel style: list only values of the jobs still visible under the stage card, the search
+  // box and the other columns' filters — this column's own filter is left out so its
+  // unchecked values can be ticked back on.
+  const ownKeys = col === 'start_time' ? ['start_time', ...Object.keys(CD_DATE_COLS)] : [col];
+  const others = Object.fromEntries(Object.entries(filters).filter(([k]) => !ownKeys.includes(k)));
+  const source = applyColFiltersAndSort(summaryFilteredTasks(), others, { col: null });
   const valSet = new Map();
-  for (const t of allTasks) {
+  for (const t of source) {
     const v = cdGetValue(t, col);
     if (!valSet.has(v)) valSet.set(v, 0);
     valSet.set(v, valSet.get(v) + 1);
@@ -1503,14 +1509,14 @@ function cdOpen(col, headerEl, scope = 'table') {
     return a[0].localeCompare(b[0], 'th');
   });
 
-  // cdPendingValues = set of values that are CHECKED (explicit whitelist).
+  // cdPendingValues = set of values that are CHECKED (explicit whitelist), limited to the listed ones.
   // No existing filter → everything starts checked (i.e. "show all").
-  cdPendingValues = filters[col] ? new Set(filters[col]) : new Set(cdAllValues.map(([v]) => v));
+  cdPendingValues = new Set(cdAllValues.map(([v]) => v).filter(v => !filters[col] || filters[col].has(v)));
 
   document.getElementById('cd-col-label').textContent = headerEl.dataset.col.toUpperCase() + ' — FILTER';
   document.getElementById('cd-val-search').value = '';
   document.getElementById('cd-date-filters').classList.toggle('hidden', col !== 'start_time');
-  if (col === 'start_time') cdInitDateFilters(filters);
+  if (col === 'start_time') cdInitDateFilters(filters, source);
 
   // Highlight sort buttons
   document.getElementById('cd-sort-asc').className = 'cd-btn' + (sort.col===col && sort.dir===1 ? ' active' : '');
@@ -1612,19 +1618,17 @@ function cdToggleVal(val, checked) {
 
 function cdApply() {
   if (cdCurrentCol) {
-    // Fully-checked (all values selected) == no filter needed.
+    // Fully-checked (all listed values selected) == no filter needed. The list only shows values
+    // of visible jobs, so values the existing filter allowed that aren't listed are kept as they were.
     const filters = cdFiltersFor(cdScope);
-    if (cdPendingValues.size === 0 || cdPendingValues.size === cdAllValues.length) {
-      delete filters[cdCurrentCol];
-    } else {
-      filters[cdCurrentCol] = new Set(cdPendingValues);
-    }
+    const save = (key, pending, listed) => {
+      const kept = filters[key] ? [...filters[key]].filter(v => !listed.has(v)) : [];
+      if (!kept.length && (pending.size === 0 || pending.size === listed.size)) delete filters[key];
+      else filters[key] = new Set([...pending, ...kept]);
+    };
+    save(cdCurrentCol, cdPendingValues, new Set(cdAllValues.map(([v]) => v)));
     if (cdCurrentCol === 'start_time') {
-      for (const key in CD_DATE_COLS) {
-        const n = cdPendingDates[key]?.size || 0;
-        if (n > 0 && n < cdDateOptions[key].length) filters[key] = new Set(cdPendingDates[key]);
-        else delete filters[key];
-      }
+      for (const key in CD_DATE_COLS) save(key, cdPendingDates[key], new Set(cdDateOptions[key].map(([d]) => d)));
     }
     updateColHeaders();
   }
