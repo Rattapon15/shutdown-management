@@ -132,6 +132,8 @@ tailwind.config = {
   .main-tab-btn:hover:not(.active) { color:#1a1b22; background:rgba(255,255,255,.45); }
   .main-tab-btn.active { background:#ffffff; color:#1a1b22; box-shadow:0 1px 3px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.04); }
   .main-tab-btn.active .material-symbols-outlined { color:#0077b6; }
+  .plant-title { display:inline-flex; align-items:center; gap:8px; font-size:20px; font-weight:800; color:#1a1b22; letter-spacing:.01em; }
+  .plant-title .material-symbols-outlined { font-size:24px; color:#0077b6; }
   #history-modal-body > * { flex-shrink:0; }
   #excel-file-name { display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:60; width:max-content; max-width:340px;
     flex-direction:column; gap:4px; padding:8px 10px; border-radius:8px; background:#ffffff;
@@ -444,11 +446,17 @@ tailwind.config = {
 
 <!-- ── Main content tabs ── -->
 <div id="main-tab-bar" class="px-5 pt-3 flex flex-col xl:flex-row xl:items-center justify-between gap-2">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
   <div class="main-tab-group" role="tablist">
     <button id="main-tab-btn-gantt" onclick="setMainTab('gantt')" role="tab" class="main-tab-btn active">
       <span class="material-symbols-outlined">view_timeline</span>TAB 1</button>
     <button id="main-tab-btn-table" onclick="setMainTab('table')" role="tab" class="main-tab-btn">
       <span class="material-symbols-outlined">table_rows</span>TAB 2</button>
+  </div>
+  <!-- Selected plant, e.g. "SKIC_BP BM16"; filled by updatePlantTitle() -->
+  <div id="current-plant-title" class="plant-title">
+    <span class="material-symbols-outlined">factory</span><span id="current-plant-title-text"></span>
+  </div>
   </div>
 
   <div id="main-action-bar" class="flex flex-wrap items-center gap-2 xl:justify-end">
@@ -1326,6 +1334,14 @@ const PLANT_GROUPS = [
   { name: 'TPC Pulp_BP', plants: ['CP', 'SCP', 'RB', 'Chipping', 'ECO'].map(u => ({ key: `TPC Pulp BP ${u}`, label: u })) },
   { name: 'TPC Pulp_WS', plants: ['CP', 'UBP', 'RB', 'Chipping'].map(u => ({ key: `TPC Pulp WS ${u}`, label: u })) },
 ];
+// "SKIC WS BM4" → "SKIC_WS BM4", the way the sidebar groups it.
+const plantDisplayName = key => {
+  for (const g of PLANT_GROUPS) {
+    const p = g.plants.find(p => p.key === key);
+    if (p) return `${g.name} ${p.label}`;
+  }
+  return key;
+};
 const LIVE_BADGE_HTML = '<span class="ml-auto font-mono text-xs px-1.5 py-0.5 rounded" style="background:#001c10; color:#4edea3; border:1px solid rgba(78,222,163,0.4);">LIVE</span>';
 const VIEW_TABS = [
   { view: 'progress', icon: 'monitoring',       label: 'Shutdown Progress Update' },
@@ -1377,6 +1393,7 @@ function togglePlantGroup(name) {
   section.querySelector('.plant-section-chevron').textContent = open ? 'expand_more' : 'chevron_right';
 }
 renderPlantNav();
+updatePlantTitle();
 
 // Mobile drawer: open from the topbar button, close after picking a plant/view.
 const NAV_MOBILE = window.matchMedia('(max-width: 767px)');
@@ -1707,7 +1724,13 @@ function applyColFiltersAndSort(tasks, filters, sort) {
 }
 
 // ─── Plant tab switching ───────────────────────────────────────────────────────
+// Tab-bar heading, e.g. 'SKIC BM16' -> 'SKIC_BP BM16'.
+function updatePlantTitle() {
+  document.getElementById('current-plant-title-text').textContent = plantDisplayName(currentPlant);
+}
+
 function showPlantSubnav(plant) {
+  updatePlantTitle();
   document.querySelectorAll('#plant-tab-nav .plant-subnav').forEach(sub => {
     const isActive = sub.dataset.plantSub === plant;
     sub.classList.toggle('hidden', !isActive);
@@ -2064,15 +2087,6 @@ function formatTimeAgo(dt) {
 
 // ─── Activity log export ──────────────────────────────────────────────────────
 const localYMD = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-// "SKIC WS BM4" → "SKIC_WS BM4", the way the sidebar groups it.
-const plantDisplayName = key => {
-  for (const g of PLANT_GROUPS) {
-    const p = g.plants.find(p => p.key === key);
-    if (p) return `${g.name} ${p.label}`;
-  }
-  return key;
-};
-
 // Event type for the export, from how server.js words each activity line.
 function activityType(row) {
   const a = row.action || '';
