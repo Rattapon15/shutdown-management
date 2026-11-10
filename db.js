@@ -610,7 +610,7 @@ const db = {
                 count(*) FILTER (WHERE status <> 'cancelled' AND progress = 100)::int AS done,
                 count(*) FILTER (WHERE status = 'cancelled')::int AS cancelled,
                 count(*) FILTER (WHERE progress > 0 OR status = 'cancelled')::int AS touched,
-                count(*) FILTER (WHERE added)::int AS added
+                count(*) FILTER (WHERE added AND status <> 'cancelled')::int AS added
          FROM shutdown_mnm_tasks WHERE plant = $1`, [p]);
     const { rows: [pl] } = await client.query('SELECT last_excel_upload FROM shutdown_mnm_plants WHERE name = $1', [p]);
     const { rows: sched } = await client.query(

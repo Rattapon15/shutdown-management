@@ -2345,13 +2345,16 @@ function getTimeStatus(task) {
   return { label: 'ON TIME', cls: 'text-secondary bg-secondary-container/30 border border-secondary/40' };
 }
 
+// Add Work = jobs added by hand that are still live; a cancelled one only counts as Cancel Job.
+function isAddWork(t) { return t.added && t.status !== 'cancelled'; }
+
 // Stage-tile phase + main search box — the summary section above the tabs drives both TAB 1 and TAB 2.
 function summaryFilteredTasks() {
   const mainEl = document.getElementById('main-search-input');
   const searchVal = (mainEl ? mainEl.value : '').toLowerCase().trim();
   return allTasks.filter(t => {
     const matchPhase = activePhase === null
-      || (activePhase === 'added' && t.added)
+      || (activePhase === 'added' && isAddWork(t))
       || (activePhase === 'cancelled' ? t.status === 'cancelled' : (t.status !== 'cancelled' && t.progress === activePhase));
     const matchSearch = !searchVal || [t.id, t.tag, t.title, t.area, t.assignee, t.note, t.start_time||'', t.end_time||'', t.duration||'', cdGetValue(t, 'progress')].some(v => String(v||'').toLowerCase().includes(searchVal));
     return matchPhase && matchSearch;
@@ -2804,7 +2807,7 @@ function sectionCounts(tasks) {
       row.total++;
       if (t.status === 'cancelled') row.cancelled++;
       else if (t.progress in row) row[t.progress]++;
-      if (t.added) row.added++;
+      if (isAddWork(t)) row.added++;
     }
   }
   return { stages, bySection, sum };
@@ -3188,7 +3191,8 @@ function updateKPIs() {
     if (el) el.textContent = counts[s.p];
   });
   // Add Work cuts across stages (hand-added jobs at any stage), so it isn't a pie slice.
-  const addedCount = addedTotal;
+  // Cancelled ones are left out: they only count as Cancel Job.
+  const addedCount = tasks.filter(isAddWork).length;
   document.getElementById('cnt-added').textContent = addedCount;
 
   // ── Draw pie chart ──────────────────────────────────────────────
@@ -3530,7 +3534,8 @@ function renderHistoryDetail(h) {
   const pct = historyPct(h);
   document.getElementById('history-modal-title').textContent = `${h.plant} — Shutdown ${historyRange(h)}`;
   const allTasksH = h.tasks || [];
-  const addedCount = h.added ?? allTasksH.filter(t => t.added).length;
+  // From the tasks when we have them: older records stored a count that included cancelled jobs.
+  const addedCount = allTasksH.length ? allTasksH.filter(isAddWork).length : h.added ?? 0;
   const kpi = (label, value) => `<div class="bg-surface-container-low rounded-lg px-3 py-2">
       <div class="text-[10px] uppercase tracking-wide text-on-surface-variant">${label}</div>
       <div class="font-mono text-lg font-bold text-on-surface">${value}</div></div>`;
@@ -3657,7 +3662,7 @@ async function exportHistoryExcel() {
   try {
     await loadSheetJS();
     const tasks = h.tasks || [];
-    const added = h.added ?? tasks.filter(t => t.added).length;
+    const added = tasks.length ? tasks.filter(isAddWork).length : h.added ?? 0;
     const dt = iso => {
       const d = iso ? new Date(iso) : null;
       return d && !isNaN(d) ? d.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
