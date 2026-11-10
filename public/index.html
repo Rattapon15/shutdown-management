@@ -1125,6 +1125,10 @@ tailwind.config = {
         <textarea id="f-note" rows="2" placeholder="ระบุสาเหตุของงานเพิ่มหรือ Note รายละเอียดหน้างาน" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary"></textarea>
       </div>
       <div class="flex items-center justify-end gap-2 pt-3 border-t border-surface-container-high">
+        <!-- Edit Work only, admin only (shown by toggleModal); the server enforces it too. -->
+        <button type="button" id="task-modal-delete" onclick="deleteEditingTask()" class="hidden mr-auto items-center gap-1.5 px-4 py-2 rounded bg-error-container/30 hover:bg-error-container/60 border border-error/40 text-error font-semibold transition-colors">
+          <span class="material-symbols-outlined" style="font-size:18px">delete</span>ลบงาน
+        </button>
         <button type="button" onclick="toggleModal(false)" class="px-4 py-2 rounded bg-surface-container hover:bg-surface-bright text-on-surface font-medium transition-colors">ยกเลิก</button>
         <button type="submit" id="task-modal-submit" class="px-5 py-2 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container font-bold transition-all shadow-md">บันทึกรายการงาน</button>
       </div>
@@ -3173,10 +3177,16 @@ function updateKPIs() {
   const avg = total > 0 ? (doneCount / total * 100).toFixed(1) : '0.0';
 
   // Add Work jobs are ordinary tasks, so they are already inside total and doneCount.
-  const addedTotal = tasks.filter(t => t.added).length;
+  // The split matches the tiles: live Add Work, and plan = what is left once cancelled jobs are set aside.
+  const addedTotal = tasks.filter(isAddWork).length;
+  const cancelledTotal = tasks.filter(t => t.status === 'cancelled').length;
   document.getElementById('kpi-percent').textContent = avg + '%';
   document.getElementById('kpi-total').textContent = total + ' งาน'
-    + (addedTotal ? ` (แผน ${total - addedTotal} + Add Work ${addedTotal})` : '')
+    + (addedTotal || cancelledTotal
+        ? ` (แผน ${total - cancelledTotal - addedTotal}`
+          + (addedTotal ? ` + Add Work ${addedTotal}` : '')
+          + (cancelledTotal ? ` + ยกเลิก ${cancelledTotal}` : '') + ')'
+        : '')
     + (filtered ? ' (ตามตัวกรอง)' : '');
   document.getElementById('gauge-text').textContent = avg + '%';
   document.getElementById('gauge-total-text').textContent = total + ' งาน';
@@ -3833,6 +3843,25 @@ async function saveEditTask(e) {
   }
 }
 
+// Delete the job open in the Edit Work form (admin only). Permanent, so it asks first.
+async function deleteEditingTask() {
+  const task = editingTask;
+  if (!task || !requireAdminUI()) return;
+  const kind = task.added ? 'งานเพิ่ม (Add Work)' : 'งานจากแผน Excel';
+  if (!confirm(`ลบงานนี้ออกจากระบบอย่างถาวร?\n\n${task.tag} · ${task.title}\n(${kind})\n\nไม่สามารถกู้คืนได้`)) return;
+  try {
+    const res = await fetch(`/api/tasks/${encodeURIComponent(task.id)}?${plantQS()}`, { method: 'DELETE' });
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(result.error || `HTTP ${res.status}`);
+    toggleModal(false);
+    await loadTasks();
+    await loadActivity();
+    showToast(`ลบงาน ${task.tag} แล้ว`, task.title);
+  } catch (err) {
+    showToast('ลบงานไม่สำเร็จ', err.message, true);
+  }
+}
+
 // ─── Excel Upload ─────────────────────────────────────────────────────────────
 function formatUploadTime(iso) {
   if (!iso) return '';
@@ -3982,6 +4011,10 @@ function toggleModal(open, task = null) {
   if (!open) return;
 
   const edit = !!task;
+  const delBtn = document.getElementById('task-modal-delete');
+  const showDelete = edit && canWrite();
+  delBtn.classList.toggle('hidden', !showDelete);
+  delBtn.classList.toggle('inline-flex', showDelete);
   document.getElementById('task-modal-icon').textContent = edit ? 'edit' : 'add_circle';
   document.getElementById('task-modal-title').textContent = edit
     ? `แก้ไขรายละเอียดงาน (Edit Work) · ${task.tag || task.id}` : 'กรอกรายละเอียดงานเพิ่มระหว่าง Shutdown (Add Work)';
