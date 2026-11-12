@@ -134,6 +134,27 @@ tailwind.config = {
   .main-tab-btn.active .material-symbols-outlined { color:#0077b6; }
   .plant-title { display:inline-flex; align-items:center; gap:8px; font-size:20px; font-weight:800; color:#1a1b22; letter-spacing:.01em; }
   .plant-title .material-symbols-outlined { font-size:24px; color:#0077b6; }
+  /* Sidebar Department > Location > Plant picker */
+  .pp-pill { display:grid; grid-template-columns:1fr auto; column-gap:6px; align-items:center; text-align:left; width:100%; min-width:0;
+    padding:4px 8px 4px 10px; border-radius:7px; background:#102034; border:1px solid #26364a; color:#d3e4fe; transition:border-color .15s, background .15s; }
+  .pp-pill:hover { border-color:#4a6585; background:#14283f; }
+  .pp-pill.open { border-color:#7bd0ff; box-shadow:0 0 0 2px rgba(123,208,255,.18); }
+  .pp-pill.empty { border-style:dashed; border-color:#7bd0ff; }
+  .pp-pill.empty .pp-val { color:#7bd0ff; font-weight:600; }
+  .pp-cap { grid-column:1/-1; font-size:9px; line-height:1.1; letter-spacing:.09em; text-transform:uppercase; color:#909097; }
+  .pp-val { font-size:13px; line-height:1.3; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pp-chev { grid-row:2; grid-column:2; font-size:18px; color:#909097; transition:transform .15s; }
+  .pp-pill.open .pp-chev { transform:rotate(180deg); color:#7bd0ff; }
+  #plant-picker.pp-overall .pp-pill:not(.open):not(.empty) { opacity:.55; }
+  .pp-menu { position:fixed; z-index:60; max-width:320px; background:#0b1c30; border:1px solid #26364a; border-radius:9px; padding:4px;
+    box-shadow:0 12px 32px rgba(0,0,0,.45); }
+  .pp-search { width:100%; margin-bottom:4px; padding:6px 9px; font-size:12px; border-radius:6px; background:#000f21; border:1px solid #26364a; color:#d3e4fe; outline:none; }
+  .pp-search:focus { border-color:#7bd0ff; }
+  .pp-list { max-height:min(340px, 60vh); overflow-y:auto; display:flex; flex-direction:column; gap:1px; }
+  .pp-item { display:flex; align-items:center; justify-content:space-between; gap:14px; text-align:left; padding:7px 10px; border-radius:6px; font-size:13px; color:#d3e4fe; }
+  .pp-item:hover { background:#1b2b3f; }
+  .pp-item.on { background:#102034; color:#7bd0ff; font-weight:700; }
+  .pp-meta { font-family:ui-monospace,monospace; font-size:10px; color:#909097; flex-shrink:0; }
   #history-modal-body > * { flex-shrink:0; }
   #excel-file-name { display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:60; width:max-content; max-width:340px;
     flex-direction:column; gap:4px; padding:8px 10px; border-radius:8px; background:#ffffff;
@@ -350,9 +371,14 @@ tailwind.config = {
         <span class="material-symbols-outlined" style="font-size:18px">dashboard</span><span>Overall Plant</span>
       </a>
     </nav>
-    <div class="px-3 py-2"><span class="text-[10px] uppercase tracking-widest px-2 font-semibold" style="color:#909097;">Plant Selection</span></div>
-    <nav class="flex flex-col gap-1 px-2" id="plant-tab-nav">
-    </nav>
+    <div class="px-3 pt-3 pb-1"><span class="text-[10px] uppercase tracking-widest px-2 font-semibold" style="color:#909097;">Plant Selection</span></div>
+    <!-- Department > Location > Plant picker; filled by renderPlantPicker() -->
+    <div id="plant-picker" class="flex flex-col gap-1.5 px-3 pb-2"></div>
+    <!-- The selected plant and its views; filled by renderPlantNav() -->
+    <div id="plant-nav-wrap">
+      <nav class="flex flex-col gap-1 px-2" id="plant-tab-nav">
+      </nav>
+    </div>
   </div>
 
   <!-- Activity feed -->
@@ -1312,6 +1338,7 @@ const ROLE_LABELS = { admin: 'Administrator', user: 'User (อ่านอย่
 const canWrite = () => currentUser && currentUser.role === 'admin';
 let currentPlant = 'SKIC BM16';
 let currentView = 'progress';
+let overallMode = false;   // Overall Plant page is showing instead of a plant
 let currentSafety = { power_outage: [], site_prep: [], high_risk: [] };
 
 // ─── Gantt timeline (Tab 1) state ──────────────────────────────────────────────
@@ -1322,30 +1349,49 @@ const GANTT_LEFT_COL_PX = 876; // must match .gantt-left-col width in CSS
 
 function plantQS() { return `plant=${encodeURIComponent(currentPlant)}`; }
 
-// ─── Plant Selection sidebar ──────────────────────────────────────────────────
-// Two groups, each a collapsible list of plants. `key` is the plant name the API and
-// database use (the BP plants keep their original "SKIC BMx" keys, so their data is
-// unchanged); `label` is what the sidebar shows.
-const PLANT_GROUPS = [
-  { name: 'SKIC_BP', plants: [
-    { key: 'SKIC BM1',  label: 'BM1' },
-    { key: 'SKIC BM3',  label: 'BM3' },
-    { key: 'SKIC BM17', label: 'BM17' },
-    { key: 'SKIC BM16', label: 'BM16' },
+// ─── Plant selection (topbar: Department > Location > Plant) ─────────────────
+// `key` is the plant name the API and database use (the BP plants keep their original
+// "SKIC BMx" keys, so their data is unchanged); `label` is what the picker shows.
+// Mirrors "Departmet-location-plant" Excel; db.js PLANTS must hold every key here.
+const mkPlants = (prefix, labels) => labels.map(u => ({ key: `${prefix} ${u}`, label: u }));
+const DEPARTMENTS = [
+  { name: 'BP Paper Maintenance', locations: [
+    { name: 'SKIC_BP', plants: ['BM1', 'BM3', 'BM17', 'BM16'].map(u => ({ key: `SKIC ${u}`, label: u })) },
+    { name: 'TPC Paper_BP', plants: mkPlants('TPC Paper BP', ['PM2', 'PM3', 'PM4', 'PM5', 'SNP']) },
   ] },
-  { name: 'SKIC_WS', plants: ['BM4', 'BM5', 'BM6', 'BM7', 'BM8', 'BM9'].map(bm => ({ key: `SKIC WS ${bm}`, label: bm })) },
-  { name: 'TCP_TM', plants: [{ key: 'TCP TM BM10', label: 'BM10' }] },
-  { name: 'TPC Pulp_BP', plants: ['CP', 'SCP', 'RB', 'Chipping', 'ECO'].map(u => ({ key: `TPC Pulp BP ${u}`, label: u })) },
-  { name: 'TPC Pulp_WS', plants: ['CP', 'UBP', 'RB', 'Chipping'].map(u => ({ key: `TPC Pulp WS ${u}`, label: u })) },
+  { name: 'WS Paper Maintenance', locations: [
+    { name: 'SKIC_WS', plants: mkPlants('SKIC WS', ['BM4', 'BM5', 'BM6', 'BM7', 'BM8', 'BM9']) },
+    { name: 'TCP_TM', plants: [{ key: 'TCP TM BM10', label: 'BM10' }] },
+  ] },
+  { name: 'Pulp Maintenance', locations: [
+    { name: 'TPC Pulp_BP', plants: mkPlants('TPC Pulp BP', ['CP', 'SCP', 'RB', 'Chipping', 'ECO']) },
+    { name: 'TPC Pulp_WS', plants: mkPlants('TPC Pulp WS', ['CP', 'UBP', 'RB', 'Chipping']) },
+  ] },
+  { name: 'Energy Maintenance', locations: [
+    { name: 'SKIC Energy_BP', plants: mkPlants('SKIC Energy BP', ['PB#11', 'PB#12', 'PB#16', 'PB#17-TRP', 'PB#19', 'TG#11', 'TG#12', 'TG#16', 'TG#17-TRP', 'TG#19']) },
+    { name: 'SKIC_Energy_WS', plants: mkPlants('SKIC Energy WS', ['PB#14', 'PB#18', 'TG#14', 'TG#18', 'TG#6']) },
+    { name: 'TCP_Energy_TM', plants: mkPlants('TCP Energy TM', ['PB#2', 'TG#2']) },
+  ] },
 ];
-// "SKIC WS BM4" → "SKIC_WS BM4", the way the sidebar groups it.
-const plantDisplayName = key => {
-  for (const g of PLANT_GROUPS) {
-    const p = g.plants.find(p => p.key === key);
-    if (p) return `${g.name} ${p.label}`;
+// Flat list of locations (a.k.a. plant groups): Overall export picker, display names.
+const PLANT_GROUPS = DEPARTMENTS.flatMap(d => d.locations.map(l => ({ ...l, department: d.name })));
+// key → { dept, loc, plant }
+function plantLookup(key) {
+  for (const dept of DEPARTMENTS) for (const loc of dept.locations) {
+    const plant = loc.plants.find(p => p.key === key);
+    if (plant) return { dept, loc, plant };
   }
-  return key;
+  return null;
+}
+// "SKIC WS BM4" → "SKIC_WS BM4", the way the picker groups it.
+const plantDisplayName = key => {
+  const f = plantLookup(key);
+  return f ? `${f.loc.name} ${f.plant.label}` : key;
 };
+{ // restore the plant picked last time on this browser
+  const saved = localStorage.getItem('currentPlant');
+  if (saved && plantLookup(saved)) currentPlant = saved;
+}
 const LIVE_BADGE_HTML = '<span class="ml-auto font-mono text-xs px-1.5 py-0.5 rounded" style="background:#001c10; color:#4edea3; border:1px solid rgba(78,222,163,0.4);">LIVE</span>';
 const VIEW_TABS = [
   { view: 'progress', icon: 'monitoring',       label: 'Shutdown Progress Update' },
@@ -1353,50 +1399,153 @@ const VIEW_TABS = [
   { view: 'history',  icon: 'history',          label: 'Shutdown History' },
 ];
 
+// Sidebar: only the selected plant and its views (hidden on Overall Plant).
 function renderPlantNav() {
-  const nav = document.getElementById('plant-tab-nav');
-  nav.innerHTML = PLANT_GROUPS.map(group => {
-    const open = group.plants.some(p => p.key === currentPlant);
-    const plants = group.plants.map(p => {
-      const active = p.key === currentPlant;
-      return `<div class="plant-group flex flex-col">
-        <a class="plant-tab${active ? ' active' : ''} flex items-center gap-2 px-3 py-2 rounded transition-colors${active ? ' border-l-2 font-semibold' : ''}"
-           style="${active ? 'background:#1b2b3f; color:#7bd0ff; border-color:#7bd0ff;' : 'color:#909097;'}"
-           href="#" data-plant="${escHtml(p.key)}" onclick="setPlantTab(this); return false;">
-          <span class="material-symbols-outlined" style="font-size:18px">factory</span><span>${escHtml(p.label)}</span>${active ? LIVE_BADGE_HTML : ''}
-        </a>
-        <div class="plant-subnav ${active ? 'flex' : 'hidden'} flex-col gap-0.5 pl-8 pr-1 py-1" data-plant-sub="${escHtml(p.key)}">
-          ${VIEW_TABS.map(v => {
-            const on = active && v.view === currentView;
-            return `<a class="view-tab${on ? ' active font-semibold' : ''} flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors"
-               style="${on ? 'background:#102034; color:#7bd0ff;' : 'color:#909097;'}" href="#" data-view="${v.view}" onclick="setViewTab(this,'${v.view}'); return false;">
-              <span class="material-symbols-outlined" style="font-size:14px">${v.icon}</span><span>${v.label}</span>
-            </a>`;
-          }).join('')}
-        </div>
-      </div>`;
-    }).join('');
-    return `<div class="plant-section flex flex-col" data-group="${group.name}">
-      <button type="button" class="plant-section-hd flex items-center gap-2 px-3 py-2 rounded text-[1.125rem] font-bold tracking-wide transition-colors hover:bg-white/5"
-              style="color:#d3e4fe;" onclick="togglePlantGroup('${group.name}')">
-        <span class="material-symbols-outlined plant-section-chevron" style="font-size:16px">${open ? 'expand_more' : 'chevron_right'}</span>
-        <span>${group.name}</span>
-        <span class="ml-auto font-mono text-[10px]" style="color:#909097;">${group.plants.length}</span>
-      </button>
-      <div class="plant-section-body ${open ? 'flex' : 'hidden'} flex-col gap-1 pl-3">${plants}</div>
-    </div>`;
-  }).join('');
+  document.getElementById('plant-nav-wrap').classList.toggle('hidden', overallMode);
+  document.getElementById('plant-tab-nav').innerHTML = `<div class="plant-group flex flex-col">
+    <div class="plant-subnav flex flex-col gap-0.5 px-1 py-1" data-plant-sub="${escHtml(currentPlant)}">
+      ${VIEW_TABS.map(v => {
+        const on = v.view === currentView;
+        return `<a class="view-tab${on ? ' active font-semibold' : ''} flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors"
+           style="${on ? 'background:#102034; color:#7bd0ff;' : 'color:#909097;'}" href="#" data-view="${v.view}" onclick="setViewTab(this,'${v.view}'); return false;">
+          <span class="material-symbols-outlined" style="font-size:14px">${v.icon}</span><span>${v.label}</span>
+        </a>`;
+      }).join('')}
+    </div>
+  </div>`;
 }
 
-function togglePlantGroup(name) {
-  const section = document.querySelector(`#plant-tab-nav .plant-section[data-group="${name}"]`);
-  const body = section.querySelector('.plant-section-body');
-  const open = body.classList.contains('hidden');
-  body.classList.toggle('hidden', !open);
-  body.classList.toggle('flex', open);
-  section.querySelector('.plant-section-chevron').textContent = open ? 'expand_more' : 'chevron_right';
+// Topbar picker. `pickerDraft` is the choice in progress: choosing a Department or
+// Location only changes the dashboard once a Plant is picked, and abandoning the menus
+// puts the draft back to the plant that is on screen.
+const pickerDraft = { dept: null, loc: null };
+let pickerOpen = null;   // 'dept' | 'loc' | 'plant' | null
+function resetPickerDraft() {
+  const f = plantLookup(currentPlant);
+  pickerDraft.dept = f ? f.dept.name : null;
+  pickerDraft.loc = f ? f.loc.name : null;
 }
+resetPickerDraft();
+
+function renderPlantPicker() {
+  const dept = DEPARTMENTS.find(d => d.name === pickerDraft.dept);
+  const loc = dept && dept.locations.find(l => l.name === pickerDraft.loc);
+  const shown = plantLookup(currentPlant);
+  const plant = loc && shown && shown.loc.name === loc.name ? shown.plant : null;
+  const pill = (lvl, cap, val) => `<button type="button" class="pp-pill${pickerOpen === lvl ? ' open' : ''}${val ? '' : ' empty'}" data-pp="${lvl}"
+      aria-haspopup="listbox" aria-expanded="${pickerOpen === lvl}">
+      <span class="pp-cap">${cap}</span>
+      <span class="pp-val">${escHtml(val || `เลือก ${cap}`)}</span>
+      <span class="material-symbols-outlined pp-chev">expand_more</span></button>`;
+  const el = document.getElementById('plant-picker');
+  el.innerHTML =
+    pill('dept', 'Department', dept && dept.name) +
+    (dept ? pill('loc', 'Location', loc && loc.name) : '') +
+    (loc ? pill('plant', 'Plant', plant && plant.label) : '');
+  el.classList.toggle('pp-overall', overallMode);
+}
+
+function pickerItems(lvl) {
+  const dept = DEPARTMENTS.find(d => d.name === pickerDraft.dept);
+  const loc = dept && dept.locations.find(l => l.name === pickerDraft.loc);
+  const shown = plantLookup(currentPlant);
+  if (lvl === 'dept') return DEPARTMENTS.map(d => ({ id: d.name, label: d.name,
+    meta: `${d.locations.reduce((n, l) => n + l.plants.length, 0)} plants`, on: d.name === pickerDraft.dept }));
+  if (lvl === 'loc') return dept.locations.map(l => ({ id: l.name, label: l.name,
+    meta: `${l.plants.length}`, on: l.name === pickerDraft.loc }));
+  return loc.plants.map(p => ({ id: p.key, label: p.label, meta: '', on: p.key === currentPlant && !!shown && shown.loc.name === loc.name }));
+}
+
+function openPickerMenu(lvl) {
+  closePickerMenu(false);
+  pickerOpen = lvl;
+  renderPlantPicker();
+  const btn = document.querySelector(`#plant-picker [data-pp="${lvl}"]`);
+  const items = pickerItems(lvl);
+  const menu = document.createElement('div');
+  menu.id = 'plant-menu';
+  menu.className = 'pp-menu';
+  menu.dataset.lvl = lvl;
+  menu.innerHTML = `${items.length > 7 ? `<input type="text" class="pp-search" placeholder="ค้นหา…" autocomplete="off" aria-label="ค้นหา">` : ''}
+    <div class="pp-list" role="listbox">${items.map(it => `<button type="button" role="option" class="pp-item${it.on ? ' on' : ''}" data-id="${escHtml(it.id)}">
+      <span class="truncate">${escHtml(it.label)}</span>${it.meta ? `<span class="pp-meta">${escHtml(it.meta)}</span>` : ''}</button>`).join('')}</div>`;
+  document.body.appendChild(menu);
+  const r = btn.getBoundingClientRect();
+  // Flyout to the right of the sidebar pill, so the other pills stay visible.
+  menu.style.minWidth = '210px';
+  menu.style.left = `${Math.min(r.right + 6, Math.max(8, window.innerWidth - menu.offsetWidth - 8))}px`;
+  menu.style.top = `${Math.max(8, Math.min(r.top, window.innerHeight - menu.offsetHeight - 8))}px`;
+  const search = menu.querySelector('.pp-search');
+  if (search) search.focus();
+  const on = menu.querySelector('.pp-item.on');
+  if (on) on.scrollIntoView({ block: 'nearest' });
+}
+
+function closePickerMenu(revert = true) {
+  const menu = document.getElementById('plant-menu');
+  if (menu) menu.remove();
+  if (pickerOpen === null) return;
+  pickerOpen = null;
+  if (revert) resetPickerDraft();   // unfinished choice is dropped
+  renderPlantPicker();
+}
+
+function pickerChoose(lvl, id) {
+  if (lvl === 'plant') {
+    closePickerMenu(false);
+    selectPlant(id);
+    return;
+  }
+  if (lvl === 'dept' && id === pickerDraft.dept) { closePickerMenu(); return; }
+  const dept = DEPARTMENTS.find(d => d.name === (lvl === 'dept' ? id : pickerDraft.dept));
+  if (lvl === 'dept') {
+    pickerDraft.dept = id;
+    pickerDraft.loc = dept.locations.length === 1 ? dept.locations[0].name : null;
+  } else {
+    pickerDraft.loc = id;
+  }
+  const loc = dept.locations.find(l => l.name === pickerDraft.loc);
+  if (!loc) { openPickerMenu('loc'); return; }
+  if (loc.plants.length === 1) { closePickerMenu(false); selectPlant(loc.plants[0].key); return; }
+  openPickerMenu('plant');   // flow straight on to the next level
+}
+
+document.getElementById('plant-picker').addEventListener('click', e => {
+  const b = e.target.closest('[data-pp]');
+  if (!b) return;
+  e.stopPropagation();   // the pill is re-rendered below, so the outside-click handler could not tell it was inside
+  if (pickerOpen === b.dataset.pp) closePickerMenu(); else openPickerMenu(b.dataset.pp);
+});
+document.addEventListener('click', e => {
+  const menu = document.getElementById('plant-menu');
+  if (!menu) return;
+  const item = e.target.closest('#plant-menu .pp-item');
+  if (item) { pickerChoose(menu.dataset.lvl, item.dataset.id); return; }
+  if (!e.target.closest('#plant-menu, #plant-picker')) closePickerMenu();
+});
+document.addEventListener('input', e => {
+  if (!e.target.classList.contains('pp-search')) return;
+  const q = e.target.value.trim().toLowerCase();
+  document.querySelectorAll('#plant-menu .pp-item').forEach(it => {
+    it.classList.toggle('hidden', !!q && !it.textContent.toLowerCase().includes(q));
+  });
+});
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('plant-menu')) return;
+  if (e.key === 'Escape') { closePickerMenu(); return; }
+  if (e.key === 'Enter' && e.target.classList.contains('pp-search')) {
+    const first = document.querySelector('#plant-menu .pp-item:not(.hidden)');
+    if (first) pickerChoose(document.getElementById('plant-menu').dataset.lvl, first.dataset.id);
+  }
+});
+let pickerVw = window.innerWidth;
+window.addEventListener('resize', () => {   // height-only resizes (phone keyboard) must not close the menu
+  if (window.innerWidth === pickerVw) return;
+  pickerVw = window.innerWidth;
+  closePickerMenu();
+});
 renderPlantNav();
+renderPlantPicker();
 updatePlantTitle();
 
 // Mobile drawer: open from the topbar button, close after picking a plant/view.
@@ -1411,7 +1560,7 @@ function toggleNav(open) {
   }
 }
 document.getElementById('sidebar').addEventListener('click', e => {
-  if (e.target.closest('a.plant-tab, a.view-tab, #overall-tab')) toggleNav(false);
+  if (e.target.closest('a.view-tab, #overall-tab')) toggleNav(false);
 });
 
 // ─── Column filter / sort state ───────────────────────────────────────────────
@@ -1733,25 +1882,12 @@ function updatePlantTitle() {
   document.getElementById('current-plant-title-text').textContent = plantDisplayName(currentPlant);
 }
 
-function showPlantSubnav(plant) {
+// Re-draws everything that shows the selected plant: title, sidebar views, topbar picker.
+function showPlantSubnav() {
   updatePlantTitle();
-  document.querySelectorAll('#plant-tab-nav .plant-subnav').forEach(sub => {
-    const isActive = sub.dataset.plantSub === plant;
-    sub.classList.toggle('hidden', !isActive);
-    sub.classList.toggle('flex', isActive);
-  });
-}
-
-function clearPlantTabHighlight() {
-  document.querySelectorAll('#plant-tab-nav .plant-tab').forEach(t => {
-    t.classList.remove('active', 'bg-surface-container-high', 'text-secondary', 'border-l-2', 'border-secondary', 'font-semibold');
-    t.classList.add('text-on-surface-variant');
-    t.style.background = '';
-    t.style.color = '#909097';
-    t.style.borderColor = '';
-    const liveBadge = t.querySelector('.ml-auto');
-    if (liveBadge) liveBadge.remove();
-  });
+  renderPlantNav();
+  resetPickerDraft();
+  renderPlantPicker();
 }
 
 function setOverallTabActive(active) {
@@ -1764,17 +1900,11 @@ function setOverallTabActive(active) {
 }
 
 // ─── Overall Plant (landing page after login) ─────────────────────────────────
-let overallMode = false;
 function showOverallView() {
   overallMode = true;
-  clearPlantTabHighlight();
+  closePickerMenu();
   setOverallTabActive(true);
-  showPlantSubnav(null);
-  document.querySelectorAll('#plant-tab-nav .view-tab').forEach(t => {
-    t.classList.remove('active', 'font-semibold');
-    t.style.background = '';
-    t.style.color = '#909097';
-  });
+  showPlantSubnav();
   ['main-tab-bar', 'progress-summary', 'main-tab-content-table', 'main-tab-content-gantt']
     .forEach(id => document.getElementById(id).classList.add('hidden'));
   document.getElementById('view-overall').classList.remove('hidden');
@@ -1810,7 +1940,7 @@ let overallYear = new Date().getFullYear();
 function changeOverallYear(delta) { overallYear += delta; loadOverall(); }
 
 // Overall shows one plant group at a time (same groups as the sidebar).
-let overallGroup = PLANT_GROUPS[0].name;
+let overallGroup = DEPARTMENTS[0].name;
 let overallData = null;
 
 function setOverallGroup(name) {
@@ -1819,7 +1949,7 @@ function setOverallGroup(name) {
 }
 
 function renderOverallGroupTabs() {
-  document.getElementById('overall-group-tabs').innerHTML = PLANT_GROUPS.map(g => `
+  document.getElementById('overall-group-tabs').innerHTML = DEPARTMENTS.map(g => `
     <button onclick="setOverallGroup('${g.name}')" role="tab" class="main-tab-btn${g.name === overallGroup ? ' active' : ''}">
       <span class="material-symbols-outlined">factory</span>${g.name}</button>`).join('');
 }
@@ -1865,7 +1995,7 @@ function overallCell(e) {
 
 function renderOverall(data) {
   renderOverallGroupTabs();
-  const groupKeys = new Set((PLANT_GROUPS.find(g => g.name === overallGroup)?.plants || []).map(p => p.key));
+  const groupKeys = new Set((DEPARTMENTS.find(d => d.name === overallGroup)?.locations || []).flatMap(l => l.plants).map(p => p.key));
   document.getElementById('overall-thead').innerHTML =
     `<th>PLANT / เครื่องจักรหลัก</th>` + MONTHS_EN.map(m => `<th>${m.toUpperCase()}</th>`).join('');
   document.getElementById('overall-tbody').innerHTML = data.plants.filter(({ plant }) => groupKeys.has(plant)).map(({ plant, entries }) => {
@@ -1880,45 +2010,40 @@ function renderOverall(data) {
       <td>
         <div class="flex items-center gap-2 flex-wrap">
           <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${meta.dot};"></span>
-          <span class="text-lg font-bold" style="color:#00325a;">${escHtml(plant)}</span>
+          <span class="text-lg font-bold" style="color:#00325a;">${escHtml(plantDisplayName(plant))}</span>
         </div>
         <div class="text-xs text-on-surface-variant mt-1">${escHtml(meta.cycle)}</div>
       </td>${months}</tr>`;
   }).join('');
 }
 
-async function setPlantTab(el) {
+async function selectPlant(key) {
+  if (!plantLookup(key)) return;
   const wasOverall = overallMode;
   overallMode = false;
   setOverallTabActive(false);
   document.getElementById('view-overall').classList.add('hidden');
-  if (el.dataset.plant === currentPlant && !wasOverall) { showPlantSubnav(currentPlant); return; }
-  clearPlantTabHighlight();
-  el.classList.add('active', 'bg-surface-container-high', 'text-secondary', 'border-l-2', 'border-secondary', 'font-semibold');
-  el.classList.remove('text-on-surface-variant');
-  el.style.background = '#1b2b3f';
-  el.style.color = '#7bd0ff';
-  el.style.borderColor = '#7bd0ff';
-  if (!el.querySelector('.ml-auto')) {
-    el.insertAdjacentHTML('beforeend', '<span class="ml-auto font-mono text-xs px-1.5 py-0.5 rounded" style="background:#001c10; color:#4edea3; border:1px solid rgba(78,222,163,0.4);">LIVE</span>');
-  }
+  if (key === currentPlant && !wasOverall) { showPlantSubnav(); return; }
 
-  if (wasOverall && el.dataset.plant === currentPlant) {
-    showPlantSubnav(currentPlant);
-    setViewTab(document.querySelector(`.plant-subnav[data-plant-sub="${currentPlant}"] .view-tab[data-view="progress"]`), 'progress');
+  if (wasOverall && key === currentPlant) {
+    showPlantSubnav();
+    setViewTab(null, 'progress');
+    if (NAV_MOBILE.matches) toggleNav(false);
     return;
   }
 
-  currentPlant = el.dataset.plant;
+  currentPlant = key;
+  localStorage.setItem('currentPlant', key);
   activePhase = null;
   updateStageTileHighlight();
   const searchInput = document.getElementById('main-search-input');
   if (searchInput) searchInput.value = '';
 
-  showPlantSubnav(currentPlant);
-  setViewTab(document.querySelector(`.plant-subnav[data-plant-sub="${currentPlant}"] .view-tab[data-view="progress"]`), 'progress');
+  showPlantSubnav();
+  setViewTab(null, 'progress');
+  if (NAV_MOBILE.matches) toggleNav(false);   // phone drawer: close it once a plant is chosen
 
-  showToast(`สลับไปยัง ${el.dataset.plant}`, 'กำลังโหลดข้อมูลแผน Shutdown ของ Plant นี้');
+  showToast(`สลับไปยัง ${plantDisplayName(key)}`, 'กำลังโหลดข้อมูลแผน Shutdown ของ Plant นี้');
 
   await Promise.all([loadTasks(), loadActivity(), loadSchedule(), loadLastExcelUpload()]);
 }

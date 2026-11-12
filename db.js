@@ -5,10 +5,15 @@ const { query, withTx } = require('./pool');
 
 const DEFAULT_PLANT = 'SKIC BM16';
 const PLANTS = ['SKIC BM1', 'SKIC BM3', 'SKIC BM17', 'SKIC BM16',
+  'TPC Paper BP PM2', 'TPC Paper BP PM3', 'TPC Paper BP PM4', 'TPC Paper BP PM5', 'TPC Paper BP SNP',
   'SKIC WS BM4', 'SKIC WS BM5', 'SKIC WS BM6', 'SKIC WS BM7', 'SKIC WS BM8', 'SKIC WS BM9',
   'TCP TM BM10',
   'TPC Pulp BP CP', 'TPC Pulp BP SCP', 'TPC Pulp BP RB', 'TPC Pulp BP Chipping', 'TPC Pulp BP ECO',
-  'TPC Pulp WS CP', 'TPC Pulp WS UBP', 'TPC Pulp WS RB', 'TPC Pulp WS Chipping'];
+  'TPC Pulp WS CP', 'TPC Pulp WS UBP', 'TPC Pulp WS RB', 'TPC Pulp WS Chipping',
+  'SKIC Energy BP PB#11', 'SKIC Energy BP PB#12', 'SKIC Energy BP PB#16', 'SKIC Energy BP PB#17-TRP', 'SKIC Energy BP PB#19',
+  'SKIC Energy BP TG#11', 'SKIC Energy BP TG#12', 'SKIC Energy BP TG#16', 'SKIC Energy BP TG#17-TRP', 'SKIC Energy BP TG#19',
+  'SKIC Energy WS PB#14', 'SKIC Energy WS PB#18', 'SKIC Energy WS TG#14', 'SKIC Energy WS TG#18', 'SKIC Energy WS TG#6',
+  'TCP Energy TM PB#2', 'TCP Energy TM TG#2'];
 
 const SCHEDULE_MILESTONES = ['shutdown', 'repair_done', 'warm_stream', 'function_test', 'startup', 'on_reel'];
 const SAFETY_CATEGORIES = ['power_outage', 'site_prep', 'high_risk'];
