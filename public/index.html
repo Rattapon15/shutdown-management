@@ -313,38 +313,66 @@ tailwind.config = {
 <body class="bg-surface text-on-surface antialiased text-sm">
 
 <!-- ═══════════════════════════════════════ LOGIN SCREEN ══════════════════════ -->
-<div id="login-screen" class="fixed inset-0 bg-surface z-[100] flex items-center justify-center p-4">
-  <div class="w-full max-w-sm bg-surface-container-lowest rounded-xl p-6 shadow-2xl border border-outline-variant/30 flex flex-col gap-4">
-    <div class="flex flex-col items-center gap-2 pb-2">
-      <div class="relative w-12 h-12 rounded bg-primary-container border border-outline-variant flex items-center justify-center">
-        <span class="material-symbols-outlined text-secondary" style="font-size:28px">settings</span>
-        <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-error border-2 border-surface-container-lowest flex items-center justify-center">
-          <span class="material-symbols-outlined text-on-error" style="font-size:12px">power_settings_new</span>
-        </span>
+<div id="login-screen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto" style="background:linear-gradient(160deg,#f8faff 0%,#eef2fb 100%);">
+  <div class="w-full max-w-4xl bg-white rounded-3xl overflow-hidden flex flex-col" style="box-shadow:0 24px 64px rgba(11,28,48,.14); border:1px solid #e3e8f2;">
+    <div class="grid grid-cols-1 md:grid-cols-2">
+      <!-- Left: what the system is -->
+      <div class="p-8 md:p-12 flex flex-col gap-6">
+        <div class="flex items-center gap-3.5">
+          <div class="relative w-14 h-14 rounded-2xl shrink-0 flex items-center justify-center" style="background:linear-gradient(135deg,#0b1c30 0%,#0077b6 100%); box-shadow:0 8px 20px rgba(0,119,182,.3);">
+            <span class="material-symbols-outlined" style="font-size:30px; color:#fff;">settings</span>
+            <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center" style="background:#ffb4ab; border:2px solid #fff;">
+              <span class="material-symbols-outlined" style="font-size:12px; color:#690005;">power_settings_new</span>
+            </span>
+          </div>
+          <div class="flex flex-col leading-tight">
+            <span class="text-xl font-bold" style="color:#0b1c30;">Shutdown Management</span>
+            <span class="text-[11px] font-bold tracking-widest uppercase" style="color:#0077b6;">Plant shutdown tracking platform</span>
+          </div>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-extrabold leading-tight" style="color:#0b1c30;">Plant shutdown<br>management<br>in one platform</h1>
+        <p class="text-sm leading-relaxed" style="color:#5b6b82;">Plan monthly shutdowns, follow job progress against the schedule, record safety activities, and review every plant's results on one dashboard, from the field to management decisions.</p>
+        <ul class="flex flex-col gap-3 text-sm" style="color:#2b3a50;">
+          <li class="flex items-center gap-3"><span class="w-2.5 h-2.5 rounded-full" style="background:#2f6fed;"></span>Shutdown Progress Tracking</li>
+          <li class="flex items-center gap-3"><span class="w-2.5 h-2.5 rounded-full" style="background:#6a5af9;"></span>Safety Activities</li>
+          <li class="flex items-center gap-3"><span class="w-2.5 h-2.5 rounded-full" style="background:#12b886;"></span>Overall Plant Dashboard</li>
+          <li class="flex items-center gap-3"><span class="w-2.5 h-2.5 rounded-full" style="background:#f59f00;"></span>Shutdown History &amp; Reports</li>
+        </ul>
       </div>
-      <h1 class="text-base font-bold text-on-surface tracking-tight">Shutdown Management</h1>
-      <p class="text-xs text-on-surface-variant">เข้าสู่ระบบเพื่อใช้งาน</p>
+
+      <!-- Right: sign in -->
+      <div class="p-8 md:p-12 flex flex-col justify-center gap-5 border-t md:border-t-0 md:border-l" style="background:#f8faff; border-color:#e3e8f2;">
+        <div>
+          <h2 class="text-2xl font-bold" style="color:#0b1c30;">Sign in</h2>
+          <p class="text-sm mt-2" style="color:#5b6b82;">Continue to your role-scoped shutdown workspace</p>
+        </div>
+        <button type="button" id="ms-login-btn" onclick="handleMicrosoftLogin()" class="flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl bg-white hover:bg-gray-50 font-semibold transition-all" style="color:#1f1f1f; border:1px solid #d9e0ee; box-shadow:0 2px 6px rgba(11,28,48,.06);">
+          <svg width="20" height="20" viewBox="0 0 21 21" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
+          <span id="ms-login-label">Sign in with Microsoft</span>
+        </button>
+        <p id="ms-login-error" class="hidden text-xs text-error"></p>
+        <p class="text-xs text-center" style="color:#8a97ab;">Role-based access via Microsoft Entra ID</p>
+        <details id="local-login" class="hidden text-xs text-on-surface-variant">
+          <summary class="cursor-pointer text-center select-none">Sign in with a local account (Username / Password)</summary>
+          <form id="login-form" onsubmit="handleLogin(event)" class="flex flex-col gap-3 mt-3">
+            <div>
+              <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">Username</label>
+              <input id="login-username" required autocomplete="username" class="w-full bg-white border border-outline-variant/50 rounded-lg px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+            </div>
+            <div>
+              <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">Password</label>
+              <input id="login-password" type="password" required autocomplete="current-password" class="w-full bg-white border border-outline-variant/50 rounded-lg px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+            </div>
+            <p id="login-error" class="hidden text-xs text-error"></p>
+            <button type="submit" class="mt-1 px-4 py-2.5 rounded-lg bg-secondary-container hover:bg-secondary text-on-secondary-container font-bold transition-all shadow-md">Sign in</button>
+          </form>
+        </details>
+      </div>
     </div>
-    <button type="button" id="ms-login-btn" onclick="handleMicrosoftLogin()" class="flex items-center justify-center gap-2.5 px-4 py-2.5 rounded bg-white hover:bg-gray-100 text-[#1f1f1f] font-semibold transition-all shadow-md">
-      <svg width="18" height="18" viewBox="0 0 21 21" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
-      <span id="ms-login-label">เข้าสู่ระบบด้วย Microsoft</span>
-    </button>
-    <p id="ms-login-error" class="hidden text-xs text-error"></p>
-    <details id="local-login" class="hidden text-xs text-on-surface-variant">
-      <summary class="cursor-pointer text-center select-none">เข้าสู่ระบบด้วยบัญชีภายใน (Username / Password)</summary>
-    <form id="login-form" onsubmit="handleLogin(event)" class="flex flex-col gap-3 mt-3">
-      <div>
-        <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">Username</label>
-        <input id="login-username" required autocomplete="username" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
-      </div>
-      <div>
-        <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">Password</label>
-        <input id="login-password" type="password" required autocomplete="current-password" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
-      </div>
-      <p id="login-error" class="hidden text-xs text-error"></p>
-      <button type="submit" class="mt-1 px-4 py-2 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container font-bold transition-all shadow-md">เข้าสู่ระบบ</button>
-    </form>
-    </details>
+    <div class="flex items-center justify-between px-8 py-4 text-xs border-t" style="color:#8a97ab; border-color:#e3e8f2;">
+      <span class="flex items-center gap-1.5"><span class="material-symbols-outlined" style="font-size:16px">shield</span>Microsoft Entra ID</span>
+      <span>SCGP Shutdown Management</span>
+    </div>
   </div>
 </div>
 
@@ -4684,12 +4712,12 @@ async function handleMicrosoftLogin() {
   const btn = document.getElementById('ms-login-btn');
   showMicrosoftError('');
   btn.disabled = true;
-  document.getElementById('ms-login-label').textContent = 'กำลังไปที่ Microsoft…';
+  document.getElementById('ms-login-label').textContent = 'Redirecting to Microsoft…';
   try {
     await window.entraAuth.signIn(); // navigates away on success
   } catch (err) {
     btn.disabled = false;
-    document.getElementById('ms-login-label').textContent = 'เข้าสู่ระบบด้วย Microsoft';
+    document.getElementById('ms-login-label').textContent = 'Sign in with Microsoft';
     showMicrosoftError(err.message);
   }
 }
