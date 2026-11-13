@@ -366,6 +366,8 @@ tailwind.config = {
         <span class="text-sm font-bold truncate" style="color:#d3e4fe; letter-spacing:0.01em;">Shutdown Management</span>
       </div>
     </div>
+    <!-- Scrolls when the plant list is long, so Live Event Update below always keeps room -->
+    <div class="flex flex-col overflow-y-auto" style="max-height:calc(100vh - 380px);">
     <nav class="flex flex-col gap-1 px-2 pt-3">
       <a id="overall-tab" class="flex items-center gap-2 px-3 py-2 rounded transition-colors" style="color:#909097;" href="#" onclick="showOverallView(); return false;">
         <span class="material-symbols-outlined" style="font-size:18px">dashboard</span><span>Overall Plant</span>
@@ -379,10 +381,11 @@ tailwind.config = {
       <nav class="flex flex-col gap-1 px-2" id="plant-tab-nav">
       </nav>
     </div>
+    </div>
   </div>
 
   <!-- Activity feed -->
-  <div class="flex-1 min-h-0 flex flex-col px-3 pt-3 pb-2" style="border-top:1px solid #1b2b3f;">
+  <div class="flex-1 min-h-[200px] flex flex-col px-3 pt-3 pb-2" style="border-top:1px solid #1b2b3f;">
     <div class="flex items-center justify-between pb-2 mb-2 shrink-0" style="border-bottom:1px solid #1b2b3f;">
       <div class="flex items-center gap-2">
         <span class="material-symbols-outlined" style="font-size:18px; color:#7bd0ff;">rss_feed</span>
@@ -435,7 +438,7 @@ tailwind.config = {
       <span class="font-mono text-xs" id="live-date" style="color:#909097;">--</span>
     </div>
     <div class="hidden md:block h-8 w-px" style="background:rgba(69,70,77,0.6);"></div>
-    <button id="user-mgmt-btn" onclick="openUserModal()" title="จัดการผู้ใช้งาน" class="hidden p-1.5 rounded transition-colors" style="color:#909097;" onmouseover="this.style.color='#7bd0ff';this.style.background='rgba(27,43,63,1)'" onmouseout="this.style.color='#909097';this.style.background='transparent'">
+    <button id="user-mgmt-btn" onclick="showUsersView()" title="จัดการผู้ใช้งาน" class="hidden p-1.5 rounded transition-colors" style="color:#909097;" onmouseover="this.style.color='#7bd0ff';this.style.background='rgba(27,43,63,1)'" onmouseout="this.style.color='#909097';this.style.background='transparent'">
       <span class="material-symbols-outlined" style="font-size:20px">manage_accounts</span>
     </button>
     <button onclick="handleLogout()" title="ออกจากระบบ" class="p-1.5 rounded transition-colors" style="color:#909097;" onmouseover="this.style.color='#ffb4ab';this.style.background='rgba(27,43,63,1)'" onmouseout="this.style.color='#909097';this.style.background='transparent'">
@@ -715,6 +718,82 @@ tailwind.config = {
     </div>
   </div>
 </div><!-- /view-overall -->
+
+<div id="view-users" class="hidden">
+  <div class="w-full max-w-5xl px-5 py-5 flex flex-col gap-4">
+    <div class="bg-surface-container-low rounded-xl p-4 flex flex-wrap items-center justify-between gap-2 shadow-md">
+      <div class="flex flex-wrap items-center gap-x-2">
+        <span class="material-symbols-outlined text-secondary" style="font-size:20px">manage_accounts</span>
+        <h2 class="text-sm font-bold text-on-surface">User Management</h2>
+        <span class="text-xs text-on-surface-variant">— กำหนดสิทธิ์การใช้งานของผู้ใช้</span>
+      </div>
+      <button type="button" onclick="showOverallView()" class="flex items-center gap-1 px-3 py-1.5 rounded text-xs font-bold bg-surface-container-high hover:bg-surface-container-highest text-on-surface transition-colors">
+        <span class="material-symbols-outlined" style="font-size:16px">arrow_back</span>กลับ Dashboard
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div class="bg-surface-container-lowest rounded-xl shadow-sm p-4 flex items-start gap-3" style="border-left:4px solid #00325a;">
+        <span class="material-symbols-outlined" style="font-size:26px; color:#00325a;">admin_panel_settings</span>
+        <div class="flex-1">
+          <div class="flex items-center justify-between"><span class="text-sm font-bold text-on-surface">Administrator</span><span id="um-count-admin" class="font-mono text-lg font-bold" style="color:#00325a;">0</span></div>
+          <p class="text-xs text-on-surface-variant mt-1">แก้ไขข้อมูลได้ทุกอย่าง: อัปโหลด Excel, เพิ่ม/แก้/ลบงาน, ปิดงาน Shutdown และจัดการผู้ใช้งาน</p>
+        </div>
+      </div>
+      <div class="bg-surface-container-lowest rounded-xl shadow-sm p-4 flex items-start gap-3" style="border-left:4px solid #74767f;">
+        <span class="material-symbols-outlined" style="font-size:26px; color:#74767f;">visibility</span>
+        <div class="flex-1">
+          <div class="flex items-center justify-between"><span class="text-sm font-bold text-on-surface">User (อ่านอย่างเดียว)</span><span id="um-count-user" class="font-mono text-lg font-bold" style="color:#74767f;">0</span></div>
+          <p class="text-xs text-on-surface-variant mt-1">ดู Dashboard, Gantt, History และ Overall Plant ได้ แต่แก้ไขหรืออัปโหลดข้อมูลไม่ได้ (ผู้ใช้ Microsoft ใหม่จะเริ่มที่สิทธิ์นี้)</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-4 flex flex-col gap-3">
+      <div class="relative">
+        <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" style="font-size:18px">search</span>
+        <input id="user-search" type="search" oninput="renderUserList()" placeholder="ค้นหา Email หรือชื่อผู้ใช้..." autocomplete="off"
+          class="w-full bg-surface-container-high rounded pl-9 pr-3 py-2 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs">
+          <thead>
+            <tr class="text-left text-[10px] uppercase tracking-wider text-on-surface-variant border-b border-surface-container-high">
+              <th class="py-2 pr-3 font-semibold">ผู้ใช้</th>
+              <th class="py-2 pr-3 font-semibold">เข้าสู่ระบบด้วย</th>
+              <th class="py-2 pr-3 font-semibold">สร้างเมื่อ</th>
+              <th class="py-2 pr-3 font-semibold">สิทธิ์</th>
+              <th class="py-2 w-10"></th>
+            </tr>
+          </thead>
+          <tbody id="user-list"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <form id="new-user-form" onsubmit="createUser(event)" class="hidden bg-surface-container-lowest rounded-xl shadow-sm p-4 flex flex-col gap-3 text-xs">
+      <div class="text-sm font-bold text-on-surface">เพิ่มผู้ใช้งาน (Local)</div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">Username *</label>
+          <input id="nu-username" required class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+        </div>
+        <div>
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">Password *</label>
+          <input id="nu-password" type="password" required class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+        </div>
+        <div>
+          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">Role</label>
+          <select id="nu-role" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
+            <option value="user" selected>User (อ่านอย่างเดียว)</option>
+            <option value="admin">Admin (แก้ไขได้)</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="self-start px-4 py-2 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container font-bold transition-all shadow-md">+ เพิ่มผู้ใช้งาน</button>
+    </form>
+  </div>
+</div><!-- /view-users -->
 
 <div id="main-tab-content-table" class="hidden">
 
@@ -1237,47 +1316,6 @@ tailwind.config = {
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════ USER MANAGEMENT MODAL ═════════════ -->
-<div id="user-modal-backdrop" class="fixed inset-0 bg-black/80 z-50 items-center justify-center p-4 hidden">
-  <div class="bg-surface-container-lowest rounded-xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 relative border border-outline-variant/30">
-    <div class="flex items-center justify-between pb-2 border-b border-surface-container-high">
-      <div class="flex items-center gap-2">
-        <span class="material-symbols-outlined text-secondary" style="font-size:22px">manage_accounts</span>
-        <h2 class="text-base font-bold text-on-surface">จัดการผู้ใช้งาน</h2>
-      </div>
-      <button onclick="toggleUserModal(false)" class="p-1 rounded hover:bg-surface-container text-on-surface-variant">
-        <span class="material-symbols-outlined" style="font-size:20px">close</span>
-      </button>
-    </div>
-    <div class="relative">
-      <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" style="font-size:18px">search</span>
-      <input id="user-search" type="search" oninput="renderUserList()" placeholder="ค้นหา Email หรือชื่อผู้ใช้..." autocomplete="off"
-        class="w-full bg-surface-container-high rounded pl-9 pr-3 py-2 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
-    </div>
-    <div id="user-list" class="flex flex-col gap-1.5 max-h-56 overflow-y-auto"></div>
-    <form id="new-user-form" onsubmit="createUser(event)" class="hidden flex flex-col gap-3 text-xs pt-3 border-t border-surface-container-high">
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">Username *</label>
-          <input id="nu-username" required class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
-        </div>
-        <div>
-          <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">Password *</label>
-          <input id="nu-password" type="password" required class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
-        </div>
-      </div>
-      <div>
-        <label class="text-[10px] font-semibold text-on-surface-variant uppercase block mb-1">Role</label>
-        <select id="nu-role" class="w-full bg-surface-container-high rounded px-3 py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary">
-          <option value="user" selected>User (อ่านอย่างเดียว)</option>
-          <option value="admin">Admin (แก้ไขได้)</option>
-        </select>
-      </div>
-      <button type="submit" class="px-4 py-2 rounded bg-secondary-container hover:bg-secondary text-on-secondary-container font-bold transition-all shadow-md">+ เพิ่มผู้ใช้งาน</button>
-    </form>
-  </div>
-</div>
-
 <!-- Column filter dropdown -->
 <div id="col-dropdown">
   <div class="cd-section" id="cd-col-label">FILTER</div>
@@ -1339,6 +1377,7 @@ const canWrite = () => currentUser && currentUser.role === 'admin';
 let currentPlant = 'SKIC BM16';
 let currentView = 'progress';
 let overallMode = false;   // Overall Plant page is showing instead of a plant
+let usersMode = false;     // User Management page is showing (also sets overallMode)
 let currentSafety = { power_outage: [], site_prep: [], high_risk: [] };
 
 // ─── Gantt timeline (Tab 1) state ──────────────────────────────────────────────
@@ -1399,11 +1438,18 @@ const VIEW_TABS = [
   { view: 'history',  icon: 'history',          label: 'Shutdown History' },
 ];
 
-// Sidebar: only the selected plant and its views (hidden on Overall Plant).
-function renderPlantNav() {
-  document.getElementById('plant-nav-wrap').classList.toggle('hidden', overallMode);
-  document.getElementById('plant-tab-nav').innerHTML = `<div class="plant-group flex flex-col">
-    <div class="plant-subnav flex flex-col gap-0.5 px-1 py-1" data-plant-sub="${escHtml(currentPlant)}">
+// Sidebar plant list: the plants of the Department/Location being browsed, each a tab
+// with the views of the selected plant underneath it (as the original list did).
+// On Overall Plant nothing is highlighted. When the plant on screen is in another
+// Location than the one being browsed, it is pinned below the list so its views stay reachable.
+function plantTabHtml(p, pinned, active) {
+  return `<div class="plant-group flex flex-col">
+    <a class="plant-tab${active ? ' active border-l-2 font-semibold' : ''} flex items-center gap-2 px-3 py-2 rounded transition-colors"
+       style="${active ? 'background:#1b2b3f; color:#7bd0ff; border-color:#7bd0ff;' : 'color:#909097;'}"
+       href="#" data-plant="${escHtml(p.key)}" onclick="${pinned ? 'browseCurrentPlantLocation()' : 'selectPlant(this.dataset.plant)'}; return false;">
+      <span class="material-symbols-outlined" style="font-size:18px">factory</span><span class="truncate">${escHtml(p.label)}</span>${active ? LIVE_BADGE_HTML : ''}
+    </a>
+    ${active ? `<div class="plant-subnav flex flex-col gap-0.5 pl-8 pr-1 py-1" data-plant-sub="${escHtml(p.key)}">
       ${VIEW_TABS.map(v => {
         const on = v.view === currentView;
         return `<a class="view-tab${on ? ' active font-semibold' : ''} flex items-center gap-1.5 px-2 py-1.5 rounded text-xs transition-colors"
@@ -1411,15 +1457,51 @@ function renderPlantNav() {
           <span class="material-symbols-outlined" style="font-size:14px">${v.icon}</span><span>${v.label}</span>
         </a>`;
       }).join('')}
-    </div>
+    </div>` : ''}
   </div>`;
 }
 
-// Topbar picker. `pickerDraft` is the choice in progress: choosing a Department or
-// Location only changes the dashboard once a Plant is picked, and abandoning the menus
-// puts the draft back to the plant that is on screen.
+let plantListCollapsed = localStorage.getItem('plantListCollapsed') === '1';
+function togglePlantList() {
+  plantListCollapsed = !plantListCollapsed;
+  localStorage.setItem('plantListCollapsed', plantListCollapsed ? '1' : '0');
+  renderPlantNav();
+}
+
+function renderPlantNav() {
+  const dept = DEPARTMENTS.find(d => d.name === pickerDraft.dept);
+  const loc = dept && dept.locations.find(l => l.name === pickerDraft.loc);
+  const cur = overallMode ? null : plantLookup(currentPlant);
+  let html = '';
+  if (loc) {
+    // Collapsed: the header stays, and so does the selected plant with its views.
+    const shown = plantListCollapsed ? loc.plants.filter(p => cur && p.key === currentPlant) : loc.plants;
+    html = `<button type="button" onclick="togglePlantList()" aria-expanded="${!plantListCollapsed}"
+        title="${plantListCollapsed ? 'แสดงทุก Plant' : 'ยุบรายการ Plant'}"
+        class="flex items-center gap-1 px-3 py-1 rounded text-[10px] uppercase tracking-widest font-semibold transition-colors hover:bg-white/5" style="color:#909097;">
+        <span class="material-symbols-outlined" style="font-size:16px">${plantListCollapsed ? 'chevron_right' : 'expand_more'}</span>
+        <span>Plants</span><span class="ml-auto font-mono">${plantListCollapsed ? `${loc.plants.length} ซ่อนอยู่` : loc.plants.length}</span>
+      </button>` + shown.map(p => plantTabHtml(p, false, !!cur && p.key === currentPlant)).join('');
+  }
+  if (cur && !(loc && loc.plants.some(p => p.key === currentPlant))) {
+    html += `<div class="mt-2 pt-2" style="border-top:1px solid #1b2b3f;">
+      <div class="px-3 pb-1 text-[10px] uppercase tracking-widest font-semibold" style="color:#909097;">${escHtml(cur.loc.name)}</div>
+      ${plantTabHtml(cur.plant, true, true)}</div>`;
+  }
+  document.getElementById('plant-tab-nav').innerHTML = html;
+}
+
+// Jump the dropdowns back to the Location of the plant on screen.
+function browseCurrentPlantLocation() {
+  resetPickerDraft();
+  renderPlantPicker();
+  renderPlantNav();
+}
+
+// Sidebar dropdowns: Department, then Location. The plants of that Location are listed
+// below (renderPlantNav); picking one in the list is what changes the dashboard.
 const pickerDraft = { dept: null, loc: null };
-let pickerOpen = null;   // 'dept' | 'loc' | 'plant' | null
+let pickerOpen = null;   // 'dept' | 'loc' | null
 function resetPickerDraft() {
   const f = plantLookup(currentPlant);
   pickerDraft.dept = f ? f.dept.name : null;
@@ -1430,8 +1512,6 @@ resetPickerDraft();
 function renderPlantPicker() {
   const dept = DEPARTMENTS.find(d => d.name === pickerDraft.dept);
   const loc = dept && dept.locations.find(l => l.name === pickerDraft.loc);
-  const shown = plantLookup(currentPlant);
-  const plant = loc && shown && shown.loc.name === loc.name ? shown.plant : null;
   const pill = (lvl, cap, val) => `<button type="button" class="pp-pill${pickerOpen === lvl ? ' open' : ''}${val ? '' : ' empty'}" data-pp="${lvl}"
       aria-haspopup="listbox" aria-expanded="${pickerOpen === lvl}">
       <span class="pp-cap">${cap}</span>
@@ -1440,24 +1520,20 @@ function renderPlantPicker() {
   const el = document.getElementById('plant-picker');
   el.innerHTML =
     pill('dept', 'Department', dept && dept.name) +
-    (dept ? pill('loc', 'Location', loc && loc.name) : '') +
-    (loc ? pill('plant', 'Plant', plant && plant.label) : '');
+    (dept ? pill('loc', 'Location', loc && loc.name) : '');
   el.classList.toggle('pp-overall', overallMode);
 }
 
 function pickerItems(lvl) {
   const dept = DEPARTMENTS.find(d => d.name === pickerDraft.dept);
-  const loc = dept && dept.locations.find(l => l.name === pickerDraft.loc);
-  const shown = plantLookup(currentPlant);
   if (lvl === 'dept') return DEPARTMENTS.map(d => ({ id: d.name, label: d.name,
     meta: `${d.locations.reduce((n, l) => n + l.plants.length, 0)} plants`, on: d.name === pickerDraft.dept }));
-  if (lvl === 'loc') return dept.locations.map(l => ({ id: l.name, label: l.name,
+  return dept.locations.map(l => ({ id: l.name, label: l.name,
     meta: `${l.plants.length}`, on: l.name === pickerDraft.loc }));
-  return loc.plants.map(p => ({ id: p.key, label: p.label, meta: '', on: p.key === currentPlant && !!shown && shown.loc.name === loc.name }));
 }
 
 function openPickerMenu(lvl) {
-  closePickerMenu(false);
+  closePickerMenu();
   pickerOpen = lvl;
   renderPlantPicker();
   const btn = document.querySelector(`#plant-picker [data-pp="${lvl}"]`);
@@ -1481,33 +1557,27 @@ function openPickerMenu(lvl) {
   if (on) on.scrollIntoView({ block: 'nearest' });
 }
 
-function closePickerMenu(revert = true) {
+function closePickerMenu() {
   const menu = document.getElementById('plant-menu');
   if (menu) menu.remove();
   if (pickerOpen === null) return;
   pickerOpen = null;
-  if (revert) resetPickerDraft();   // unfinished choice is dropped
   renderPlantPicker();
 }
 
 function pickerChoose(lvl, id) {
-  if (lvl === 'plant') {
-    closePickerMenu(false);
-    selectPlant(id);
-    return;
-  }
   if (lvl === 'dept' && id === pickerDraft.dept) { closePickerMenu(); return; }
-  const dept = DEPARTMENTS.find(d => d.name === (lvl === 'dept' ? id : pickerDraft.dept));
   if (lvl === 'dept') {
+    const dept = DEPARTMENTS.find(d => d.name === id);
     pickerDraft.dept = id;
     pickerDraft.loc = dept.locations.length === 1 ? dept.locations[0].name : null;
   } else {
     pickerDraft.loc = id;
   }
-  const loc = dept.locations.find(l => l.name === pickerDraft.loc);
-  if (!loc) { openPickerMenu('loc'); return; }
-  if (loc.plants.length === 1) { closePickerMenu(false); selectPlant(loc.plants[0].key); return; }
-  openPickerMenu('plant');   // flow straight on to the next level
+  closePickerMenu();
+  plantListCollapsed = false;   // a newly chosen Location shows its plants
+  renderPlantNav();
+  if (!pickerDraft.loc) openPickerMenu('loc');   // several Locations: flow straight on to choose one
 }
 
 document.getElementById('plant-picker').addEventListener('click', e => {
@@ -1886,7 +1956,6 @@ function updatePlantTitle() {
 function showPlantSubnav() {
   updatePlantTitle();
   renderPlantNav();
-  resetPickerDraft();
   renderPlantPicker();
 }
 
@@ -1902,6 +1971,8 @@ function setOverallTabActive(active) {
 // ─── Overall Plant (landing page after login) ─────────────────────────────────
 function showOverallView() {
   overallMode = true;
+  usersMode = false;
+  document.getElementById('view-users').classList.add('hidden');
   closePickerMenu();
   setOverallTabActive(true);
   showPlantSubnav();
@@ -2021,6 +2092,8 @@ async function selectPlant(key) {
   if (!plantLookup(key)) return;
   const wasOverall = overallMode;
   overallMode = false;
+  usersMode = false;
+  document.getElementById('view-users').classList.add('hidden');
   setOverallTabActive(false);
   document.getElementById('view-overall').classList.add('hidden');
   if (key === currentPlant && !wasOverall) { showPlantSubnav(); return; }
@@ -2034,6 +2107,7 @@ async function selectPlant(key) {
 
   currentPlant = key;
   localStorage.setItem('currentPlant', key);
+  resetPickerDraft();
   activePhase = null;
   updateStageTileHighlight();
   const searchInput = document.getElementById('main-search-input');
@@ -2162,7 +2236,7 @@ function updateLastRefreshLabel() {
 async function doAutoRefresh() {
   await Promise.all([loadTasks(), loadActivity(), loadSchedule(), loadLastExcelUpload()]);
   if (currentView === 'safety') await loadSafetyActivities();
-  if (overallMode) await loadOverall();
+  if (overallMode && !usersMode) await loadOverall();
   updateLastRefreshLabel();
 }
 
@@ -2179,6 +2253,7 @@ async function loadTasks() {
 
 async function loadActivity() {
   const res = await fetch(`/api/activity?${plantQS()}`);
+  if (!res.ok) return;
   const rows = await res.json();
   const feed = document.getElementById('activity-feed');
   feed.innerHTML = '';
@@ -4654,18 +4729,19 @@ async function checkAuth() {
   }
 }
 
-// ─── User management ─────────────────────────────────────────────────────────
-function toggleUserModal(open) {
-  const m = document.getElementById('user-modal-backdrop');
-  m.classList.toggle('hidden', !open);
-  m.classList.toggle('flex', open);
-}
-
-async function openUserModal() {
+// ─── User management (full page) ─────────────────────────────────────────────
+async function showUsersView() {
+  if (!currentUser || currentUser.role !== 'admin') return;
+  overallMode = true;      // like Overall Plant: no plant highlighted, plant content hidden
+  usersMode = true;
+  closePickerMenu();
+  setOverallTabActive(false);
+  showPlantSubnav();
+  ['main-tab-bar', 'progress-summary', 'main-tab-content-table', 'main-tab-content-gantt', 'view-overall']
+    .forEach(id => document.getElementById(id).classList.add('hidden'));
+  document.getElementById('view-users').classList.remove('hidden');
   document.getElementById('user-search').value = '';
-  toggleUserModal(true);
   await loadUserList();
-  document.getElementById('user-search').focus();
 }
 
 let userListCache = [];
@@ -4679,31 +4755,44 @@ async function loadUserList() {
 
 // Filters the loaded users by the search box (username or email, case-insensitive).
 function renderUserList() {
+  document.getElementById('um-count-admin').textContent = userListCache.filter(u => u.role === 'admin').length;
+  document.getElementById('um-count-user').textContent = userListCache.filter(u => u.role !== 'admin').length;
   const q = document.getElementById('user-search').value.trim().toLowerCase();
   const users = q
     ? userListCache.filter(u => `${u.username} ${u.email || ''}`.toLowerCase().includes(q))
     : userListCache;
   const list = document.getElementById('user-list');
   if (!users.length) {
-    list.innerHTML = `<div class="px-3 py-4 text-center text-xs text-on-surface-variant/70 italic">ไม่พบผู้ใช้ที่ตรงกับ "${escHtml(q)}"</div>`;
+    list.innerHTML = `<tr><td colspan="5" class="px-3 py-6 text-center text-xs text-on-surface-variant/70 italic">ไม่พบผู้ใช้${q ? `ที่ตรงกับ "${escHtml(q)}"` : ''}</td></tr>`;
     return;
   }
-  list.innerHTML = users.map(u => `
-    <div class="flex items-center justify-between px-3 py-2 rounded bg-surface-container-high">
-      <div class="flex flex-col">
-        <span class="text-xs font-semibold text-on-surface">${escHtml(u.username)}</span>
-        <span class="text-[10px] text-on-surface-variant">${escHtml(u.email || '')} · ${u.auth === 'entra' ? 'Microsoft' : 'Local'}</span>
-      </div>
-      ${u.username === currentUser.username
-        ? `<span class="text-[10px] text-on-surface-variant uppercase">${escHtml(u.role)}</span>`
-        : `<select onchange="changeUserRole('${escHtml(u.username)}', this.value)" class="bg-surface-container text-[11px] rounded px-1 py-0.5 text-on-surface">
-            ${['user','admin'].map(r => `<option value="${r}" ${u.role === r ? 'selected' : ''}>${r}</option>`).join('')}
-          </select>`}
-      ${u.username === currentUser.username
-        ? '<span class="text-[10px] text-on-surface-variant/60">คุณ</span>'
-        : `<button onclick="deleteUser('${escHtml(u.username)}')" class="p-1 rounded hover:bg-error-container/30 text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined" style="font-size:18px">delete</span></button>`}
-    </div>
-  `).join('');
+  list.innerHTML = users.map(u => {
+    const self = u.username === currentUser.username;
+    const created = u.created_at ? new Date(u.created_at).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' }) : '—';
+    const seg = (role, label) => {
+      const on = u.role === role;
+      return `<button type="button" ${self || on ? 'disabled' : ''} data-user="${escHtml(u.username)}" data-role="${role}"
+        onclick="changeUserRole(this.dataset.user, this.dataset.role)"
+        class="px-3 py-1 text-[11px] font-semibold transition-colors ${on ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-high'} ${self && !on ? 'opacity-40' : ''}">${label}</button>`;
+    };
+    return `<tr class="border-b border-surface-container-high/60">
+      <td class="py-2 pr-3">
+        <div class="flex items-center gap-2">
+          <span class="w-7 h-7 rounded-full bg-surface-container-high flex items-center justify-center text-[11px] font-bold text-on-surface shrink-0">${escHtml(u.username.charAt(0).toUpperCase())}</span>
+          <div class="flex flex-col min-w-0">
+            <span class="font-semibold text-on-surface truncate">${escHtml(u.username)}${self ? ' <span class="text-[10px] font-normal text-on-surface-variant">(คุณ)</span>' : ''}</span>
+            <span class="text-[10px] text-on-surface-variant truncate">${escHtml(u.email || '')}</span>
+          </div>
+        </div>
+      </td>
+      <td class="py-2 pr-3 text-on-surface-variant">${u.auth === 'entra' ? 'Microsoft' : 'Local'}</td>
+      <td class="py-2 pr-3 font-mono text-on-surface-variant">${created}</td>
+      <td class="py-2 pr-3">
+        <div class="inline-flex rounded overflow-hidden border border-outline-variant/40">${seg('user', 'User')}${seg('admin', 'Admin')}</div>
+      </td>
+      <td class="py-2 text-right">${self ? '' : `<button type="button" data-user="${escHtml(u.username)}" onclick="deleteUser(this.dataset.user)" title="ลบผู้ใช้" class="p-1 rounded hover:bg-error-container/30 text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined" style="font-size:18px">delete</span></button>`}</td>
+    </tr>`;
+  }).join('');
 }
 
 async function createUser(e) {
